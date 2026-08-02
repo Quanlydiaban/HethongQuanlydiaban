@@ -825,16 +825,35 @@
         // Hàm định vị (geocode) DÙNG CHUNG: chuyển địa chỉ chữ -> toạ độ thật qua bản đồ mở (miễn phí, không cần
         // API key). Trả về {lat, lon, ten} hoặc null nếu không tìm thấy. Dùng cho: định vị hộ dân, định vị
         // trụ sở Công an phường, và có thể mở rộng cho việc khác sau này.
+        // Tính khoảng cách (km) giữa 2 toạ độ theo công thức Haversine — dùng để phát hiện kết quả định vị
+        // đáng ngờ (quá xa vị trí lẽ ra phải có).
+        function khoangCachKm(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
         async function geocodeDiaChi(diaChiTho) {
             const khu = DANH_MUC_HANH_CHINH[khuVucHienTai] || {};
             const c = khu.center || DEFAULT_CENTER;
             const d = 0.06;
             const viewbox = `${c[1]-d},${c[0]+d},${c[1]+d},${c[0]-d}`;
-            const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=vn&viewbox=${viewbox}&bounded=0&q=${encodeURIComponent(diaChiTho)}`;
+            // QUAN TRỌNG: bounded=1 (trước đây để 0) — bắt buộc kết quả phải nằm TRONG phạm vi quanh phường
+            // đang chọn. Trước đây để 0 chỉ là "gợi ý ưu tiên", khiến tên đường phổ biến (VD "Nguyễn Tri
+            // Phương" - trùng tên ở rất nhiều tỉnh) có thể bị định vị nhầm sang tỉnh/thành khác hẳn.
+            const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=vn&viewbox=${viewbox}&bounded=1&q=${encodeURIComponent(diaChiTho)}`;
             const res = await fetch(url, { headers: { 'Accept-Language': 'vi' } });
             const data = await res.json();
             if (!data || data.length === 0) return null;
-            return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), ten: data[0].display_name };
+            const lat = parseFloat(data[0].lat), lon = parseFloat(data[0].lon);
+            // Lớp bảo vệ thứ 2 (phòng khi bounded=1 vẫn lọt kết quả xa do lỗi dữ liệu bản đồ mở): tính khoảng
+            // cách gần đúng tới tâm phường, từ chối nếu quá xa bất thường (>15km) thay vì chấm nhầm tỉnh khác.
+            const kmMoiDo = 111;
+            const khoangCachKm = Math.sqrt(Math.pow((lat - c[0]) * kmMoiDo, 2) + Math.pow((lon - c[1]) * kmMoiDo * Math.cos(c[0] * Math.PI / 180), 2));
+            if (khoangCachKm > 15) { console.warn("Từ chối kết quả định vị vì cách quá xa tâm phường (" + khoangCachKm.toFixed(1) + " km):", data[0].display_name); return null; }
+            return { lat, lon, ten: data[0].display_name };
         }
 
         // ================== TIỆN ÍCH TRÊN BẢN ĐỒ GIS (Y tế, Giáo dục, Công an, Chợ, Cây xăng...) ==================
@@ -1026,6 +1045,23 @@
             }, err => console.warn("Lỗi lắng nghe quyền cá nhân:", err.message));
         }
 
+        let taiKhoanChoXacThuc2FA = null; // Giữ tạm thông tin tài khoản Admin trong lúc chờ nhập mã 2FA (dùng chung toàn cục)
+
+        function kichHoatSauDangNhapFirebase(user, quyen) {
+            currentUser = { email: user.email, uid: user.uid, role: quyen.role, khuVucPhuTrach: quyen.khuVucPhuTrach, phuongPhuTrach: quyen.phuongPhuTrach };
+            if (currentUser.phuongPhuTrach && currentUser.phuongPhuTrach.length > 0 && DANH_MUC_HANH_CHINH[currentUser.phuongPhuTrach[0]]) {
+                khuVucHienTai = currentUser.phuongPhuTrach[0];
+            }
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('otpScreen').classList.add('hidden');
+            kichHoatGiaoDienChinh();
+            dangKyLangNgheHoGiaDinh();
+            ghiNhatKy('Đăng nhập', 'Vai trò: ' + quyen.role);
+            dangKyLangNgheQuyenCuaToi(user.email);
+            const elXM = document.getElementById('badgeXacMinhEmail');
+            if (elXM) elXM.classList.toggle('hidden', user.emailVerified);
+        }
+
         function khoiTaoCheDoFirebase() {
             // Hiện ô mật khẩu + nút đăng ký, đổi nút đăng nhập chính sang luồng Firebase thật
             document.getElementById('khungMatKhauFirebase').classList.remove('hidden');
@@ -1036,17 +1072,23 @@
             authFirebase.onAuthStateChanged(async (user) => {
                 if (user) {
                     const quyen = await xacDinhQuyenTuFirestore(user.email);
-                    currentUser = { email: user.email, uid: user.uid, role: quyen.role, khuVucPhuTrach: quyen.khuVucPhuTrach, phuongPhuTrach: quyen.phuongPhuTrach };
-                    if (currentUser.phuongPhuTrach && currentUser.phuongPhuTrach.length > 0 && DANH_MUC_HANH_CHINH[currentUser.phuongPhuTrach[0]]) {
-                        khuVucHienTai = currentUser.phuongPhuTrach[0];
+                    // BẮT BUỘC lớp bảo mật thứ 2 (mã TOTP từ app Authenticator) cho tài khoản ADMIN — kể cả
+                    // đã đăng nhập đúng mật khẩu Firebase. Mỗi phiên trình duyệt chỉ cần xác thực 1 lần
+                    // (lưu tạm trong sessionStorage, tự hết khi đóng trình duyệt) để khỏi phải nhập lại liên tục.
+                    if (quyen.role === 'admin' && CHE_DO_FIREBASE && !sessionStorage.getItem('da2FA_xacThuc')) {
+                        taiKhoanChoXacThuc2FA = { user, quyen };
+                        document.getElementById('loginScreen').classList.add('hidden');
+                        document.getElementById('otpEmailDisplay').innerText = user.email;
+                        document.getElementById('otpCodeInput').value = '';
+                        document.getElementById('qrcodeCanvas').innerHTML = '';
+                        new QRCode(document.getElementById("qrcodeCanvas"), {
+                            text: "otpauth://totp/QuanLyDiaBan:" + user.email + "?secret=" + ADMIN_TOTP_SECRET + "&issuer=QuanLyDiaBan",
+                            width: 180, height: 180
+                        });
+                        document.getElementById('otpScreen').classList.remove('hidden');
+                        return;
                     }
-                    document.getElementById('loginScreen').classList.add('hidden');
-                    kichHoatGiaoDienChinh();
-                    dangKyLangNgheHoGiaDinh();
-                    ghiNhatKy('Đăng nhập', 'Vai trò: ' + quyen.role);
-                    dangKyLangNgheQuyenCuaToi(user.email); // Cấp quyền mới có hiệu lực ngay, không cần đăng xuất/vào lại
-                    const elXM = document.getElementById('badgeXacMinhEmail');
-                    if (elXM) elXM.classList.toggle('hidden', user.emailVerified);
+                    kichHoatSauDangNhapFirebase(user, quyen);
                 } else {
                     if (huyLangNgheQuyenCuaToi) { huyLangNgheQuyenCuaToi(); huyLangNgheQuyenCuaToi = null; }
                     currentUser = null;
@@ -1376,7 +1418,16 @@
             }
         }
         
-        function quayLaiDangNhap() { document.getElementById('otpScreen').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); }
+        function quayLaiDangNhap() {
+            document.getElementById('otpScreen').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            if (CHE_DO_FIREBASE && taiKhoanChoXacThuc2FA) {
+                // Đã đăng nhập mật khẩu Firebase thành công nhưng bỏ dở bước 2FA -> đăng xuất luôn cho sạch,
+                // tránh trạng thái "nửa vời" (Firebase coi là đã đăng nhập nhưng ứng dụng chưa cho vào).
+                taiKhoanChoXacThuc2FA = null;
+                authFirebase.signOut();
+            }
+        }
         // Hàm DÙNG CHUNG để xác định quyền (role + phường/khu vực phụ trách) từ email — dùng ở cả lúc đăng nhập,
         // lúc mở lại phiên đã lưu, và lúc Admin/CSKV vừa nhập file phân quyền mới — tránh viết trùng logic 3 nơi.
         function xacDinhQuyenTuEmail(email) {
@@ -1399,7 +1450,13 @@
             if (btn) { btn.disabled = false; btn.innerText = 'Xác Thực'; }
             if (!hopLe) { alert("❌ Mã xác thực không đúng hoặc đã hết hạn. Vui lòng mở lại ứng dụng Authenticator và thử lại."); return; }
             document.getElementById('otpScreen').classList.add('hidden');
-            hoanTatDangNhap();
+            if (CHE_DO_FIREBASE && taiKhoanChoXacThuc2FA) {
+                sessionStorage.setItem('da2FA_xacThuc', '1'); // Chỉ cần xác thực 1 lần/phiên trình duyệt
+                kichHoatSauDangNhapFirebase(taiKhoanChoXacThuc2FA.user, taiKhoanChoXacThuc2FA.quyen);
+                taiKhoanChoXacThuc2FA = null;
+            } else {
+                hoanTatDangNhap();
+            }
         }
 
         function hoanTatDangNhap() {
@@ -1414,6 +1471,7 @@
         }
         function dangXuat() {
             localStorage.removeItem("currentUserAuthGIS_V5"); localStorage.removeItem("lanHoatDongCuoiGIS_V5");
+            sessionStorage.removeItem("da2FA_xacThuc"); // Bắt xác thực 2FA lại từ đầu ở lần đăng nhập kế tiếp
             if (CHE_DO_FIREBASE && authFirebase) { authFirebase.signOut().finally(() => location.reload()); }
             else { location.reload(); }
         }
@@ -1839,8 +1897,8 @@
             cacMarkerTrongDiem = [];
 
             const diaDiem = [];
-            if (khu.info.truSo) diaDiem.push({ nhan: "🏛️ " + khu.info.truSo, dc: khu.info.diaChiUBNDDeTimKiem || khu.info.truSo, khoaCache: "toaDoUBND_" + khuVucHienTai, mau: "#3b82f6", chuaXacMinh: false });
-            if (khu.info.diaChiCongAnPhuong) diaDiem.push({ nhan: "🚓 Công an " + khuVucHienTai, dc: khu.info.diaChiCongAnPhuong, khoaCache: "toaDoCA_" + khuVucHienTai, mau: "#dc2626", chuaXacMinh: khu.info.diaChiCongAnChuaXacMinh });
+            if (khu.info.truSo) diaDiem.push({ nhan: "🏛️ " + khu.info.truSo, dc: khu.info.diaChiUBNDDeTimKiem || khu.info.truSo, khoaCache: "toaDoUBND_v3_" + khuVucHienTai, mau: "#3b82f6", chuaXacMinh: false });
+            if (khu.info.diaChiCongAnPhuong) diaDiem.push({ nhan: "🚓 Công an " + khuVucHienTai, dc: khu.info.diaChiCongAnPhuong, khoaCache: "toaDoCA_v3_" + khuVucHienTai, mau: "#dc2626", chuaXacMinh: khu.info.diaChiCongAnChuaXacMinh });
 
             let coLoiMang = false;
             let laLanThuHai = false;
@@ -1860,6 +1918,16 @@
                         if (kq) localStorage.setItem(d.khoaCache, JSON.stringify({ lat: kq.lat, lon: kq.lon, ten: kq.ten }));
                     }
                     if (!kq) continue;
+                    // Lớp kiểm tra an toàn bổ sung: dù đã giới hạn vùng tìm kiếm (bounded=1), vẫn kiểm tra lại
+                    // khoảng cách thực tế — nếu kết quả cách xa tâm phường quá 15km (gần như chắc chắn sai,
+                    // như vụ định vị nhầm sang tỉnh khác trước đây), coi như KHÔNG hợp lệ, không cache lại.
+                    const tamPhuong = khu.center || DEFAULT_CENTER;
+                    const kmCachXa = khoangCachKm(tamPhuong[0], tamPhuong[1], kq.lat, kq.lon);
+                    if (kmCachXa > 15) {
+                        console.warn("Bỏ qua kết quả định vị nghi sai (cách tâm phường " + kmCachXa.toFixed(1) + "km):", d.nhan, kq.ten);
+                        localStorage.removeItem(d.khoaCache);
+                        continue;
+                    }
                     const marker = L.marker([kq.lat, kq.lon], {
                         icon: L.divIcon({ className: '', html: `<div style="background:${d.mau};width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 0 6px rgba(0,0,0,0.6);"></div>` })
                     }).addTo(mainMiniMapInstance).bindPopup(
@@ -2132,6 +2200,12 @@
         function nhapFileExcel(event) {
             const file = event.target.files[0];
             if (!file) return;
+
+            if (CHE_DO_FIREBASE && !coQuyenXemPhuong(khuVucHienTai)) {
+                alert("⛔ Tài khoản này chưa được Admin cấp quyền cho " + khuVucHienTai + " nên không thể nhập dữ liệu. Vui lòng liên hệ Admin để được cấp quyền trước.");
+                event.target.value = "";
+                return;
+            }
             
             const khuVucTuTenFile = layKhuVucTuTenFile(file.name);
 
@@ -2313,7 +2387,13 @@
                         ? `\n⚠️ LƯU Ý BẢO MẬT: File này có chứa cột số CCCD/định danh. Để hạn chế rủi ro số CCCD của nhiều công dân bị phát tán qua file Excel (email, USB, máy dùng chung), khuyến nghị: xóa cột CCCD khỏi file gốc cho các lần nhập sau, và bổ sung CCCD trực tiếp cho từng người ngay trong phần mềm (mục "Chi tiết" của từng hộ).`
                         : `\nℹ️ File không có cột CCCD — đúng khuyến nghị bảo mật. Anh/chị có thể bổ sung CCCD sau cho từng người trực tiếp trong phần mềm khi cần.`;
                     alert(`✅ Đã nhập thành công ${danhSachMoi.length} hộ dân Phường Tân An, TP. Cần Thơ!${ghiChuKV}${ghiChuCCCD}`);
-                } catch (err) { alert("Lỗi đọc file: " + err.message); }
+                } catch (err) {
+                    if (err.code === 'permission-denied' || /permission/i.test(err.message || '')) {
+                        alert("⛔ KHÔNG THỂ NHẬP: Tài khoản này chưa được Admin cấp quyền cho " + khuVucHienTai + ".\n\nĐây KHÔNG phải lỗi hỏng file — đây là tính năng bảo mật đang hoạt động đúng: hệ thống chặn ghi dữ liệu khi tài khoản chưa được phân quyền. Vui lòng liên hệ Admin để được cấp quyền trước khi nhập.");
+                    } else {
+                        alert("❌ Lỗi đọc file Excel: " + err.message + "\nVui lòng kiểm tra lại định dạng file (.xlsx/.xls) và thử lại.");
+                    }
+                }
             };
             reader.readAsArrayBuffer(file);
             event.target.value = null;
@@ -2325,8 +2405,13 @@
                 let nhan = layNhanKhuVucTuDiaChi(ho.diaChi);
                 setKhuVuc.add(nhan || "Khu Vực 1");
             });
-            if (setKhuVuc.size === 0) setKhuVuc.add("Khu Vực 1");
+            // KHÔNG tự thêm "Khu Vực 1" giả khi chưa có dữ liệu nào — trước đây làm vậy khiến CSKV
+            // tưởng nhầm là đã có dữ liệu ở "Khu Vực 1" dù thực tế trống trơn, gây khó hiểu.
             const selKv = document.getElementById('filterKhuVuc');
+            if (setKhuVuc.size === 0) {
+                selKv.innerHTML = '<option value="">-- Chưa có dữ liệu nào (hãy Nhập Excel trước) --</option>';
+                return;
+            }
             selKv.innerHTML = '<option value="">-- Tất cả Khu Vực --</option>';
             Array.from(setKhuVuc).sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }))
                 .forEach(kv => selKv.innerHTML += `<option value="${kv}">${kv}</option>`);
