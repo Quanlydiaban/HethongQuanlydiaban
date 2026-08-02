@@ -1,0 +1,14 @@
+{
+  "name": "Hệ Thống Quản Lý Địa Bàn CSKV",
+  "short_name": "QL Địa Bàn",
+  "description": "Hệ thống quản lý địa bàn, cư trú và bản đồ GIS cho Cảnh sát khu vực",
+  "start_url": "./QuanLyDiaBan_TanAn.html",
+  "display": "standalone",
+  "background_color": "#0B1220",
+  "theme_color": "#8A0E1F",
+  "orientation": "any",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
