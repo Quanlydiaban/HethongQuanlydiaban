@@ -127,7 +127,7 @@
                     <h1 class="text-base md:text-lg font-bold bg-gradient-to-r from-red-400 via-blue-400 to-emerald-400 bg-clip-text text-transparent">Hệ Thống Quản Lý Địa Bàn Cho CSKV - Phường Tân An, TP. Cần Thơ</h1>
                     <span id="userBadgeRole" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-900 text-red-200"></span>
                     <span id="badgeCheDoKetNoi" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-700 text-gray-300"></span>
-                    <span id="badgeXacMinhEmail" class="hidden px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-900 text-amber-300 cursor-pointer" onclick="guiLaiEmailXacMinh()" title="Bấm để gửi lại email xác minh">⚠️ Email chưa xác minh</span>
+                    <span id="badgeXacMinhEmail" class="hidden px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-900 text-amber-300 cursor-pointer" onclick="kiemTraLaiXacMinhEmail()" title="Bấm để kiểm tra lại (nếu đã xác minh trong email nhưng huy hiệu chưa mất)">⚠️ Email chưa xác minh</span>
                 </div>
                 <p class="text-[11px] text-gray-300 mt-0.5">Cán bộ: <span id="userNameDisplay" class="text-emerald-400 font-semibold"></span> | <button onclick="moModalRBAC()" class="text-blue-400 underline ml-1 hover:text-blue-300">Phân quyền (RBAC)</button></p>
             </div>
@@ -1138,6 +1138,30 @@
                 alert("✅ Đã gửi lại email xác minh tới " + authFirebase.currentUser.email + ". Kiểm tra cả mục Spam.");
             } catch (err) {
                 alert("❌ Không gửi được: " + (err.message || err.code));
+            }
+        }
+
+        // Firebase KHÔNG tự cập nhật trạng thái "đã xác minh" cho phiên đang mở sẵn — phải chủ động
+        // yêu cầu tải lại thông tin tài khoản (reload) thì mới biết email vừa được xác minh xong.
+        async function kiemTraLaiXacMinhEmail() {
+            if (!CHE_DO_FIREBASE || !authFirebase.currentUser) return;
+            const badge = document.getElementById('badgeXacMinhEmail');
+            const chuCu = badge.innerText;
+            badge.innerText = "Đang kiểm tra...";
+            try {
+                await authFirebase.currentUser.reload();
+                if (authFirebase.currentUser.emailVerified) {
+                    badge.classList.add('hidden');
+                    alert("✅ Đã xác nhận: email này đã được xác minh thành công!");
+                } else {
+                    badge.innerText = chuCu;
+                    if (confirm("Email vẫn CHƯA được xác minh. Có thể anh/chị chưa bấm vào link trong email, hoặc email bị vào mục Spam.\n\nGửi lại email xác minh ngay bây giờ?")) {
+                        guiLaiEmailXacMinh();
+                    }
+                }
+            } catch (err) {
+                badge.innerText = chuCu;
+                alert("❌ Không kiểm tra được lúc này: " + (err.message || err.code));
             }
         }
 
