@@ -130,7 +130,7 @@
                     <h1 class="text-base md:text-lg font-bold bg-gradient-to-r from-red-400 via-blue-400 to-emerald-400 bg-clip-text text-transparent">Hệ Thống Quản Lý Địa Bàn Cho CSKV - Phường Tân An, TP. Cần Thơ</h1>
                     <span id="userBadgeRole" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-900 text-red-200"></span>
                     <span id="badgeCheDoKetNoi" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-700 text-gray-300"></span>
-                    <span id="badgeXacMinhEmail" class="hidden px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-900 text-amber-300 cursor-pointer" onclick="kiemTraLaiXacMinhEmail()" title="Bấm để kiểm tra lại (nếu đã xác minh trong email nhưng huy hiệu chưa mất)">⚠️ Email chưa xác minh</span>
+                    
                 </div>
                 <p class="text-[11px] text-gray-300 mt-0.5">Cán bộ: <span id="userNameDisplay" class="text-emerald-400 font-semibold"></span> | <button onclick="moModalRBAC()" class="text-blue-400 underline ml-1 hover:text-blue-300">Phân quyền (RBAC)</button></p>
             </div>
@@ -278,7 +278,7 @@
                             <span>📥 Nhập ranh giới GIS</span>
                             <input type="file" id="fileRanhGioiGIS" accept=".geojson,.json,.kml" class="hidden" onchange="nhapRanhGioiGIS(event)">
                         </label>
-                        <button onclick="xuatHinhVeThanhGeoJSON()" class="bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1 rounded text-[11px] font-medium shadow">📤 Xuất hình vẽ</button>
+                        <button onclick="xuatHinhVeThanhGeoJSON()" title="Xuất ranh giới đã vẽ của phường đang chọn ra file .geojson" class="bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1 rounded text-[11px] font-medium shadow">📤 Xuất Ranh Giới (.geojson)</button>
                         <button onclick="luuHinhVeThanhRanhGioiChinhThuc()" class="bg-green-600 hover:bg-green-700 px-2.5 py-1 rounded text-[11px] font-medium shadow">💾 Lưu Ranh Giới</button>
                         <label class="flex items-center gap-1 bg-gray-800 hover:bg-gray-700 px-2.5 py-1 rounded text-[11px] cursor-pointer select-none">
                             <input type="checkbox" id="chkTienIchGIS" onchange="bamTienIchGIS(this.checked)" class="accent-amber-500">
@@ -632,9 +632,12 @@
     </div>
 
     <div id="dashboardModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
-        <div class="glass-card w-full max-w-5xl rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[90vh] overflow-y-auto">
+        <div class="glass-card w-full max-w-6xl rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[92vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                <h3 class="font-bold text-fuchsia-400">📊 Dashboard Tổng Quan</h3>
+                <div>
+                    <h3 class="font-bold text-fuchsia-400 text-sm">📊 Dashboard Tổng Quan</h3>
+                    <p id="dashboardCapNhatLuc" class="text-[10px] text-gray-500"></p>
+                </div>
                 <button onclick="document.getElementById('dashboardModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
             </div>
             <div id="noiDungDashboard">Đang tải...</div>
@@ -1159,10 +1162,6 @@
             dangKyLangNgheHoGiaDinh();
             ghiNhatKy('Đăng nhập', 'Vai trò: ' + quyen.role);
             dangKyLangNgheQuyenCuaToi(user.email);
-            const elXM = document.getElementById('badgeXacMinhEmail');
-            // Admin đã có lớp 2FA (TOTP) bảo vệ mạnh hơn nên không cần "nhắc" xác minh email nữa (tránh gây
-            // hoang mang không cần thiết, nhất là khi email xác minh đôi khi bị trễ/thất lạc phía Google).
-            if (elXM) elXM.classList.toggle('hidden', user.emailVerified || quyen.role === 'admin');
             kiemTraNhacSaoLuu();
         }
 
@@ -1285,45 +1284,10 @@
             if (!email || !matKhau) return alert("Vui lòng nhập đủ Email và Mật khẩu (tối thiểu 6 ký tự).");
             if (!confirm("Đăng ký tài khoản mới với email " + email + "?\n\nLưu ý: tài khoản mới sẽ CHƯA có quyền xem dữ liệu nào cho đến khi Admin cấp quyền qua mục Phân quyền (RBAC).")) return;
             try {
-                const cred = await authFirebase.createUserWithEmailAndPassword(email, matKhau);
-                try { await cred.user.sendEmailVerification(); } catch (e2) { console.warn("Không gửi được email xác minh:", e2.message); }
-                alert("✅ Đăng ký thành công! Đã gửi email xác minh tới " + email + " (kiểm tra cả mục Spam) — bấm vào link trong email để xác nhận đúng chủ tài khoản.\n\nVui lòng liên hệ Admin (" + ADMIN_EMAILS[0] + ") để được cấp quyền xem dữ liệu.");
+                await authFirebase.createUserWithEmailAndPassword(email, matKhau);
+                alert("✅ Đăng ký thành công! Vui lòng liên hệ Admin (" + ADMIN_EMAILS[0] + ") để được cấp quyền xem dữ liệu.");
             } catch (err) {
                 alert("❌ Đăng ký thất bại: " + (err.message || err.code));
-            }
-        }
-
-        async function guiLaiEmailXacMinh() {
-            if (!CHE_DO_FIREBASE || !authFirebase.currentUser) return;
-            try {
-                await authFirebase.currentUser.sendEmailVerification();
-                alert("✅ Đã gửi lại email xác minh tới " + authFirebase.currentUser.email + ". Kiểm tra cả mục Spam.");
-            } catch (err) {
-                alert("❌ Không gửi được: " + (err.message || err.code));
-            }
-        }
-
-        // Firebase KHÔNG tự cập nhật trạng thái "đã xác minh" cho phiên đang mở sẵn — phải chủ động
-        // yêu cầu tải lại thông tin tài khoản (reload) thì mới biết email vừa được xác minh xong.
-        async function kiemTraLaiXacMinhEmail() {
-            if (!CHE_DO_FIREBASE || !authFirebase.currentUser) return;
-            const badge = document.getElementById('badgeXacMinhEmail');
-            const chuCu = badge.innerText;
-            badge.innerText = "Đang kiểm tra...";
-            try {
-                await authFirebase.currentUser.reload();
-                if (authFirebase.currentUser.emailVerified) {
-                    badge.classList.add('hidden');
-                    alert("✅ Đã xác nhận: email này đã được xác minh thành công!");
-                } else {
-                    badge.innerText = chuCu;
-                    if (confirm("Email vẫn CHƯA được xác minh.\n\nMột số lý do thường gặp:\n• Email nằm trong mục 'Đã tạm ẩn' (Snoozed) hoặc Spam của Gmail, không phải Hộp thư chính\n• Email của Google/Firebase đôi khi bị TRỄ vài phút đến vài giờ (hạ tầng gửi thư của Google, không phải lỗi ứng dụng)\n• Thử tìm trong Gmail với từ khóa: 'Verify your email' hoặc 'firebaseapp.com'\n\nGửi lại 1 email xác minh mới ngay bây giờ?")) {
-                        guiLaiEmailXacMinh();
-                    }
-                }
-            } catch (err) {
-                badge.innerText = chuCu;
-                alert("❌ Không kiểm tra được lúc này: " + (err.message || err.code));
             }
         }
 
@@ -2323,11 +2287,13 @@
                 return;
             }
             const geo = drawnItems.toGeoJSON();
+            const tenFile = "ranh_gioi_" + khuVucHienTai.replace(/\s+/g, '_') + ".geojson";
             const blob = new Blob([JSON.stringify(geo, null, 2)], { type: "application/geo+json" });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = "ranh_gioi_" + khuVucHienTai.replace(/\s+/g,'_') + ".geojson";
+            a.download = tenFile;
             a.click();
+            alert("✅ Đã xuất file: " + tenFile + "\nĐây là ranh giới của: " + khuVucHienTai + "\n\n📖 CÁCH XEM FILE NÀY:\nFile .geojson KHÔNG mở được bằng cách nhấp đúp như ảnh/Word — đây là dữ liệu bản đồ thô. Có 2 cách xem:\n\n1️⃣ ĐƠN GIẢN NHẤT: quay lại đúng phường \"" + khuVucHienTai + "\" trong phần mềm này, bấm \"📥 Nhập ranh giới GIS\", chọn lại file vừa xuất — ranh giới sẽ hiện ngay trên bản đồ.\n\n2️⃣ XEM TRỰC QUAN NGOÀI PHẦN MỀM: vào trang https://geojson.io (miễn phí, không cần tài khoản) → kéo thả file .geojson này vào → ranh giới hiện ngay trên bản đồ vệ tinh thật.");
         }
 
         // Bản đồ nhiệt mật độ HỘ DÂN — cố ý KHÔNG dùng dữ liệu CCCD (vì CCCD không khuyến khích nhập vào hệ
@@ -3526,49 +3492,137 @@
         }
 
         // ================== DASHBOARD TỔNG QUAN (Nhóm A) ==================
+        // ================== DASHBOARD TỔNG QUAN — thiết kế chuyên nghiệp với biểu đồ thật ==================
+        let dashboardCharts = {}; // Lưu các instance Chart.js để hủy đúng cách trước khi vẽ lại (tránh lỗi canvas)
+        function huyBieuDoDashboard() {
+            Object.values(dashboardCharts).forEach(c => { if (c) c.destroy(); });
+            dashboardCharts = {};
+        }
+
+        function theKPI(icon, soLieu, nhan, mauNen, mauChu) {
+            return `<div class="rounded-xl p-3 flex items-center gap-3" style="background:${mauNen}">
+                <div class="text-2xl">${icon}</div>
+                <div><p class="text-xl font-bold" style="color:${mauChu}">${soLieu}</p><p class="text-[10px] text-gray-300">${nhan}</p></div>
+            </div>`;
+        }
+
         async function moDashboard() {
             document.getElementById('dashboardModal').classList.remove('hidden');
+            document.getElementById('dashboardCapNhatLuc').innerText = 'Cập nhật lúc ' + new Date().toLocaleString('vi-VN');
             const el = document.getElementById('noiDungDashboard');
-            el.innerHTML = '<p class="text-gray-500 p-3">Đang tải dữ liệu...</p>';
+            el.innerHTML = '<p class="text-gray-500 p-6 text-center">⏳ Đang tổng hợp dữ liệu...</p>';
+            huyBieuDoDashboard();
 
-            // Phần 1: Tổng quan phường đang chọn (mọi vai trò đều thấy)
             const dsPhuongNay = layDuLieuThuocPhuongHienTai();
-            const soKhauPhuongNay = dsPhuongNay.reduce((t, h) => t + (h.thanhVien ? h.thanhVien.length : 0), 0);
-            let htmlPhuong = `<div class="mb-4">
-                <p class="font-semibold text-gray-200 mb-1.5">🏘️ ${escHtml(khuVucHienTai)}</p>
-                <div class="grid grid-cols-4 gap-2">
-                    <div class="bg-gray-900/70 border border-gray-800 rounded p-2 text-center"><p class="text-xl font-bold text-blue-400">${dsPhuongNay.length}</p><p class="text-[10px] text-gray-400">Hộ</p></div>
-                    <div class="bg-gray-900/70 border border-gray-800 rounded p-2 text-center"><p class="text-xl font-bold text-emerald-400">${soKhauPhuongNay}</p><p class="text-[10px] text-gray-400">Nhân khẩu</p></div>
-                    <div class="bg-gray-900/70 border border-gray-800 rounded p-2 text-center"><p class="text-xl font-bold text-amber-400">${dsPhuongNay.filter(h => h.dienNghiepVu === 'Tạm trú' || h.dienNghiepVu === 'Lưu trú').length}</p><p class="text-[10px] text-gray-400">Hộ tạm/lưu trú</p></div>
-                    <div class="bg-gray-900/70 border border-gray-800 rounded p-2 text-center"><p class="text-xl font-bold text-rose-400">${dsPhuongNay.reduce((t,h)=>t+(h.thanhVien||[]).filter(tv=>tv.trangThaiBienDong && tv.trangThaiBienDong!=='Đang cư trú').length,0)}</p><p class="text-[10px] text-gray-400">Nhân khẩu biến động</p></div>
-                </div>
-            </div>`;
+            const soKhau = dsPhuongNay.reduce((t, h) => t + (h.thanhVien ? h.thanhVien.length : 0), 0);
+            const soThuongTru = dsPhuongNay.filter(h => (h.dienNghiepVu || 'Thường trú') === 'Thường trú').length;
+            const soTamTru = dsPhuongNay.filter(h => h.dienNghiepVu === 'Tạm trú' || h.dienNghiepVu === 'Lưu trú').length;
+            const soKhac = dsPhuongNay.length - soThuongTru - soTamTru;
+            let soNam = 0, soNu = 0, soTreEm = 0, soLaoDong = 0, soCaoTuoi = 0, soBienDong = 0;
+            const namNay = new Date().getFullYear();
+            dsPhuongNay.forEach(h => (h.thanhVien || []).forEach(tv => {
+                const gt = (tv.gioiTinh || '').toLowerCase();
+                if (gt === 'nam') soNam++; else if (gt === 'nữ' || gt === 'nu') soNu++;
+                if (tv.trangThaiBienDong && tv.trangThaiBienDong !== 'Đang cư trú') soBienDong++;
+                if (tv.ngaySinh) {
+                    const m = String(tv.ngaySinh).match(/(\d{4})(?!.*\d{4})/);
+                    if (m) { const t = namNay - parseInt(m[1]); if (t >= 0 && t < 130) { if (t < 16) soTreEm++; else if (t <= 60) soLaoDong++; else soCaoTuoi++; } }
+                }
+            }));
+            let soSuVuDangXuLy = 0;
+            try {
+                const svSnap = await dbFirestore.collection('nhat_ky_dia_ban').where('phuong', '==', khuVucHienTai).where('trangThai', '==', 'Đang xử lý').get();
+                soSuVuDangXuLy = svSnap.size;
+            } catch (e) { /* bỏ qua nếu chưa có quyền/collection trống */ }
 
-            // Phần 2: Toàn Thành phố — CHỈ Admin/Chỉ huy TP mới truy vấn được (Security Rules chặn người khác)
+            let theoKhuVuc = {};
+            dsPhuongNay.forEach(h => { const k = layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1'; theoKhuVuc[k] = (theoKhuVuc[k] || 0) + 1; });
+
+            el.innerHTML = `
+                <div class="mb-3">
+                    <p class="font-bold text-gray-100 text-sm mb-2">🏘️ ${escHtml(khuVucHienTai)}</p>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
+                        ${theKPI('🏠', dsPhuongNay.length, 'Tổng số hộ', 'linear-gradient(135deg,#1e3a8a,#1e40af)', '#93c5fd')}
+                        ${theKPI('👥', soKhau, 'Tổng nhân khẩu', 'linear-gradient(135deg,#065f46,#047857)', '#6ee7b7')}
+                        ${theKPI('🟡', soTamTru, 'Hộ tạm/lưu trú', 'linear-gradient(135deg,#78350f,#92400e)', '#fcd34d')}
+                        ${theKPI('🔄', soBienDong, 'Nhân khẩu biến động', 'linear-gradient(135deg,#7f1d1d,#991b1b)', '#fca5a5')}
+                        ${theKPI('📋', soSuVuDangXuLy, 'Sự vụ đang xử lý', 'linear-gradient(135deg,#3730a3,#4338ca)', '#c7d2fe')}
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
+                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">Phân bố cư trú</p>
+                            <div style="height:170px;"><canvas id="dbChartCuTru"></canvas></div>
+                        </div>
+                        <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
+                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">Giới tính & Độ tuổi</p>
+                            <div style="height:170px;"><canvas id="dbChartTuoiGioiTinh"></canvas></div>
+                        </div>
+                        <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
+                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">Số hộ theo khu vực</p>
+                            <div style="height:170px;"><canvas id="dbChartKhuVuc"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+                <div id="dashboardThanhPho"></div>
+            `;
+
+            dashboardCharts.cuTru = new Chart(document.getElementById('dbChartCuTru'), {
+                type: 'doughnut',
+                data: { labels: ['Thường trú', 'Tạm/Lưu trú', 'NOHN/Khác'], datasets: [{ data: [soThuongTru, soTamTru, soKhac], backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'], borderWidth: 2, borderColor: '#111827' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 9 }, boxWidth: 10 } } } }
+            });
+            dashboardCharts.tuoiGioiTinh = new Chart(document.getElementById('dbChartTuoiGioiTinh'), {
+                type: 'bar',
+                data: {
+                    labels: ['Nam', 'Nữ', 'D.16t', '16-60t', 'Tr.60t'],
+                    datasets: [{ data: [soNam, soNu, soTreEm, soLaoDong, soCaoTuoi], backgroundColor: ['#0ea5e9', '#ec4899', '#22d3ee', '#818cf8', '#fbbf24'], borderRadius: 4 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { color: '#374151' } } } }
+            });
+            const tenKV = Object.keys(theoKhuVuc).sort();
+            dashboardCharts.khuVuc = new Chart(document.getElementById('dbChartKhuVuc'), {
+                type: 'bar',
+                data: { labels: tenKV, datasets: [{ data: tenKV.map(k => theoKhuVuc[k]), backgroundColor: '#a855f7', borderRadius: 4 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { color: '#374151' } }, y: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { display: false } } } }
+            });
+
+            // Phần Toàn Thành phố — CHỈ Admin/Chỉ huy TP truy vấn được (Security Rules chặn người khác)
             if (currentUser.role === 'admin' || currentUser.role === 'chi_huy_tp') {
+                const elTP = document.getElementById('dashboardThanhPho');
+                elTP.innerHTML = '<p class="text-gray-500 p-2">Đang tải dữ liệu toàn thành phố...</p>';
                 try {
                     const snap = await dbFirestore.collection('households').get();
                     const theoPhuong = {};
                     snap.docs.forEach(d => {
-                        const h = d.data();
-                        const p = h.phuong || 'Chưa rõ';
+                        const h = d.data(); const p = h.phuong || 'Chưa rõ';
                         if (!theoPhuong[p]) theoPhuong[p] = { ho: 0, khau: 0 };
-                        theoPhuong[p].ho++;
-                        theoPhuong[p].khau += (h.thanhVien ? h.thanhVien.length : 0);
+                        theoPhuong[p].ho++; theoPhuong[p].khau += (h.thanhVien ? h.thanhVien.length : 0);
                     });
                     const tenPhuong = Object.keys(theoPhuong).sort((a, b) => theoPhuong[b].ho - theoPhuong[a].ho);
-                    htmlPhuong += `<div>
-                        <p class="font-semibold text-gray-200 mb-1.5">🏙️ Toàn Thành Phố (${tenPhuong.length} phường có dữ liệu)</p>
-                        <table class="w-full text-[11px]">
-                            <thead class="bg-gray-800 text-gray-300"><tr><th class="p-1.5 text-left">Phường</th><th class="p-1.5 text-right">Số Hộ</th><th class="p-1.5 text-right">Nhân Khẩu</th></tr></thead>
-                            <tbody class="divide-y divide-gray-800 text-gray-300">` +
-                        tenPhuong.map(p => `<tr class="${p === khuVucHienTai ? 'bg-fuchsia-950/30' : ''}"><td class="p-1.5">${escHtml(p)}</td><td class="p-1.5 text-right font-mono">${theoPhuong[p].ho}</td><td class="p-1.5 text-right font-mono">${theoPhuong[p].khau}</td></tr>`).join('') +
-                        `</tbody></table></div>`;
+                    elTP.innerHTML = `<div class="border-t border-gray-700 pt-3">
+                        <p class="font-bold text-gray-100 text-sm mb-2">🏙️ Toàn Thành Phố — ${tenPhuong.length} phường có dữ liệu</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
+                                <p class="text-gray-300 font-semibold mb-1 text-[11px]">Xếp hạng số hộ theo phường</p>
+                                <div style="height:${Math.max(160, tenPhuong.length * 26)}px;"><canvas id="dbChartXepHang"></canvas></div>
+                            </div>
+                            <div class="bg-gray-900/70 border border-gray-800 rounded-lg overflow-y-auto" style="max-height:340px;">
+                                <table class="w-full text-[11px]">
+                                    <thead class="bg-gray-800 text-gray-300 sticky top-0"><tr><th class="p-1.5 text-left">Phường</th><th class="p-1.5 text-right">Hộ</th><th class="p-1.5 text-right">Nhân khẩu</th></tr></thead>
+                                    <tbody class="divide-y divide-gray-800 text-gray-300">${tenPhuong.map(p => `<tr class="${p === khuVucHienTai ? 'bg-fuchsia-950/40' : ''}"><td class="p-1.5">${escHtml(p)}</td><td class="p-1.5 text-right font-mono">${theoPhuong[p].ho}</td><td class="p-1.5 text-right font-mono">${theoPhuong[p].khau}</td></tr>`).join('')}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>`;
+                    dashboardCharts.xepHang = new Chart(document.getElementById('dbChartXepHang'), {
+                        type: 'bar',
+                        data: { labels: tenPhuong, datasets: [{ data: tenPhuong.map(p => theoPhuong[p].ho), backgroundColor: tenPhuong.map(p => p === khuVucHienTai ? '#e879f9' : '#6366f1'), borderRadius: 4 }] },
+                        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { color: '#374151' } }, y: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { display: false } } } }
+                    });
                 } catch (err) {
-                    htmlPhuong += '<p class="text-rose-400">❌ Lỗi tải dữ liệu toàn thành phố: ' + escHtml(err.message) + '</p>';
+                    elTP.innerHTML = '<p class="text-rose-400 p-2">❌ Lỗi tải dữ liệu toàn thành phố: ' + escHtml(err.message) + '</p>';
                 }
             }
-            el.innerHTML = htmlPhuong;
         }
 
         function xuatBaoCaoThongKeTongHop() {
