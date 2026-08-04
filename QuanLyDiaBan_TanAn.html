@@ -2371,13 +2371,17 @@
         }
 
         function dinhViLanLuotThuCong(danhSach, idx) {
-            if (idx >= danhSach.length) { anBannerChamTay(); alert("✅ Đã chấm xong tất cả. Bấm lại '🚓 Định Vị UBND & Công An Phường' để xem kết quả."); return; }
+            huyChamTay(); // Dọn sạch mọi trình xử lý click còn sót lại từ lượt chấm tay trước đó (nếu có) — tránh 2 trình xử lý chồng lên nhau gây lỗi khó lường
+            if (idx >= danhSach.length) { anBannerChamTay(); hienThiTrongDiemHanhChinh(); return; } // Tự làm mới bản đồ luôn, khỏi cần bấm lại nút
             const d = danhSach[idx];
             hienBannerChamTay('🎯 Bấm ĐÚNG vị trí "' + d.nhan.replace(/^\S+\s/, '') + '" trên bản đồ');
             trinhXuLyChamTayHienTai = (e) => {
-                localStorage.setItem(d.khoaCache, JSON.stringify({ lat: e.latlng.lat, lon: e.latlng.lng, ten: "Đã chỉnh tay" }));
-                mainMiniMapInstance.off('click', trinhXuLyChamTayHienTai);
-                dinhViLanLuotThuCong(danhSach, idx + 1);
+                try {
+                    localStorage.setItem(d.khoaCache, JSON.stringify({ lat: e.latlng.lat, lon: e.latlng.lng, ten: "Đã chỉnh tay" }));
+                    mainMiniMapInstance.off('click', trinhXuLyChamTayHienTai);
+                    trinhXuLyChamTayHienTai = null;
+                    dinhViLanLuotThuCong(danhSach, idx + 1);
+                } catch (err) { alert("❌ Lỗi khi lưu vị trí: " + err.message); }
             };
             mainMiniMapInstance.on('click', trinhXuLyChamTayHienTai);
         }
@@ -2386,12 +2390,18 @@
         // rồi lưu lại (localStorage) để dùng ngay các lần sau, không cần tra cứu lại.
         function dinhViLaiThuCong(khoaCache) {
             if (!mainMiniMapInstance) return;
+            huyChamTay(); // QUAN TRỌNG: dọn sạch trình xử lý click cũ (nếu còn sót từ lượt trước) TRƯỚC khi gắn cái mới —
+                          // đây chính là nguyên nhân gây lỗi trước đây: 2 trình xử lý cùng lắng nghe 1 lúc trên cùng bản đồ.
+            mainMiniMapInstance.closePopup(); // Đóng popup đang mở, tránh vướng khi bấm lên bản đồ
             hienBannerChamTay('🎯 Bấm ĐÚNG vị trí thật trên bản đồ để chấm lại điểm này');
             trinhXuLyChamTayHienTai = (e) => {
-                localStorage.setItem(khoaCache, JSON.stringify({ lat: e.latlng.lat, lon: e.latlng.lng, ten: "Đã chỉnh tay" }));
-                mainMiniMapInstance.off('click', trinhXuLyChamTayHienTai);
-                anBannerChamTay();
-                alert("✅ Đã lưu vị trí mới. Bấm lại '🚓 Định Vị UBND & Công An Phường' để xem.");
+                try {
+                    localStorage.setItem(khoaCache, JSON.stringify({ lat: e.latlng.lat, lon: e.latlng.lng, ten: "Đã chỉnh tay" }));
+                    mainMiniMapInstance.off('click', trinhXuLyChamTayHienTai);
+                    trinhXuLyChamTayHienTai = null;
+                    anBannerChamTay();
+                    hienThiTrongDiemHanhChinh(); // Tự làm mới bản đồ ngay, khỏi cần bấm lại nút thủ công
+                } catch (err) { alert("❌ Lỗi khi lưu vị trí: " + err.message); }
             };
             mainMiniMapInstance.on('click', trinhXuLyChamTayHienTai);
         }
@@ -3259,32 +3269,35 @@
                 const kq = await geocodeDiaChi(diaChi + ", " + khuVucHienTai + ", Cần Thơ, Việt Nam");
                 if (!kq) { alert("Không tìm thấy toạ độ khớp với địa chỉ này. Có thể địa chỉ chưa đủ chi tiết (số nhà, tên đường), hoặc bấm trực tiếp lên bản đồ để chấm tay."); return; }
                 const doTinCay = tinhDoTinCayDiaChi(diaChi, kq.ten);
-                if (doTinCay < 0.34) {
-                    // ĐỘ TIN CẬY THẤP: tên địa điểm tìm được gần như không liên quan gì đến địa chỉ đã nhập
-                    // (VD: nhầm sang tên 1 cơ quan/trụ sở khác trong vùng) — KHÔNG tự động lưu, bắt buộc
-                    // cán bộ tự xác nhận hoặc chấm tay, tránh lặp lại lỗi định vị nhầm địa điểm không liên quan.
-                    const dongY = confirm(
-                        "⚠️ CẢNH BÁO: Kết quả định vị có vẻ KHÔNG khớp với địa chỉ đã nhập — dễ bị SAI.\n\n" +
-                        "📍 Địa chỉ anh/chị đã nhập:\n" + diaChi + "\n\n" +
-                        "🔍 Kết quả bản đồ tìm được:\n" + kq.ten + "\n\n" +
-                        "Đây thường gặp ở địa chỉ dạng khu dân cư (KDC)/số lô — bản đồ mở chưa có dữ liệu chi tiết nên trả về 1 địa điểm/trụ sở lớn gần đó KHÔNG liên quan.\n\n" +
-                        "Bấm OK NẾU anh/chị đã tự kiểm tra và chắc chắn đúng. Bấm Cancel để TỰ CHẤM TAY trên bản đồ (khuyến nghị — chính xác hơn nhiều với địa chỉ dạng KDC)."
-                    );
-                    if (!dongY) {
-                        // Tự cuộn đến đúng bản đồ + hiện banner nổi bật ngay trên bản đồ, thay vì chỉ có 1 dòng
-                        // alert rồi để cán bộ tự mò tìm bản đồ ở đâu.
-                        const mapEl = document.getElementById('mapContainer');
-                        mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        setTimeout(() => hienBannerChamTayModal("🎯 Bấm ĐÚNG vị trí thật của hộ trên bản đồ này"), 400);
-                        return;
-                    }
-                }
+
+                // QUAN TRỌNG — THAY ĐỔI LỚN: KHÔNG BAO GIỜ tự động coi kết quả định vị là "đã xác nhận" nữa,
+                // kể cả khi độ tin cậy cao. Trước đây tự động chấp nhận khi độ tin cậy ≥ 0.34 vẫn để lọt nhiều
+                // trường hợp sai (địa chỉ dạng khu dân cư/KDC rất dễ bị định vị nhầm sang trụ sở/địa điểm khác
+                // gần đó dù điểm tin cậy tính ra không quá thấp). Giờ LUÔN hiển thị lên bản đồ trước, bắt buộc
+                // cán bộ tự nhìn và xác nhận bằng mắt mới coi là toạ độ thật.
                 document.getElementById('editGps').value = `${kq.lat.toFixed(6)}, ${kq.lon.toFixed(6)}`;
-                gpsHoHienTaiLaThat = true;
+                gpsHoHienTaiLaThat = false;
                 capNhatBanDoLeaflet();
-                if (doTinCay >= 0.34) {
-                    alert("✅ Đã định vị theo: " + kq.ten + "\nKiểm tra lại điểm chấm trên bản đồ, nếu chưa đúng có thể bấm trực tiếp lên bản đồ để chỉnh tay, rồi bấm Lưu Hồ Sơ.");
-                }
+
+                const canhBaoDoTinCayThap = doTinCay < 0.34
+                    ? "\n\n⚠️ ĐỘ TIN CẬY THẤP — địa chỉ dạng khu dân cư (KDC)/số lô RẤT DỄ bị định vị nhầm sang trụ sở/địa điểm khác gần đó. Khuyến nghị mạnh: bấm Cancel để tự chấm tay."
+                    : "";
+                const mapEl = document.getElementById('mapContainer');
+                mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => {
+                    const dongY = confirm(
+                        "📍 Đây là vị trí GỢI Ý theo địa chỉ đã ghi (đã chấm lên bản đồ bên dưới):\n" + kq.ten + canhBaoDoTinCayThap +
+                        "\n\n👀 Hãy NHÌN KỸ điểm chấm màu trên bản đồ, so sánh với vị trí thật của hộ.\n\n" +
+                        "✅ Bấm OK NẾU đúng — sẽ xác nhận toạ độ này để dùng cho \"Chỉ Đường\".\n" +
+                        "✏️ Bấm Cancel để TỰ CHẤM TAY (khuyến nghị nếu không chắc chắn 100%)."
+                    );
+                    if (dongY) {
+                        gpsHoHienTaiLaThat = true;
+                        alert("✅ Đã xác nhận toạ độ. Nhớ bấm \"Lưu Hồ Sơ\" để lưu lại.");
+                    } else {
+                        hienBannerChamTayModal("🎯 Bấm ĐÚNG vị trí thật của hộ trên bản đồ này");
+                    }
+                }, 350);
             } catch (err) {
                 alert("Không định vị được lúc này (cần kết nối internet). Vui lòng thử lại.");
             } finally {
@@ -3407,6 +3420,8 @@
 
         function dongModal() {
             document.getElementById('detailModal').classList.add('hidden');
+            const bannerCu = document.getElementById('bannerChamTayModal');
+            if (bannerCu) bannerCu.remove(); // Dọn sạch banner chấm tay (nếu đang dở dang) để không sót lại lần mở sau
             if (mapInstance) { mapInstance.remove(); mapInstance = null; }
         }
 
