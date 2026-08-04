@@ -84,7 +84,8 @@
                 </div>
                 <div id="khungMatKhauFirebase" class="hidden">
                     <label class="block text-xs text-gray-300 mb-1 font-medium">Mật khẩu:</label>
-                    <input type="password" id="matKhauInput" placeholder="Tối thiểu 6 ký tự" class="w-full bg-gray-950 border border-gray-600 rounded-lg px-3 py-2.5 text-xs text-white focus:outline-none focus:border-red-500">
+                    <input type="password" id="matKhauInput" oninput="capNhatDoMạnhMatKhauHienThi()" placeholder="VD: Cskv@2026" class="w-full bg-gray-950 border border-gray-600 rounded-lg px-3 py-2.5 text-xs text-white focus:outline-none focus:border-red-500">
+                    <p id="doMạnhMatKhauHienThi" class="text-[10px] text-gray-500 mt-1">Cần đủ: ≥8 ký tự, 1 chữ HOA, 1 chữ thường, 1 số, 1 ký tự đặc biệt (@ # $ % ! ...)</p>
                     <p class="text-[10px] text-gray-500 mt-1">Chưa có tài khoản? Nhập email + mật khẩu mới rồi bấm "Đăng Ký Tài Khoản Mới".</p>
                     <button type="button" onclick="quenMatKhau()" class="text-[10px] text-blue-400 hover:text-blue-300 underline mt-1">Quên mật khẩu?</button>
                 </div>
@@ -109,7 +110,8 @@
                     <div id="qrcodeCanvas" class="bg-white p-3 rounded-xl mx-auto w-fit flex justify-center items-center"></div>
                 </div>
                 <div>
-                    <input type="text" id="otpCodeInput" maxlength="6" placeholder="------" class="w-full bg-gray-900 border border-gray-700 rounded-lg py-2 text-center tracking-[1em] text-base font-mono text-white focus:outline-none focus:border-emerald-500">
+                    <input type="text" id="otpCodeInput" maxlength="9" placeholder="------" class="w-full bg-gray-900 border border-gray-700 rounded-lg py-2 text-center tracking-[0.3em] text-base font-mono text-white focus:outline-none focus:border-emerald-500">
+                    <p id="goiYMaKhoiPhuc" class="text-[10px] text-gray-500 text-center mt-1">Mất điện thoại/mất app Authenticator? Nhập 1 trong 8 <b>mã khôi phục</b> đã lưu trước đó (dạng XXXX-XXXX) vào ô này.</p>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="quayLaiDangNhap()" class="w-1/3 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs">Quay lại</button>
@@ -476,7 +478,7 @@
                     <select id="inputVaiTroCSKV" onchange="doiVaiTroTrongForm()" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
                         <option value="can_bo">Cảnh sát khu vực (1 khu vực trong 1 phường)</option>
                         <option value="chi_huy">Chỉ huy phường (toàn bộ 1 phường)</option>
-                        <option value="chi_huy_tp">Chỉ huy cấp Thành phố (xem tất cả phường)</option>
+                        <option value="chi_huy_tp">Chỉ huy cấp Thành phố / PC06 (xem tất cả 103 phường)</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-1.5">
@@ -560,7 +562,9 @@
             </div>
 
             <div class="flex justify-end gap-2 pt-1">
-                <button onclick="taiMauExcelTrong()" class="bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded font-medium">⬇️ Tải File Mẫu Trống</button>
+                <button onclick="taiMauExcelThuongTru()" class="bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded font-medium">⬇️ Mẫu Thường Trú</button>
+                <button onclick="taiMauExcelTamTru()" class="bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded font-medium">⬇️ Mẫu Tạm Trú</button>
+                <button onclick="taiMauExcelLuuTru()" class="bg-rose-600 hover:bg-rose-700 px-3 py-1.5 rounded font-medium">⬇️ Mẫu Lưu Trú/NOHN</button>
                 <button onclick="dongModalHuongDanExcel()" class="bg-gray-700 px-3 py-1.5 rounded">Đóng</button>
             </div>
         </div>
@@ -931,6 +935,34 @@
         // trụ sở Công an phường, và có thể mở rộng cho việc khác sau này.
         // Tính khoảng cách (km) giữa 2 toạ độ theo công thức Haversine — dùng để phát hiện kết quả định vị
         // đáng ngờ (quá xa vị trí lẽ ra phải có).
+        // Đánh giá ĐỘ TIN CẬY của 1 kết quả định vị bằng cách so khớp từ khóa giữa địa chỉ đã nhập và tên địa
+        // điểm mà bản đồ mở trả về — vì các địa chỉ dạng khu dân cư (VD "01 B5 KDC 91B") không phải lúc nào
+        // Nominatim cũng hiểu đúng, đôi khi trả về nhầm 1 địa danh/trụ sở khác trong vùng (VD từng bị nhầm
+        // sang "Trung tâm truyền hình" dù không liên quan gì đến địa chỉ hộ). Trả về tỉ lệ 0-1, càng thấp
+        // càng đáng ngờ.
+        const TU_LOAI_BO_KHI_SO_KHOP = ['khu', 'vuc', 'pho', 'phuong', 'thanh', 'can', 'tho', 'xa', 'kv', 'kdc', 'viet', 'nam'];
+        function tinhDoTinCayDiaChi(diaChiGoc, tenKetQua) {
+            // QUAN TRỌNG: phải loại thêm cả các từ trong TÊN PHƯỜNG đang chọn (VD "tân", "an") khỏi việc so
+            // khớp — vì phường này LUÔN xuất hiện trong mọi kết quả tìm kiếm (do đã giới hạn vùng tìm), nên
+            // nếu không loại trừ, địa chỉ dù sai hoàn toàn vẫn dễ đạt điểm "tin cậy" giả chỉ nhờ trùng tên
+            // phường — đây chính là nguyên nhân khiến trước đây định vị nhầm sang địa điểm không liên quan
+            // (VD: "Trung tâm truyền hình") mà vẫn không bị cảnh báo.
+            const tuLoaiTru = new Set([...TU_LOAI_BO_KHI_SO_KHOP, ...boDauTiengViet(khuVucHienTai).split(/\s+/)]);
+            const chuanHoa = s => [...new Set(boDauTiengViet(s).replace(/[,.]/g, ' ').split(/\s+/).filter(t => t.length > 1 && !tuLoaiTru.has(t)))];
+            const tuGoc = chuanHoa(diaChiGoc);
+            const tuKetQua = new Set(chuanHoa(tenKetQua));
+            if (tuGoc.length === 0) return 1;
+            const soKhop = tuGoc.filter(t => tuKetQua.has(t)).length;
+            let diem = soKhop / tuGoc.length;
+            // Số nhà/số lô/số căn hộ (KDC...) là phần QUAN TRỌNG NHẤT để phân biệt đúng nhà — nếu địa chỉ gốc
+            // có số mà KHÔNG SỐ NÀO khớp với kết quả, gần như chắc chắn định vị sai, phải hạ điểm mạnh.
+            const soTrongGoc = tuGoc.filter(t => /\d/.test(t));
+            if (soTrongGoc.length > 0 && !soTrongGoc.some(t => tuKetQua.has(t))) {
+                diem = Math.min(diem, 0.15);
+            }
+            return diem;
+        }
+
         function khoangCachKm(lat1, lon1, lat2, lon2) {
             const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -939,10 +971,13 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        async function geocodeDiaChi(diaChiTho) {
+        async function geocodeDiaChi(diaChiTho, banKinhDo) {
             const khu = DANH_MUC_HANH_CHINH[khuVucHienTai] || {};
             const c = khu.center || DEFAULT_CENTER;
-            const d = 0.06;
+            // Bán kính tìm kiếm CÓ THỂ CHỈNH theo mục đích: địa chỉ hộ dân cần bán kính HẸP (mặc định 0.02
+            // độ ~2.2km) để giảm rủi ro khớp nhầm sang 1 địa danh/cơ quan nổi tiếng khác trong cùng phường;
+            // định vị trụ sở UBND/Công an có thể dùng bán kính rộng hơn khi gọi hàm (truyền banKinhDo=0.06).
+            const d = banKinhDo || 0.02;
             const viewbox = `${c[1]-d},${c[0]+d},${c[1]+d},${c[0]-d}`;
             // QUAN TRỌNG: bounded=1 (trước đây để 0) — bắt buộc kết quả phải nằm TRONG phạm vi quanh phường
             // đang chọn. Trước đây để 0 chỉ là "gợi ý ưu tiên", khiến tên đường phổ biến (VD "Nguyễn Tri
@@ -951,13 +986,20 @@
             const res = await fetch(url, { headers: { 'Accept-Language': 'vi' } });
             const data = await res.json();
             if (!data || data.length === 0) return null;
+            // CẢNH BÁO ĐỘ TIN CẬY: nếu kết quả khớp là 1 CƠ QUAN/ĐỊA DANH nổi tiếng (đài truyền hình, trường
+            // học, bệnh viện, cơ quan nhà nước...) thay vì đúng địa chỉ nhà/đường — rất có thể ứng dụng bản
+            // đồ mở không tìm thấy đúng địa chỉ chi tiết (VD nhà trong khu dân cư/hẻm nhỏ) nên trả về "kết quả
+            // gần đúng nhất" là 1 địa danh lớn ở gần đó, dẫn đến định vị SAI HOÀN TOÀN dù vẫn nằm trong phường.
+            const nhomDiaDanhNgo = ['townhall', 'public_building', 'government', 'college', 'university', 'school',
+                'hospital', 'clinic', 'police', 'fire_station', 'stadium', 'university', 'broadcast', 'tv', 'radio'];
+            const coTheLaDiaDanh = nhomDiaDanhNgo.some(k => (data[0].type || '').includes(k) || (data[0].class || '').includes(k));
             const lat = parseFloat(data[0].lat), lon = parseFloat(data[0].lon);
             // Lớp bảo vệ thứ 2 (phòng khi bounded=1 vẫn lọt kết quả xa do lỗi dữ liệu bản đồ mở): tính khoảng
             // cách gần đúng tới tâm phường, từ chối nếu quá xa bất thường (>15km) thay vì chấm nhầm tỉnh khác.
             const kmMoiDo = 111;
             const khoangCachKm = Math.sqrt(Math.pow((lat - c[0]) * kmMoiDo, 2) + Math.pow((lon - c[1]) * kmMoiDo * Math.cos(c[0] * Math.PI / 180), 2));
             if (khoangCachKm > 15) { console.warn("Từ chối kết quả định vị vì cách quá xa tâm phường (" + khoangCachKm.toFixed(1) + " km):", data[0].display_name); return null; }
-            return { lat, lon, ten: data[0].display_name };
+            return { lat, lon, ten: data[0].display_name, coTheLaDiaDanh };
         }
 
         // ================== TIỆN ÍCH TRÊN BẢN ĐỒ GIS (Y tế, Giáo dục, Công an, Chợ, Cây xăng...) ==================
@@ -1204,6 +1246,7 @@
                             width: 180, height: 180
                         });
                         document.getElementById('qrcodeCanvas').parentElement.classList.toggle('hidden', !dangDangKyLan1);
+                        document.getElementById('goiYMaKhoiPhuc').classList.toggle('hidden', dangDangKyLan1);
                         document.getElementById('otpScreen').classList.remove('hidden');
                         return;
                     }
@@ -1278,10 +1321,35 @@
             }
         }
 
+        // Kiểm tra độ mạnh mật khẩu: TỐI THIỂU 8 ký tự, có ít nhất 1 chữ HOA, 1 chữ thường, 1 SỐ, và 1 KÝ TỰ
+        // ĐẶC BIỆT. Áp dụng bắt buộc khi đăng ký tài khoản mới.
+        function capNhatDoMạnhMatKhauHienThi() {
+            const mk = document.getElementById('matKhauInput').value;
+            const el = document.getElementById('doMạnhMatKhauHienThi');
+            if (!mk) { el.className = "text-[10px] text-gray-500 mt-1"; el.innerText = "Cần đủ: ≥8 ký tự, 1 chữ HOA, 1 chữ thường, 1 số, 1 ký tự đặc biệt (@ # $ % ! ...)"; return; }
+            const loi = kiemTraDoMạnhMatKhau(mk);
+            if (loi.length === 0) { el.className = "text-[10px] text-emerald-400 mt-1 font-semibold"; el.innerText = "✅ Mật khẩu đủ mạnh"; }
+            else { el.className = "text-[10px] text-amber-400 mt-1"; el.innerText = "⚠️ Còn thiếu: " + loi.join(" · "); }
+        }
+
+        function kiemTraDoMạnhMatKhau(mk) {
+            const loi = [];
+            if (mk.length < 8) loi.push("Tối thiểu 8 ký tự");
+            if (!/[A-Z]/.test(mk)) loi.push("Ít nhất 1 chữ IN HOA (A-Z)");
+            if (!/[a-z]/.test(mk)) loi.push("Ít nhất 1 chữ thường (a-z)");
+            if (!/[0-9]/.test(mk)) loi.push("Ít nhất 1 chữ số (0-9)");
+            if (!/[^A-Za-z0-9]/.test(mk)) loi.push("Ít nhất 1 ký tự đặc biệt (VD: @ # $ % ! .)");
+            return loi;
+        }
+
         async function dangKyTaiKhoanMoi() {
             const email = document.getElementById('gmailInput').value.trim();
             const matKhau = document.getElementById('matKhauInput').value;
-            if (!email || !matKhau) return alert("Vui lòng nhập đủ Email và Mật khẩu (tối thiểu 6 ký tự).");
+            if (!email || !matKhau) return alert("Vui lòng nhập đủ Email và Mật khẩu.");
+            const loiMatKhau = kiemTraDoMạnhMatKhau(matKhau);
+            if (loiMatKhau.length > 0) {
+                return alert("❌ Mật khẩu CHƯA đủ mạnh, còn thiếu:\n\n• " + loiMatKhau.join("\n• ") + "\n\nVí dụ mật khẩu hợp lệ: Cskv@2026 hoặc Tan#An079");
+            }
             if (!confirm("Đăng ký tài khoản mới với email " + email + "?\n\nLưu ý: tài khoản mới sẽ CHƯA có quyền xem dữ liệu nào cho đến khi Admin cấp quyền qua mục Phân quyền (RBAC).")) return;
             try {
                 await authFirebase.createUserWithEmailAndPassword(email, matKhau);
@@ -1546,6 +1614,25 @@
             return { role: 'chua_cap_quyen', khuVucPhuTrach: null, phuongPhuTrach: null };
         }
 
+        // ================== MÃ KHÔI PHỤC 2FA (dùng khi mất điện thoại/mất app Authenticator) ==================
+        async function bam(text) {
+            const data = new TextEncoder().encode(text);
+            const hash = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        function taoDanhSachMaKhoiPhuc() {
+            const bang = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // Bỏ ký tự dễ nhầm: 0/O, 1/I/L
+            const ds = [];
+            for (let i = 0; i < 8; i++) {
+                const mang = new Uint8Array(8);
+                crypto.getRandomValues(mang);
+                let ma = '';
+                for (let j = 0; j < 8; j++) ma += bang[mang[j] % bang.length];
+                ds.push(ma.slice(0, 4) + '-' + ma.slice(4));
+            }
+            return ds;
+        }
+
         async function xacThucOtp() {
             const maNhap = document.getElementById('otpCodeInput').value.trim();
             const btn = document.getElementById('btnXacThucOtp');
@@ -1554,23 +1641,51 @@
             // Firebase mode: xác thực theo khóa RIÊNG của từng tài khoản. Local mode (không Firebase): vẫn
             // dùng ADMIN_TOTP_SECRET cũ làm phương án dự phòng đơn giản.
             const biMatDeXacThuc = (CHE_DO_FIREBASE && taiKhoanChoXacThuc2FA) ? taiKhoanChoXacThuc2FA.bimatTamThoi : ADMIN_TOTP_SECRET;
-            const hopLe = await xacMinhMaTOTP(biMatDeXacThuc, maNhap);
+
+            // Nhận dạng mã KHÔI PHỤC (dạng XXXX-XXXX, có dấu gạch ngang) — khác mã TOTP thường (6 số).
+            const laMaKhoiPhuc = /^[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(maNhap);
+            let hopLe = false;
+            let dungMaKhoiPhuc = false;
+
+            if (laMaKhoiPhuc && CHE_DO_FIREBASE && taiKhoanChoXacThuc2FA && !taiKhoanChoXacThuc2FA.laDangKyLan1) {
+                try {
+                    const docRef = dbFirestore.collection('permissions').doc(taiKhoanChoXacThuc2FA.user.email.toLowerCase());
+                    const doc = await docRef.get();
+                    const dsMaHash = (doc.exists && doc.data().maKhoiPhucHash) || [];
+                    const hashNhap = await bam(maNhap.toUpperCase());
+                    if (dsMaHash.includes(hashNhap)) {
+                        hopLe = true; dungMaKhoiPhuc = true;
+                        // Mã khôi phục CHỈ DÙNG ĐƯỢC 1 LẦN — xóa khỏi danh sách ngay sau khi dùng
+                        await docRef.update({ maKhoiPhucHash: dsMaHash.filter(h => h !== hashNhap) });
+                    }
+                } catch (err) { console.error("Lỗi kiểm tra mã khôi phục:", err); }
+            } else {
+                hopLe = await xacMinhMaTOTP(biMatDeXacThuc, maNhap);
+            }
+
             if (btn) { btn.disabled = false; btn.innerText = 'Xác Thực'; }
-            if (!hopLe) { alert("❌ Mã xác thực không đúng hoặc đã hết hạn. Vui lòng mở lại ứng dụng Authenticator và thử lại."); return; }
+            if (!hopLe) { alert("❌ Mã không đúng hoặc đã hết hạn/đã dùng. Vui lòng kiểm tra lại."); return; }
             document.getElementById('otpScreen').classList.add('hidden');
 
             if (CHE_DO_FIREBASE && taiKhoanChoXacThuc2FA) {
                 const { user, quyen, khoa2FA, bimatTamThoi, laDangKyLan1 } = taiKhoanChoXacThuc2FA;
                 if (laDangKyLan1) {
-                    // Chỉ LƯU khóa bí mật lên máy chủ SAU KHI đã xác thực đúng mã lần đầu — tránh lưu nhầm 1
-                    // khóa mà tài khoản chưa từng thật sự quét/dùng thành công.
+                    // Sinh kèm 8 MÃ KHÔI PHỤC dùng 1 lần — chỉ hiện ĐÚNG 1 LẦN DUY NHẤT lúc thiết lập, chỉ lưu
+                    // BẢN BĂM (hash) lên máy chủ (không lưu mã gốc dạng đọc được, giống cách lưu mật khẩu).
+                    const dsMaKhoiPhuc = taoDanhSachMaKhoiPhuc();
+                    const dsMaHash = await Promise.all(dsMaKhoiPhuc.map(m => bam(m)));
                     try {
                         await dbFirestore.collection('permissions').doc(user.email.toLowerCase())
-                            .set({ email: user.email.toLowerCase(), totpSecret: bimatTamThoi }, { merge: true });
+                            .set({ email: user.email.toLowerCase(), totpSecret: bimatTamThoi, maKhoiPhucHash: dsMaHash }, { merge: true });
                     } catch (err) {
                         alert("❌ Không lưu được thiết lập bảo mật 2 lớp lên máy chủ: " + (err.message || err.code) + "\nVui lòng thử lại.");
                         return;
                     }
+                    alert("✅ Đã bật bảo mật 2 lớp thành công!\n\n🔑 8 MÃ KHÔI PHỤC (dùng khi mất điện thoại/mất app Authenticator, mỗi mã chỉ dùng được 1 LẦN):\n\n" +
+                        dsMaKhoiPhuc.join('\n') +
+                        "\n\n⚠️ HÃY CHỤP MÀN HÌNH HOẶC GHI LẠI NGAY — màn hình này sẽ KHÔNG hiện lại được nữa. Cất giữ nơi an toàn, không chia sẻ cho ai.");
+                } else if (dungMaKhoiPhuc) {
+                    alert("✅ Đã đăng nhập bằng mã khôi phục. Mã này đã bị vô hiệu hóa (không dùng lại được). Khuyến nghị: vào Phân quyền nhờ Admin \"Đặt lại 2FA\" để thiết lập lại Authenticator mới sớm nhất có thể.");
                 }
                 sessionStorage.setItem(khoa2FA, '1'); // Chỉ cần xác thực 1 lần/phiên trình duyệt cho tài khoản này
                 kichHoatSauDangNhapFirebase(user, quyen);
@@ -1816,7 +1931,10 @@
             if (!CHE_DO_FIREBASE) return alert("Tính năng này chỉ khả dụng ở chế độ Máy chủ.");
             if (!confirm("Đặt lại bảo mật 2 lớp (2FA) cho " + email + "?\n\nDùng khi cán bộ này bị MẤT điện thoại/mất quyền truy cập app Authenticator cũ. Sau khi đặt lại, lần đăng nhập kế tiếp của họ sẽ hiện mã QR MỚI để thiết lập lại từ đầu.")) return;
             try {
-                await dbFirestore.collection('permissions').doc(email).update({ totpSecret: firebase.firestore.FieldValue.delete() });
+                await dbFirestore.collection('permissions').doc(email).update({
+                    totpSecret: firebase.firestore.FieldValue.delete(),
+                    maKhoiPhucHash: firebase.firestore.FieldValue.delete()
+                });
                 ghiNhatKy('Đặt lại 2FA', email);
                 alert("✅ Đã đặt lại 2FA cho " + email + ". Báo cho họ đăng nhập lại để thiết lập Authenticator mới.");
             } catch (err) {
@@ -2078,11 +2196,18 @@
 
             const diaDiem = [];
             if (khu.info.truSo) diaDiem.push({ nhan: "🏛️ " + khu.info.truSo, dc: khu.info.diaChiUBNDDeTimKiem || khu.info.truSo, khoaCache: "toaDoUBND_v3_" + khuVucHienTai, mau: "#3b82f6", chuaXacMinh: false });
-            if (khu.info.diaChiCongAnPhuong) diaDiem.push({ nhan: "🚓 Công an " + khuVucHienTai, dc: khu.info.diaChiCongAnPhuong, khoaCache: "toaDoCA_v3_" + khuVucHienTai, mau: "#dc2626", chuaXacMinh: khu.info.diaChiCongAnChuaXacMinh });
+            // Với các phường CHƯA có địa chỉ Công an xác định sẵn trong code (102/103 phường ngoài Tân An),
+            // vẫn CỨ THỬ tìm theo mẫu chung "Công an Phường {tên phường}, Cần Thơ" — nếu bản đồ mở có dữ liệu
+            // thì tự tìm ra, nếu không thì sẽ rơi vào nhánh "chấm tay" bên dưới (không còn bị bỏ sót hoàn toàn
+            // như trước đây, khi mở rộng cho phường khác).
+            const diaChiCA = khu.info.diaChiCongAnPhuong || ("Công an Phường " + khuVucHienTai.replace(/^Phường\s*/i, ''));
+            diaDiem.push({ nhan: "🚓 Công an " + khuVucHienTai, dc: diaChiCA, khoaCache: "toaDoCA_v3_" + khuVucHienTai, mau: "#dc2626", chuaXacMinh: khu.info.diaChiCongAnChuaXacMinh !== false });
 
             let coLoiMang = false;
             let laLanThuHai = false;
+            let diaDiemThatBai = []; // Theo dõi RIÊNG từng điểm không định vị được, để báo rõ (VD: chỉ thiếu Công an, không phải cả 2)
             for (const d of diaDiem) {
+                let thanhCong = false;
                 try {
                     // Ưu tiên dùng toạ độ đã định vị đúng trước đó (lưu sẵn trên trình duyệt) để khỏi phải tra
                     // cứu lại mỗi lần bấm — vừa nhanh hơn, vừa đỡ phụ thuộc mạng ngoài lúc cần dùng gấp.
@@ -2094,10 +2219,19 @@
                         // 2 lượt tra cứu liên tiếp (UBND rồi đến Công an) để không bị họ tạm chặn.
                         if (laLanThuHai) await new Promise(r => setTimeout(r, 1100));
                         laLanThuHai = true;
-                        kq = await geocodeDiaChi(d.dc + ", Cần Thơ, Việt Nam");
+                        kq = await geocodeDiaChi(d.dc + ", Cần Thơ, Việt Nam", 0.06);
                         if (kq) localStorage.setItem(d.khoaCache, JSON.stringify({ lat: kq.lat, lon: kq.lon, ten: kq.ten }));
                     }
-                    if (!kq) continue;
+                    if (!kq) { diaDiemThatBai.push(d); continue; }
+                    // Áp dụng cùng lớp kiểm tra độ tin cậy như định vị hộ dân — tránh lặp lại kiểu lỗi
+                    // định vị nhầm sang địa điểm không liên quan (VD: "Trung tâm truyền hình").
+                    const doTinCayTrongDiem = tinhDoTinCayDiaChi(d.dc, kq.ten);
+                    if (doTinCayTrongDiem < 0.25) {
+                        console.warn("Bỏ qua kết quả định vị nghi sai (độ tin cậy thấp):", d.nhan, kq.ten);
+                        localStorage.removeItem(d.khoaCache);
+                        diaDiemThatBai.push(d);
+                        continue;
+                    }
                     // Lớp kiểm tra an toàn bổ sung: dù đã giới hạn vùng tìm kiếm (bounded=1), vẫn kiểm tra lại
                     // khoảng cách thực tế — nếu kết quả cách xa tâm phường quá 15km (gần như chắc chắn sai,
                     // như vụ định vị nhầm sang tỉnh khác trước đây), coi như KHÔNG hợp lệ, không cache lại.
@@ -2115,7 +2249,9 @@
                         `<br><button onclick="dinhViLaiThuCong('${d.khoaCache}')" style="font-size:10px;color:#60a5fa;text-decoration:underline;margin-top:4px;">Định vị lại / chỉnh tay điểm này</button>`
                     );
                     cacMarkerTrongDiem.push(marker);
+                    thanhCong = true;
                 } catch (e) { coLoiMang = true; console.warn("Không định vị được:", d.nhan, e.message); }
+                if (!thanhCong && !diaDiemThatBai.includes(d)) diaDiemThatBai.push(d);
             }
             if (cacMarkerTrongDiem.length === 0) {
                 const lyDo = coLoiMang
@@ -2125,6 +2261,16 @@
                     dinhViLanLuotThuCong(diaDiem, 0);
                 }
                 return;
+            }
+            // QUAN TRỌNG: báo RÕ nếu chỉ định vị được 1 TRONG 2 điểm (VD: có UBND nhưng thiếu Công an) — trước
+            // đây trường hợp này bị BỎ QUA ÂM THẦM, khiến cán bộ tưởng nhầm là "chỉ có UBND" mà không biết vì
+            // sao thiếu Công an hay cách khắc phục.
+            if (diaDiemThatBai.length > 0) {
+                const tenThieu = diaDiemThatBai.map(d => d.nhan.replace(/^\S+\s/, '')).join(', ');
+                if (confirm("⚠️ Đã định vị được " + cacMarkerTrongDiem.length + "/" + diaDiem.length + " điểm.\n\nCHƯA định vị được: " + tenThieu + " (bản đồ mở không có/không chắc chắn dữ liệu này).\n\nBấm OK để TỰ CHẤM TAY (các) điểm còn thiếu ngay bây giờ.")) {
+                    dinhViLanLuotThuCong(diaDiemThatBai, 0);
+                    return;
+                }
             }
             const nhom = L.featureGroup(cacMarkerTrongDiem);
             mainMiniMapInstance.fitBounds(nhom.getBounds().pad(0.3));
@@ -2860,7 +3006,7 @@
                     <td class="p-2 text-gray-300">${escHtml(ho.diaChi)}</td>
                     <td class="p-2"><span class="px-2 py-0.5 rounded text-[10px] border ${styleNV}">${dien}</span></td>
                     <td class="p-2 text-center"><span class="bg-blue-900/60 text-blue-300 px-2 rounded-full font-bold">${ho.thanhVien ? ho.thanhVien.length : 0}</span></td>
-                    <td class="p-2 text-center"><button onclick="xemChiTiet(${originalIndex})" class="bg-blue-600 hover:bg-blue-700 px-2.5 py-1 rounded text-[11px] shadow">Chi tiết</button></td>
+                    <td class="p-2 text-center"><button onclick="xemChiTiet(${originalIndex})" class="bg-blue-600 hover:bg-blue-700 px-2.5 py-1 rounded text-[11px] shadow">Chi tiết</button> <button onclick="chiDuongNhanhDenHo(${originalIndex})" title="Chỉ đường nhanh đến hộ này (cần đã có toạ độ xác nhận)" class="bg-teal-700 hover:bg-teal-600 px-2 py-1 rounded text-[11px] shadow">🧭</button></td>
                 `;
                 tbody.appendChild(row);
             });
@@ -3030,10 +3176,29 @@
             try {
                 const kq = await geocodeDiaChi(diaChi + ", " + khuVucHienTai + ", Cần Thơ, Việt Nam");
                 if (!kq) { alert("Không tìm thấy toạ độ khớp với địa chỉ này. Có thể địa chỉ chưa đủ chi tiết (số nhà, tên đường), hoặc bấm trực tiếp lên bản đồ để chấm tay."); return; }
+                const doTinCay = tinhDoTinCayDiaChi(diaChi, kq.ten);
+                if (doTinCay < 0.34) {
+                    // ĐỘ TIN CẬY THẤP: tên địa điểm tìm được gần như không liên quan gì đến địa chỉ đã nhập
+                    // (VD: nhầm sang tên 1 cơ quan/trụ sở khác trong vùng) — KHÔNG tự động lưu, bắt buộc
+                    // cán bộ tự xác nhận hoặc chấm tay, tránh lặp lại lỗi định vị nhầm địa điểm không liên quan.
+                    const dongY = confirm(
+                        "⚠️ CẢNH BÁO: Kết quả định vị có vẻ KHÔNG khớp với địa chỉ đã nhập — dễ bị SAI.\n\n" +
+                        "📍 Địa chỉ anh/chị đã nhập:\n" + diaChi + "\n\n" +
+                        "🔍 Kết quả bản đồ tìm được:\n" + kq.ten + "\n\n" +
+                        "Đây có thể là địa chỉ dạng khu dân cư (KDC) mà bản đồ mở chưa hiểu đúng, dễ nhầm sang 1 địa điểm/trụ sở khác không liên quan.\n\n" +
+                        "Bấm OK NẾU anh/chị đã tự kiểm tra và chắc chắn đúng. Bấm Cancel để tự CHẤM TAY trên bản đồ (khuyến nghị với địa chỉ dạng KDC)."
+                    );
+                    if (!dongY) {
+                        alert("Vui lòng bấm trực tiếp lên bản đồ (ở khung bên dưới) đúng vị trí thật của hộ, bản đồ sẽ tự ghi nhận toạ độ.");
+                        return;
+                    }
+                }
                 document.getElementById('editGps').value = `${kq.lat.toFixed(6)}, ${kq.lon.toFixed(6)}`;
                 gpsHoHienTaiLaThat = true;
                 capNhatBanDoLeaflet();
-                alert("✅ Đã định vị theo: " + kq.ten + "\nKiểm tra lại điểm chấm trên bản đồ, nếu chưa đúng có thể bấm trực tiếp lên bản đồ để chỉnh tay, rồi bấm Lưu Hồ Sơ.");
+                if (doTinCay >= 0.34) {
+                    alert("✅ Đã định vị theo: " + kq.ten + "\nKiểm tra lại điểm chấm trên bản đồ, nếu chưa đúng có thể bấm trực tiếp lên bản đồ để chỉnh tay, rồi bấm Lưu Hồ Sơ.");
+                }
             } catch (err) {
                 alert("Không định vị được lúc này (cần kết nối internet). Vui lòng thử lại.");
             } finally {
@@ -3043,12 +3208,10 @@
 
         // Dẫn đường từ vị trí hiện tại của cán bộ (nếu cho phép định vị) đến đúng địa chỉ hộ, qua Google Maps
         // (miễn phí, không cần API key trả phí — chỉ mở liên kết chỉ đường có sẵn của Google Maps).
-        function chiDuongDenHo() {
-            if (!gpsHoHienTaiLaThat) {
-                return alert("Hộ này CHƯA có toạ độ chính xác (đang chỉ hiển thị tạm ở tâm phường). Vui lòng bấm '📍 Xác Định Toạ Độ Chính Xác' trước để tránh dẫn đường sai.");
-            }
-            const gpsVal = document.getElementById('editGps').value.trim();
-            const parts = gpsVal.split(',').map(s => parseFloat(s.trim()));
+        // Hàm dùng chung: mở Google Maps chỉ đường từ vị trí hiện tại của cán bộ đến đúng toạ độ đích
+        // (dùng cho cả nút trong Chi tiết hộ và nút "🧭" nhanh ngay trên danh sách).
+        function moChiDuongGoogleMaps(gpsVal) {
+            const parts = (gpsVal || '').split(',').map(s => parseFloat(s.trim()));
             if (parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])) {
                 return alert("Toạ độ không hợp lệ. Vui lòng xác định lại toạ độ.");
             }
@@ -3067,6 +3230,23 @@
             } else {
                 moDuong(null);
             }
+        }
+
+        // Dẫn đường NHANH ngay từ danh sách hộ — không cần mở "Chi tiết" trước (đúng nhu cầu Chỉ huy: từ vị
+        // trí hiện tại, tìm và đến đúng nhà mà CSKV đã chấm toạ độ chính xác trước đó).
+        function chiDuongNhanhDenHo(originalIndex) {
+            const ho = danhSachHoGiaDinh[originalIndex];
+            if (!ho.gps) {
+                return alert("Hộ \"" + ho.chuHo + "\" CHƯA có toạ độ chính xác được xác nhận.\n\nCSKV cần vào 'Chi tiết' hộ này → bấm '📍 Xác Định Toạ Độ Chính Xác' hoặc chấm tay trên bản đồ → Lưu Hồ Sơ — thì Chỉ huy mới dẫn đường đến đúng nhà được.");
+            }
+            moChiDuongGoogleMaps(ho.gps);
+        }
+
+        function chiDuongDenHo() {
+            if (!gpsHoHienTaiLaThat) {
+                return alert("Hộ này CHƯA có toạ độ chính xác (đang chỉ hiển thị tạm ở tâm phường). Vui lòng bấm '📍 Xác Định Toạ Độ Chính Xác' trước để tránh dẫn đường sai.");
+            }
+            moChiDuongGoogleMaps(document.getElementById('editGps').value.trim());
         }
 
         // Đánh dấu hộ này vừa được kiểm tra định kỳ (lưu ngay, không cần bấm "Lưu Hồ Sơ" riêng)
@@ -3263,30 +3443,66 @@
         }
         function dongModalHuongDanExcel() { document.getElementById('huongDanExcelModal').classList.add('hidden'); }
 
-        function taiMauExcelTrong() {
-            // LƯU Ý BẢO MẬT: mẫu này KHÔNG có cột CCCD/Định danh. Số CCCD là dữ liệu cá nhân nhạy cảm — nên
-            // nhập tay riêng từng người ngay trong phần mềm (mục "Chi tiết" của từng hộ) thay vì đưa vào file
-            // Excel, để tránh số CCCD của nhiều công dân bị phát tán qua email/USB/máy tính dùng chung.
-            const rows = [
-                ["Số HSCT", "Họ Và Tên", "Ngày Sinh", "Quan Hệ", "Địa Chỉ", "Phường/Xã", "Chủ Hộ", "Diện", "Giới Tính", "Dân Tộc", "Tôn Giáo", "Quê Quán", "Nghề Nghiệp", "SĐT", "Quốc Tịch"],
-                ["HS-0001", "Nguyễn Văn A", "01/01/1975", "Chủ hộ", "Khu Vực 7, số 12 đường ABC", "Phường Tân An", "Nguyễn Văn A", "Thường trú", "Nam", "Kinh", "Không", "Cần Thơ", "Buôn bán", "0901234567", "Việt Nam"],
-                ["HS-0001", "Trần Thị B", "15/05/1978", "Vợ", "Khu Vực 7, số 12 đường ABC", "Phường Tân An", "Nguyễn Văn A", "Thường trú", "Nữ", "Kinh", "Không", "Cần Thơ", "Nội trợ", "", "Việt Nam"]
-            ];
+        // Hàm dùng chung để dựng file mẫu Excel — 3 diện cư trú có thêm cột RIÊNG phù hợp nghiệp vụ từng loại,
+        // nhưng LƯU Ý BẢO MẬT giống nhau: KHÔNG có cột CCCD/Định danh trong cả 3 mẫu — nên nhập tay riêng
+        // từng người ngay trong phần mềm (mục "Chi tiết" của từng hộ) sau khi đã nhập danh sách lên.
+        function dungFileMauExcel(tenDien, cotThem, dongViDu, ghiChuThem, tenFile) {
+            const cotChung = ["Số HSCT", "Họ Và Tên", "Ngày Sinh", "Quan Hệ", "Giới Tính", "Địa Chỉ", "Phường/Xã", "Chủ Hộ", "Diện"];
+            const header = [...cotChung, ...cotThem, "Dân Tộc", "Tôn Giáo", "Quê Quán", "Nghề Nghiệp", "SĐT", "Quốc Tịch"];
+            const rows = [header, ...dongViDu];
             const ws = XLSX.utils.aoa_to_sheet(rows);
-            ws['!cols'] = rows[0].map(() => ({ wch: 18 }));
+            ws['!cols'] = header.map(() => ({ wch: 18 }));
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Du_Lieu");
             const wsHD = XLSX.utils.aoa_to_sheet([
-                ["HƯỚNG DẪN NHANH"],
+                ["HƯỚNG DẪN NHANH — MẪU " + tenDien.toUpperCase()],
                 ["1. Không xóa dòng tiêu đề (dòng 1)."],
                 ["2. Mỗi thành viên hộ là 1 dòng, các dòng cùng hộ ghi trùng cột 'Chủ Hộ' hoặc 'Số HSCT'."],
-                ["3. Cột 'Địa Chỉ' nên ghi rõ Khu Vực (VD: Khu Vực 7, ...). Nếu không, đặt TÊN FILE theo mẫu: Thuong_tru_Khu_vuc_7_Tan_An.xlsx"],
-                ["4. Cột 'Diện' ghi 1 trong 4 giá trị: Thường trú / Tạm trú / Lưu trú / NOHN."],
-                ["5. KHUYẾN NGHỊ BẢO MẬT: KHÔNG đưa số CCCD/Định danh vào file Excel này. Sau khi nhập xong, hãy bổ sung số CCCD cho từng người trực tiếp trong phần mềm (mục 'Chi tiết' của từng hộ)."],
-                ["6. Xem thêm chi tiết ở nút '❓ Hướng Dẫn Mẫu Excel' trong phần mềm."]
+                ["3. Cột 'Địa Chỉ' nên ghi rõ Khu Vực (VD: Khu Vực 7, ...). Nếu không, đặt TÊN FILE theo mẫu: " + tenDien.replace(/\s/g, '_') + "_Khu_vuc_7_Tan_An.xlsx"],
+                ["4. Cột 'Diện' luôn ghi đúng: " + tenDien + "."],
+                ...ghiChuThem,
+                ["KHUYẾN NGHỊ BẢO MẬT: KHÔNG đưa số CCCD/Định danh vào file Excel này. Bổ sung CCCD sau, trực tiếp trong phần mềm (mục 'Chi tiết' của từng hộ)."],
+                ["Xem thêm chi tiết ở nút '❓ Hướng Dẫn Mẫu Excel' trong phần mềm."]
             ]);
             XLSX.utils.book_append_sheet(wb, wsHD, "Huong_Dan");
-            XLSX.writeFile(wb, "Mau_Nhap_Du_Lieu_Cu_Tru.xlsx");
+            XLSX.writeFile(wb, tenFile);
+        }
+
+        function taiMauExcelThuongTru() {
+            dungFileMauExcel("Thường trú",
+                [],
+                [
+                    ["HS-0001", "Nguyễn Văn A", "01/01/1975", "Chủ hộ", "Nam", "Khu Vực 7, số 12 đường ABC", "Phường Tân An", "Nguyễn Văn A", "Thường trú", "Kinh", "Không", "Cần Thơ", "Buôn bán", "0901234567", "Việt Nam"],
+                    ["HS-0001", "Trần Thị B", "15/05/1978", "Vợ", "Nữ", "Khu Vực 7, số 12 đường ABC", "Phường Tân An", "Nguyễn Văn A", "Thường trú", "Kinh", "Không", "Cần Thơ", "Nội trợ", "", "Việt Nam"]
+                ],
+                [["5. Đây là diện cư trú ỔN ĐỊNH, LÂU DÀI — không cần cột ngày hết hạn."]],
+                "Mau_Thuong_Tru.xlsx");
+        }
+
+        function taiMauExcelTamTru() {
+            dungFileMauExcel("Tạm trú",
+                ["Địa Chỉ Thường Trú Gốc", "Ngày Bắt Đầu Tạm Trú", "Ngày Hết Hạn Tạm Trú"],
+                [
+                    ["HS-0002", "Lê Văn C", "20/03/1990", "Chủ hộ", "Nam", "Khu Vực 3, trọ số 5 hẻm 20", "Phường Tân An", "Lê Văn C", "Tạm trú", "Ấp 2, xã Hòa An, huyện Phụng Hiệp, Hậu Giang", "01/01/2026", "01/01/2027", "Kinh", "Không", "Hậu Giang", "Công nhân", "0912345678", "Việt Nam"]
+                ],
+                [
+                    ["5. 'Địa Chỉ Thường Trú Gốc' = nơi đăng ký hộ khẩu chính thức (khác nơi đang tạm trú)."],
+                    ["6. 'Ngày Hết Hạn Tạm Trú' RẤT QUAN TRỌNG — hệ thống tự nhắc trước khi hết hạn qua nút '🏠 Nhắc Hạn Tạm Trú'. Ghi theo dd/mm/yyyy."]
+                ],
+                "Mau_Tam_Tru.xlsx");
+        }
+
+        function taiMauExcelLuuTru() {
+            dungFileMauExcel("Lưu trú",
+                ["Lý Do Lưu Trú", "Dự Kiến Đến Ngày", "Ngày Hết Hạn Lưu Trú"],
+                [
+                    ["HS-0003", "Phạm Thị D", "10/09/1995", "Khách", "Nữ", "Khu Vực 5, nhà số 8 đường XYZ", "Phường Tân An", "Nguyễn Văn E (chủ nhà)", "Lưu trú", "Thăm người thân", "05/03/2026", "12/03/2026", "Kinh", "Không", "An Giang", "Buôn bán", "0987654321", "Việt Nam"]
+                ],
+                [
+                    ["5. Diện này dành cho khách LƯU TRÚ NGẮN NGÀY (khác Tạm trú dài hạn) — cột 'Chủ Hộ' ghi tên chủ nhà/người quản lý nơi đến lưu trú, không phải người lưu trú."],
+                    ["6. 'Ngày Hết Hạn Lưu Trú' để hệ thống tự nhắc qua nút '🏠 Nhắc Hạn Tạm Trú' (dùng chung cơ chế nhắc hạn với Tạm trú)."]
+                ],
+                "Mau_Luu_Tru_NOHN.xlsx");
         }
 
         async function xoaDuLieuExcel() {
