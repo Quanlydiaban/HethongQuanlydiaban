@@ -405,7 +405,10 @@
 
                     <!-- Bản đồ GIS chi tiết hộ -->
                     <div class="flex flex-col space-y-1.5 bg-gray-900 p-3 rounded-lg border border-gray-700 no-print">
-                        <label class="text-gray-400 block font-semibold text-blue-300">📍 Tọa Độ GPS Hộ Gia Đình:</label>
+                        <div class="flex justify-between items-center">
+                            <label class="text-gray-400 block font-semibold text-blue-300">📍 Tọa Độ GPS Hộ Gia Đình:</label>
+                            <span id="trangThaiGpsHo" class="text-[10px] font-bold px-2 py-0.5 rounded"></span>
+                        </div>
                         <div id="mapContainer"></div>
                         <input type="text" id="editGps" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-gray-400 w-full font-mono text-[10px]" onchange="capNhatBanDoLeaflet()">
                         <div class="flex gap-1.5">
@@ -2253,46 +2256,47 @@
         // CHỈ dùng đúng toạ độ do CHÍNH cán bộ tự chấm tay xác nhận trước đó (lưu trên trình duyệt) — đáng tin
         // cậy 100% vì là do người thật xác nhận, không suy đoán. Công an phường được ưu tiên vì có giá trị
         // liên hệ công tác thực tế nhất.
-        function hienThiTrongDiemHanhChinh() {
+        async function hienThiTrongDiemHanhChinh() {
+            if (!CHE_DO_FIREBASE) return alert("Tính năng này cần kết nối máy chủ để dùng chung được nhiều thiết bị.");
             const khu = DANH_MUC_HANH_CHINH[khuVucHienTai];
             if (!khu || !khu.info) return alert("Chưa có thông tin cho " + khuVucHienTai + ".");
             cacMarkerTrongDiem.forEach(m => mainMiniMapInstance.removeLayer(m));
             cacMarkerTrongDiem = [];
 
-            // Chỉ còn định vị Công An Phường — bỏ UBND khỏi tính năng này vì không cần thiết cho công tác
-            // hàng ngày của CSKV; tiện cho việc tra cứu nhanh khi cần liên hệ công tác với Công an phường.
-            const diaDiem = [
-                { nhan: "🚓 Công an " + khuVucHienTai, khoaCache: "toaDoCA_v5_" + khuVucHienTai, mau: "#dc2626" }
-            ];
-
-            const daCoViTri = [];
-            const chuaCoViTri = [];
-            diaDiem.forEach(d => {
-                const daLuu = localStorage.getItem(d.khoaCache);
-                if (daLuu) {
-                    const kq = JSON.parse(daLuu);
-                    const marker = L.marker([kq.lat, kq.lon], {
-                        icon: L.divIcon({ className: '', html: `<div style="background:${d.mau};width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 0 6px rgba(0,0,0,0.6);"></div>` })
-                    }).addTo(mainMiniMapInstance).bindPopup(
-                        `<b>${d.nhan}</b><br><span style="color:#6ee7b7;font-size:10px;">✅ Vị trí do cán bộ tự xác nhận</span>` +
-                        `<br><button onclick="dinhViLaiThuCong('${d.khoaCache}')" style="font-size:10px;color:#60a5fa;text-decoration:underline;margin-top:4px;">Chấm lại vị trí này</button>`
-                    );
-                    cacMarkerTrongDiem.push(marker);
-                    daCoViTri.push(d);
-                } else {
-                    chuaCoViTri.push(d);
-                }
-            });
-
-            if (daCoViTri.length > 0) {
-                const nhom = L.featureGroup(cacMarkerTrongDiem);
-                mainMiniMapInstance.fitBounds(nhom.getBounds().pad(0.3));
+            // QUAN TRỌNG: từ giờ lưu vị trí Công an phường lên MÁY CHỦ (Firestore), KHÔNG còn chỉ lưu trên
+            // trình duyệt (localStorage) như trước — trước đây mỗi máy/mỗi trình duyệt phải tự chấm lại từ đầu,
+            // người khác không thấy được. Giờ 1 người chấm xong, TẤT CẢ mọi người (đúng quyền xem phường đó)
+            // đều thấy ngay, đúng nhu cầu "tiện tra cứu khi cần liên hệ công tác".
+            let kq = null;
+            try {
+                const doc = await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).get();
+                if (doc.exists && doc.data().toaDoCA) kq = doc.data().toaDoCA;
+            } catch (err) {
+                console.warn("Không tải được vị trí Công an phường từ máy chủ:", err.message);
             }
-            if (chuaCoViTri.length > 0) {
-                const tenThieu = chuaCoViTri.map(d => d.nhan).join(', ');
-                if (confirm((daCoViTri.length > 0 ? "Đã hiện " + daCoViTri.length + " vị trí đã lưu.\n\n" : "") +
-                    "CHƯA có toạ độ cho: " + tenThieu + ".\n\nBấm OK để TỰ CHẤM TAY ngay trên bản đồ (chỉ cần làm 1 lần, hệ thống nhớ mãi cho các lần sau).")) {
-                    dinhViLanLuotThuCong(chuaCoViTri, 0);
+            // Tự động ĐỒNG BỘ LÊN nếu máy này còn lưu vị trí cũ kiểu cũ (localStorage) mà máy chủ chưa có —
+            // tránh mất công chấm lại từ đầu chỉ vì đổi cách lưu trữ.
+            if (!kq) {
+                const kieuCu = localStorage.getItem("toaDoCA_v5_" + khuVucHienTai);
+                if (kieuCu) {
+                    kq = JSON.parse(kieuCu);
+                    try { await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).set({ phuong: khuVucHienTai, toaDoCA: kq }, { merge: true }); }
+                    catch (err) { console.warn("Không đồng bộ được vị trí cũ lên máy chủ:", err.message); }
+                }
+            }
+
+            if (kq) {
+                const marker = L.marker([kq.lat, kq.lon], {
+                    icon: L.divIcon({ className: '', html: `<div style="background:#dc2626;width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 0 6px rgba(0,0,0,0.6);"></div>` })
+                }).addTo(mainMiniMapInstance).bindPopup(
+                    `<b>🚓 Công an ${khuVucHienTai}</b><br><span style="color:#6ee7b7;font-size:10px;">✅ Vị trí do cán bộ xác nhận — dùng chung mọi thiết bị</span>` +
+                    `<br><button onclick="dinhViLaiThuCong()" style="font-size:10px;color:#60a5fa;text-decoration:underline;margin-top:4px;">Chấm lại vị trí này</button>`
+                );
+                cacMarkerTrongDiem.push(marker);
+                mainMiniMapInstance.setView([kq.lat, kq.lon], 17);
+            } else {
+                if (confirm("CHƯA có toạ độ Công an " + khuVucHienTai + " trên máy chủ.\n\nBấm OK để TỰ CHẤM TAY ngay trên bản đồ (chỉ cần làm 1 lần, mọi người dùng chung sẽ thấy ngay).")) {
+                    dinhViLaiThuCong();
                 }
             }
         }
@@ -2356,20 +2360,25 @@
 
         // Cho phép cán bộ tự chấm tay lại vị trí UBND/Công an phường lên bản đồ nếu định vị tự động sai/thiếu,
         // rồi lưu lại (localStorage) để dùng ngay các lần sau, không cần tra cứu lại.
-        function dinhViLaiThuCong(khoaCache) {
+        function dinhViLaiThuCong() {
             if (!mainMiniMapInstance) return;
             huyChamTay(); // QUAN TRỌNG: dọn sạch trình xử lý click cũ (nếu còn sót từ lượt trước) TRƯỚC khi gắn cái mới —
                           // đây chính là nguyên nhân gây lỗi trước đây: 2 trình xử lý cùng lắng nghe 1 lúc trên cùng bản đồ.
             mainMiniMapInstance.closePopup(); // Đóng popup đang mở, tránh vướng khi bấm lên bản đồ
-            hienBannerChamTay('🎯 Bấm ĐÚNG vị trí thật trên bản đồ để chấm lại điểm này');
-            trinhXuLyChamTayHienTai = (e) => {
+            hienBannerChamTay('🎯 Bấm ĐÚNG vị trí Công an ' + khuVucHienTai + ' trên bản đồ');
+            trinhXuLyChamTayHienTai = async (e) => {
+                mainMiniMapInstance.off('click', trinhXuLyChamTayHienTai);
+                trinhXuLyChamTayHienTai = null;
+                anBannerChamTay();
                 try {
-                    localStorage.setItem(khoaCache, JSON.stringify({ lat: e.latlng.lat, lon: e.latlng.lng, ten: "Đã chỉnh tay" }));
-                    mainMiniMapInstance.off('click', trinhXuLyChamTayHienTai);
-                    trinhXuLyChamTayHienTai = null;
-                    anBannerChamTay();
+                    // Lưu lên MÁY CHỦ (Firestore) — dùng chung được cho mọi tài khoản/thiết bị có quyền xem phường này.
+                    await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).set({
+                        phuong: khuVucHienTai,
+                        toaDoCA: { lat: e.latlng.lat, lon: e.latlng.lng, ten: "Đã chỉnh tay" }
+                    }, { merge: true });
+                    ghiNhatKy('Cập nhật vị trí Công an phường', khuVucHienTai);
                     hienThiTrongDiemHanhChinh(); // Tự làm mới bản đồ ngay, khỏi cần bấm lại nút thủ công
-                } catch (err) { alert("❌ Lỗi khi lưu vị trí: " + err.message); }
+                } catch (err) { alert("❌ Lỗi khi lưu vị trí lên máy chủ: " + err.message); }
             };
             mainMiniMapInstance.on('click', trinhXuLyChamTayHienTai);
         }
@@ -3083,7 +3092,17 @@
             document.getElementById('editDiaChi').value = ho.diaChi;
             document.getElementById('editGhiChu').value = ho.ghiChu || '';
             document.getElementById('editGps').value = ho.gps || `${DEFAULT_CENTER[0]}, ${DEFAULT_CENTER[1]}`;
-            gpsHoHienTaiLaThat = !!ho.gps; // Đánh dấu rõ: có phải toạ độ THẬT đã xác định, hay chỉ là tâm phường hiển thị tạm trên bản đồ
+            // SỬA LỖI QUAN TRỌNG: trước đây coi là "đã xác nhận" chỉ vì Ô TOẠ ĐỘ CÓ GIÁ TRỊ — kể cả dữ liệu CŨ
+            // (nhập từ trước khi có cơ chế xác nhận thủ công) chưa từng thực sự được cán bộ chấm tay xác nhận.
+            // Đây chính là lý do nút "Chỉ Đường Đến Đây" TRONG modal vẫn hoạt động được với toạ độ cũ sai, dù
+            // nút nhanh ngoài danh sách đã được chặn đúng. Giờ CHỈ coi là đã xác nhận khi có cờ gpsXacNhan thật.
+            gpsHoHienTaiLaThat = !!ho.gpsXacNhan;
+            const elTT = document.getElementById('trangThaiGpsHo');
+            if (elTT) {
+                if (ho.gpsXacNhan) { elTT.innerText = '✅ Đã xác nhận'; elTT.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-900 text-emerald-300'; }
+                else if (ho.gps) { elTT.innerText = '⚠️ Dữ liệu cũ — CHƯA xác nhận'; elTT.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-rose-900 text-rose-300'; }
+                else { elTT.innerText = 'Chưa có toạ độ'; elTT.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-gray-800 text-gray-400'; }
+            }
             document.getElementById('editDienNV').value = ho.dienNghiepVu || 'Thường trú';
             document.getElementById('editNgayHetHan').value = ho.ngayHetHan || '';
             document.getElementById('hienThiNgayKiemTra').innerText = ho.ngayKiemTraGanNhat ? new Date(ho.ngayKiemTraGanNhat).toLocaleDateString('vi-VN') : 'Chưa từng';
@@ -3198,15 +3217,20 @@
             L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png').addTo(mapInstance);
             
             markerInstance = L.marker(coords, { draggable: true }).addTo(mapInstance);
+            const capNhatBadgeDaXacNhan = () => {
+                gpsHoHienTaiLaThat = true; // Cán bộ tự tay chấm/kéo ghim -> coi là toạ độ thật, đáng tin để dẫn đường
+                const elTT = document.getElementById('trangThaiGpsHo');
+                if (elTT) { elTT.innerText = '✅ Vừa chấm — nhớ bấm Lưu Hồ Sơ'; elTT.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-900 text-emerald-300'; }
+            };
             markerInstance.on('dragend', function() {
                 let pos = markerInstance.getLatLng();
                 document.getElementById('editGps').value = `${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`;
-                gpsHoHienTaiLaThat = true; // Cán bộ tự tay chấm/kéo ghim -> coi là toạ độ thật, đáng tin để dẫn đường
+                capNhatBadgeDaXacNhan();
             });
             mapInstance.on('click', function(e) {
                 markerInstance.setLatLng(e.latlng);
                 document.getElementById('editGps').value = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
-                gpsHoHienTaiLaThat = true;
+                capNhatBadgeDaXacNhan();
             });
         }
 
@@ -3907,7 +3931,7 @@
                     const theoPhuong = {};
                     duLieuThoTheoPhuongDashboard = {}; // Lưu lại DANH SÁCH HỘ theo phường (không chỉ số đếm) để bấm xem chi tiết khu vực mà không cần quét lại
                     snap.docs.forEach(d => {
-                        const h = d.data(); const p = h.phuong || 'Chưa rõ';
+                        const h = d.data(); const p = h.phuong || 'Phường Tân An';
                         if (!theoPhuong[p]) { theoPhuong[p] = { ho: 0, khau: 0 }; duLieuThoTheoPhuongDashboard[p] = []; }
                         theoPhuong[p].ho++; theoPhuong[p].khau += (h.thanhVien ? h.thanhVien.length : 0);
                         duLieuThoTheoPhuongDashboard[p].push(h);
