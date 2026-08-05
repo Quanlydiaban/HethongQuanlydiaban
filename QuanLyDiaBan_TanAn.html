@@ -168,6 +168,7 @@
         <!-- Bản đồ GIS & Thống kê -->
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-3">
             <div class="space-y-3 flex flex-col justify-between">
+                <p id="nguCanhTongQuan" class="text-[11px] text-fuchsia-300 font-semibold -mb-1"></p>
                 <div class="grid grid-cols-2 gap-2">
                     <div class="glass-card p-3 rounded-xl shadow relative border-l-4 border-blue-500">
                         <p class="text-gray-400 text-[10px] font-semibold uppercase">Tổng Nhân Khẩu</p>
@@ -315,6 +316,11 @@
                         <button onclick="tinhTuyenDuongTuanTra()" class="bg-blue-600 hover:bg-blue-700 px-2.5 py-1 rounded text-[11px] font-medium shadow flex items-center gap-1">
                             <span>🧭 Lập tuyến kiểm tra nhanh</span>
                         </button>
+                    </div>
+                    <div class="flex items-center gap-1.5 mt-1.5">
+                        <span class="text-[11px] text-gray-400 flex-shrink-0">🚓 Địa chỉ trụ sở Công an phường:</span>
+                        <input type="text" id="diaChiCaChu" placeholder="VD: Số 02, đường Nguyễn Tri Phương, Phường Tân An..." class="flex-1 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-[11px] text-white">
+                        <button onclick="luuDiaChiCongAn()" class="bg-fuchsia-700 hover:bg-fuchsia-600 px-2.5 py-1 rounded text-[11px] font-medium flex-shrink-0">💾 Lưu Địa Chỉ</button>
                     </div>
                 </div>
                 <div class="flex gap-1.5">
@@ -1800,7 +1806,7 @@
                 capNhatDanhSachPhuongTrongDropdown();
             }
             apDungGioiHanKhuVucTheoQuyen();
-            setTimeout(() => khoiTaoMainMiniMap(), 250);
+            setTimeout(() => { khoiTaoMainMiniMap(); napDiaChiCongAnDaLuu(); }, 250);
         }
 
         // Đổ danh sách phường vào ô chọn, sắp xếp theo bảng chữ cái tiếng Việt cho dễ tìm trong 103 phường/xã.
@@ -2256,6 +2262,37 @@
         // CHỈ dùng đúng toạ độ do CHÍNH cán bộ tự chấm tay xác nhận trước đó (lưu trên trình duyệt) — đáng tin
         // cậy 100% vì là do người thật xác nhận, không suy đoán. Công an phường được ưu tiên vì có giá trị
         // liên hệ công tác thực tế nhất.
+        // Lưu ĐỊA CHỈ DẠNG CHỮ của trụ sở Công an phường lên máy chủ — độc lập với toạ độ GPS, để cán bộ MỖI
+        // phường (trong 103 phường) tự nhập đúng địa chỉ thật của phường mình, không phụ thuộc vào việc định
+        // vị tự động (vốn không đáng tin cho hầu hết địa chỉ trụ sở chưa có trên bản đồ mở).
+        async function luuDiaChiCongAn() {
+            if (!CHE_DO_FIREBASE) return alert("Cần kết nối máy chủ để lưu dùng chung nhiều thiết bị.");
+            const diaChi = document.getElementById('diaChiCaChu').value.trim();
+            if (!diaChi) return alert("Vui lòng nhập địa chỉ trước khi lưu.");
+            try {
+                await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).set({
+                    phuong: khuVucHienTai, diaChiCA: diaChi
+                }, { merge: true });
+                ghiNhatKy('Cập nhật địa chỉ Công an phường', khuVucHienTai + ': ' + diaChi);
+                alert("✅ Đã lưu địa chỉ trụ sở Công an " + khuVucHienTai + " — mọi tài khoản có quyền xem phường này đều thấy ngay.");
+            } catch (err) {
+                alert("❌ Lỗi lưu địa chỉ: " + err.message);
+            }
+        }
+
+        // Nạp lại địa chỉ đã lưu (nếu có) vào ô nhập khi đổi phường đang xem
+        async function napDiaChiCongAnDaLuu() {
+            const elChu = document.getElementById('diaChiCaChu');
+            if (!elChu) return;
+            elChu.value = '';
+            if (!CHE_DO_FIREBASE) return;
+            try {
+                const doc = await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).get();
+                if (doc.exists && doc.data().diaChiCA) elChu.value = doc.data().diaChiCA;
+            } catch (err) { console.warn("Không tải được địa chỉ Công an phường:", err.message); }
+        }
+
+
         async function hienThiTrongDiemHanhChinh() {
             if (!CHE_DO_FIREBASE) return alert("Tính năng này cần kết nối máy chủ để dùng chung được nhiều thiết bị.");
             const khu = DANH_MUC_HANH_CHINH[khuVucHienTai];
@@ -2268,9 +2305,13 @@
             // người khác không thấy được. Giờ 1 người chấm xong, TẤT CẢ mọi người (đúng quyền xem phường đó)
             // đều thấy ngay, đúng nhu cầu "tiện tra cứu khi cần liên hệ công tác".
             let kq = null;
+            let diaChiDaLuu = '';
             try {
                 const doc = await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).get();
-                if (doc.exists && doc.data().toaDoCA) kq = doc.data().toaDoCA;
+                if (doc.exists) {
+                    if (doc.data().toaDoCA) kq = doc.data().toaDoCA;
+                    if (doc.data().diaChiCA) diaChiDaLuu = doc.data().diaChiCA;
+                }
             } catch (err) {
                 console.warn("Không tải được vị trí Công an phường từ máy chủ:", err.message);
             }
@@ -2290,6 +2331,7 @@
                     icon: L.divIcon({ className: '', html: `<div style="background:#dc2626;width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 0 6px rgba(0,0,0,0.6);"></div>` })
                 }).addTo(mainMiniMapInstance).bindPopup(
                     `<b>🚓 Công an ${khuVucHienTai}</b><br><span style="color:#6ee7b7;font-size:10px;">✅ Vị trí do cán bộ xác nhận — dùng chung mọi thiết bị</span>` +
+                    (diaChiDaLuu ? `<br><span style="font-size:10px;color:#d1d5db;">📍 ${escHtml(diaChiDaLuu)}</span>` : '') +
                     `<br><button onclick="dinhViLaiThuCong()" style="font-size:10px;color:#60a5fa;text-decoration:underline;margin-top:4px;">Chấm lại vị trí này</button>`
                 );
                 cacMarkerTrongDiem.push(marker);
@@ -2337,9 +2379,26 @@
         }
         let trinhXuLyChamTayHienTai = null;
         function huyChamTay() {
-            if (trinhXuLyChamTayHienTai && mainMiniMapInstance) mainMiniMapInstance.off('click', trinhXuLyChamTayHienTai);
-            trinhXuLyChamTayHienTai = null;
+            goTrinhXuLyChamTay();
             anBannerChamTay();
+        }
+
+        // QUAN TRỌNG: gắn trình xử lý click vào CẢ bản đồ VÀ từng lớp ranh giới phường (drawnItems) — vì ranh
+        // giới phường thường phủ gần như toàn bộ khung nhìn, khi bấm vào bên trong ranh giới thì Leaflet ưu
+        // tiên mở popup của ranh giới và CHẶN LUÔN sự kiện click truyền xuống bản đồ, khiến chấm tay không
+        // bao giờ ghi nhận được click. Gắn thêm vào từng lớp polygon đảm bảo luôn bắt được click dù bấm ở đâu.
+        function ganTrinhXuLyChamTay(handler) {
+            trinhXuLyChamTayHienTai = handler;
+            if (mainMiniMapInstance) mainMiniMapInstance.on('click', handler);
+            if (drawnItems) drawnItems.eachLayer(l => l.on('click', handler));
+            if (wardBoundaryLayer) wardBoundaryLayer.on('click', handler);
+        }
+        function goTrinhXuLyChamTay() {
+            if (!trinhXuLyChamTayHienTai) return;
+            if (mainMiniMapInstance) mainMiniMapInstance.off('click', trinhXuLyChamTayHienTai);
+            if (drawnItems) drawnItems.eachLayer(l => l.off('click', trinhXuLyChamTayHienTai));
+            if (wardBoundaryLayer) wardBoundaryLayer.off('click', trinhXuLyChamTayHienTai);
+            trinhXuLyChamTayHienTai = null;
         }
 
         function dinhViLanLuotThuCong(danhSach, idx) {
@@ -2366,9 +2425,9 @@
                           // đây chính là nguyên nhân gây lỗi trước đây: 2 trình xử lý cùng lắng nghe 1 lúc trên cùng bản đồ.
             mainMiniMapInstance.closePopup(); // Đóng popup đang mở, tránh vướng khi bấm lên bản đồ
             hienBannerChamTay('🎯 Bấm ĐÚNG vị trí Công an ' + khuVucHienTai + ' trên bản đồ');
-            trinhXuLyChamTayHienTai = async (e) => {
-                mainMiniMapInstance.off('click', trinhXuLyChamTayHienTai);
-                trinhXuLyChamTayHienTai = null;
+            ganTrinhXuLyChamTay(async (e) => {
+                mainMiniMapInstance.closePopup(); // Đóng ngay popup ranh giới nếu lỡ mở ra do bấm trúng bên trong ranh giới
+                goTrinhXuLyChamTay();
                 anBannerChamTay();
                 try {
                     // Lưu lên MÁY CHỦ (Firestore) — dùng chung được cho mọi tài khoản/thiết bị có quyền xem phường này.
@@ -2379,8 +2438,7 @@
                     ghiNhatKy('Cập nhật vị trí Công an phường', khuVucHienTai);
                     hienThiTrongDiemHanhChinh(); // Tự làm mới bản đồ ngay, khỏi cần bấm lại nút thủ công
                 } catch (err) { alert("❌ Lỗi khi lưu vị trí lên máy chủ: " + err.message); }
-            };
-            mainMiniMapInstance.on('click', trinhXuLyChamTayHienTai);
+            });
         }
 
         // Mở đúng vị trí phường đang xem trên Google Maps (miễn phí, không cần API key) để đối chiếu tham khảo
@@ -2398,6 +2456,7 @@
             if (chk) { chk.checked = false; if (lopTienIchGIS) mainMiniMapInstance.removeLayer(lopTienIchGIS); }
             veLaiRanhGioiPhuong();
             capNhatOThongTinPhuong();
+            napDiaChiCongAnDaLuu();
             if (CHE_DO_FIREBASE) {
                 dangKyLangNgheHoGiaDinh(); // Đổi kênh đồng bộ Firestore sang đúng phường mới chọn
             } else {
@@ -2933,6 +2992,11 @@
 
             document.getElementById('statNhanKhau').innerText = tongNhanKhau;
             document.getElementById('statHoGiaDinh').innerText = danhSachHoGiaDinh.length;
+            const elNgu = document.getElementById('nguCanhTongQuan');
+            if (elNgu) {
+                const kvDangLoc = document.getElementById('filterKhuVuc') ? document.getElementById('filterKhuVuc').value : '';
+                elNgu.innerText = '📍 ' + khuVucHienTai + (kvDangLoc ? ' — ' + kvDangLoc : ' (tất cả khu vực)');
+            }
             document.getElementById('cntThuongTru').innerText = cntTT;
             document.getElementById('cntTamTru').innerText = cntTamT;
             document.getElementById('cntTrongDiem').innerText = cntKhac;
@@ -3294,20 +3358,12 @@
                 return alert("Toạ độ không hợp lệ. Vui lòng xác định lại toạ độ.");
             }
             const diemDen = `${parts[0]},${parts[1]}`;
-            const moDuong = (diemDi) => {
-                const url = diemDi
-                    ? `https://www.google.com/maps/dir/?api=1&origin=${diemDi}&destination=${diemDen}&travelmode=driving`
-                    : `https://www.google.com/maps/dir/?api=1&destination=${diemDen}&travelmode=driving`;
-                window.open(url, '_blank');
-            };
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    pos => moDuong(`${pos.coords.latitude},${pos.coords.longitude}`),
-                    () => { alert("Không lấy được vị trí hiện tại của anh/chị (có thể do chưa cho phép truy cập định vị) — mở Google Maps chỉ với điểm đến, Google Maps sẽ tự dùng vị trí thiết bị."); moDuong(null); }
-                );
-            } else {
-                moDuong(null);
-            }
+            // QUAN TRỌNG: KHÔNG tự lấy vị trí hiện tại rồi gắn cứng vào link nữa — vị trí lấy qua trình duyệt
+            // (nhất là trên máy tính, dùng định vị theo WiFi) thường KÉM CHÍNH XÁC hơn nhiều so với để chính
+            // Google Maps tự nhận diện "Vị trí của bạn" (theo GPS thật của điện thoại, cập nhật liên tục theo
+            // thời gian thực) khi mở link. Đây là lý do đường đi trước đây có thể xuất phát từ vị trí sai lệch.
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${diemDen}&travelmode=driving`;
+            window.open(url, '_blank');
         }
 
         // Dẫn đường NHANH ngay từ danh sách hộ — không cần mở "Chi tiết" trước (đúng nhu cầu Chỉ huy: từ vị
