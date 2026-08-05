@@ -316,6 +316,7 @@
                         <button onclick="tinhTuyenDuongTuanTra()" class="bg-blue-600 hover:bg-blue-700 px-2.5 py-1 rounded text-[11px] font-medium shadow flex items-center gap-1">
                             <span>🧭 Lập tuyến kiểm tra nhanh</span>
                         </button>
+                        <button onclick="moDanhBaCongAn()" class="bg-red-700 hover:bg-red-600 px-2.5 py-1 rounded text-[11px] font-medium shadow">📇 Danh Bạ Công An Các Phường</button>
                     </div>
                     <div class="flex items-center gap-1.5 mt-1.5">
                         <span class="text-[11px] text-gray-400 flex-shrink-0">🚓 Địa chỉ trụ sở Công an phường:</span>
@@ -674,6 +675,24 @@
             <p id="doMạnhMatKhauMoiHienThi" class="text-[10px] text-gray-500">Cần đủ: ≥8 ký tự, 1 chữ HOA, 1 chữ thường, 1 số, 1 ký tự đặc biệt</p>
             <input type="password" id="matKhauMoiXacNhan" placeholder="Nhập lại mật khẩu mới" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
             <button onclick="doiMatKhau()" class="w-full bg-emerald-600 hover:bg-emerald-700 rounded px-2 py-1.5 font-bold">💾 Cập Nhật Mật Khẩu</button>
+        </div>
+    </div>
+
+    <div id="danhBaCongAnModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+        <div class="glass-card w-full max-w-3xl rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[88vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-red-400">📇 Danh Bạ Trụ Sở Công An Các Phường</h3>
+                <button onclick="document.getElementById('danhBaCongAnModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <p class="text-gray-400">Danh sách vị trí Công an phường đã được cán bộ TỪNG PHƯỜNG tự xác nhận — phục vụ liên hệ công tác, dẫn đường qua lại giữa các phường. Cán bộ phường nào tự chấm vị trí phường đó (mục "🚓 Định Vị Công An Phường" phía trên), danh bạ này sẽ tự đầy đủ dần khi càng nhiều phường tham gia sử dụng.</p>
+            <input type="text" id="timKiemDanhBaCongAn" oninput="renderDanhBaCongAn()" placeholder="🔍 Tìm theo tên phường..." class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+            <div class="flex items-center gap-1.5">
+                <span class="text-gray-400 flex-shrink-0">Chỉ đường xuất phát từ:</span>
+                <select id="diemXuatPhatDanhBa" class="flex-1 bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <option value="hien_tai">📍 Vị trí hiện tại của tôi</option>
+                </select>
+            </div>
+            <div id="noiDungDanhBaCongAn">Đang tải...</div>
         </div>
     </div>
 
@@ -2293,6 +2312,73 @@
         }
 
 
+        // ================== DANH BẠ CÔNG AN CÁC PHƯỜNG (dùng chung mọi phường) ==================
+        // Đây là thông tin liên hệ công tác cơ bản (địa chỉ + vị trí trụ sở Công an) — KHÔNG phải dữ liệu cư
+        // trú nhạy cảm, nên cho phép ĐỌC được xuyên suốt mọi phường (khác với dữ liệu hộ khẩu phải giới hạn
+        // đúng phạm vi phân quyền). Việc GHI/sửa vẫn chỉ dành cho cán bộ đúng phường đó (theo Security Rules).
+        let danhBaCongAnDaTai = [];
+        async function moDanhBaCongAn() {
+            if (!CHE_DO_FIREBASE) return alert("Tính năng này cần kết nối máy chủ.");
+            document.getElementById('danhBaCongAnModal').classList.remove('hidden');
+            const el = document.getElementById('noiDungDanhBaCongAn');
+            el.innerHTML = '<p class="text-gray-500 p-3">⏳ Đang tải danh bạ...</p>';
+            try {
+                const snap = await dbFirestore.collection('dia_diem_dac_biet').get();
+                danhBaCongAnDaTai = snap.docs
+                    .map(d => Object.assign({ id: d.id }, d.data()))
+                    .filter(d => d.toaDoCA); // Chỉ liệt kê phường ĐÃ có toạ độ xác nhận, tránh danh bạ có mục trống vô nghĩa
+                danhBaCongAnDaTai.sort((a, b) => a.phuong.localeCompare(b.phuong, 'vi'));
+
+                // Đổ vào ô chọn "xuất phát từ" để hỗ trợ chỉ đường GIỮA 2 phường bất kỳ (VD: từ CA Tân An đến CA Cái Răng)
+                const selXP = document.getElementById('diemXuatPhatDanhBa');
+                selXP.innerHTML = '<option value="hien_tai">📍 Vị trí hiện tại của tôi</option>' +
+                    danhBaCongAnDaTai.map(d => `<option value="${escHtml(d.id)}">🚓 Công an ${escHtml(d.phuong)}</option>`).join('');
+
+                renderDanhBaCongAn();
+            } catch (err) {
+                el.innerHTML = '<p class="text-rose-400 p-3">❌ Lỗi tải danh bạ: ' + escHtml(err.message) + '</p>';
+            }
+        }
+
+        function renderDanhBaCongAn() {
+            const el = document.getElementById('noiDungDanhBaCongAn');
+            const tuKhoa = boDauTiengViet(document.getElementById('timKiemDanhBaCongAn').value.trim());
+            const ds = tuKhoa ? danhBaCongAnDaTai.filter(d => boDauTiengViet(d.phuong).includes(tuKhoa)) : danhBaCongAnDaTai;
+
+            if (ds.length === 0) {
+                el.innerHTML = danhBaCongAnDaTai.length === 0
+                    ? '<p class="text-gray-500 p-3">Chưa có phường nào chấm vị trí Công an phường. Danh bạ sẽ tự đầy đủ dần khi các phường khác bắt đầu sử dụng.</p>'
+                    : '<p class="text-gray-500 p-3">Không tìm thấy phường khớp từ khoá.</p>';
+                return;
+            }
+            el.innerHTML = ds.map(d => `
+                <div class="flex justify-between items-center border-b border-gray-800 p-2">
+                    <div class="min-w-0">
+                        <p class="text-white font-semibold">🚓 Công an ${escHtml(d.phuong)}</p>
+                        ${d.diaChiCA ? `<p class="text-[10px] text-gray-400">${escHtml(d.diaChiCA)}</p>` : '<p class="text-[10px] text-gray-600 italic">Chưa có địa chỉ dạng chữ</p>'}
+                    </div>
+                    <button onclick="chiDuongDanhBaCongAn('${escHtml(d.id).replace(/'/g, "&apos;")}')" class="bg-blue-700 hover:bg-blue-600 px-2.5 py-1 rounded text-[11px] font-medium flex-shrink-0">🧭 Chỉ Đường</button>
+                </div>`).join('');
+        }
+
+        function chiDuongDanhBaCongAn(tenPhuongDich) {
+            const dich = danhBaCongAnDaTai.find(d => d.id === tenPhuongDich);
+            if (!dich || !dich.toaDoCA) return alert("Không tìm thấy toạ độ cho phường này.");
+            const diemDen = `${dich.toaDoCA.lat},${dich.toaDoCA.lon}`;
+            const xuatPhat = document.getElementById('diemXuatPhatDanhBa').value;
+
+            if (xuatPhat === 'hien_tai') {
+                // Để chính Google Maps tự nhận diện vị trí hiện tại (đáng tin cậy hơn định vị qua trình duyệt)
+                window.open(`https://www.google.com/maps/dir/?api=1&destination=${diemDen}&travelmode=driving`, '_blank');
+            } else {
+                // Chỉ đường GIỮA 2 trụ sở Công an phường bất kỳ đã có trong danh bạ (VD: từ CA Tân An đến CA Cái Răng)
+                const goc = danhBaCongAnDaTai.find(d => d.id === xuatPhat);
+                if (!goc || !goc.toaDoCA) return alert("Không tìm thấy toạ độ điểm xuất phát.");
+                const diemDi = `${goc.toaDoCA.lat},${goc.toaDoCA.lon}`;
+                window.open(`https://www.google.com/maps/dir/?api=1&origin=${diemDi}&destination=${diemDen}&travelmode=driving`, '_blank');
+            }
+        }
+
         async function hienThiTrongDiemHanhChinh() {
             if (!CHE_DO_FIREBASE) return alert("Tính năng này cần kết nối máy chủ để dùng chung được nhiều thiết bị.");
             const khu = DANH_MUC_HANH_CHINH[khuVucHienTai];
@@ -2612,23 +2698,48 @@
         }
 
         function tinhTuyenDuongTuanTra() {
-            if(danhSachHoGiaDinh.length === 0) return alert("Chưa có dữ liệu hộ gia đình!");
+            if (danhSachHoGiaDinh.length === 0) return alert("Chưa có dữ liệu hộ gia đình!");
             let filtered = thucHienLocVaTimKiem();
-            if(filtered.length < 2) return alert("Cần ít nhất 2 hộ dân để lập lộ trình kiểm tra!");
 
-            let points = filtered.slice(0, 10).map(h => {
-                if (h.gps && h.gps.includes(',')) {
-                    let p = h.gps.split(',');
+            // SỬA LỖI QUAN TRỌNG: trước đây dùng THẲNG toạ độ gps của hộ mà KHÔNG kiểm tra đã xác nhận hay
+            // chưa (dữ liệu cũ/sai như "Đài truyền hình" vẫn bị đưa vào lộ trình), và KHÔNG hề lấy vị trí hiện
+            // tại của cán bộ làm điểm xuất phát — trái với đúng nghĩa "lập tuyến kiểm tra nhanh". Giờ CHỈ lấy
+            // hộ có toạ độ ĐÃ XÁC NHẬN, và BẮT BUỘC lấy vị trí hiện tại làm điểm đầu tuyến.
+            const hoDaXacNhan = filtered.filter(h => h.gpsXacNhan && h.gps && h.gps.includes(','));
+            const soHoBiLoai = filtered.length - hoDaXacNhan.length;
+            if (hoDaXacNhan.length < 1) {
+                return alert("Không có hộ nào trong danh sách đang lọc có toạ độ ĐÃ XÁC NHẬN.\n\nVào 'Chi tiết' từng hộ, chấm tay xác nhận toạ độ trước khi lập tuyến, để tránh dẫn sai địa điểm.");
+            }
+            if (!navigator.geolocation) return alert("Trình duyệt này không hỗ trợ định vị vị trí hiện tại.");
+
+            alert("⏳ Đang lấy vị trí hiện tại của anh/chị để làm điểm xuất phát...");
+            navigator.geolocation.getCurrentPosition(pos => {
+                const diemXuatPhat = [pos.coords.latitude, pos.coords.longitude];
+                const hoDungTuyen = hoDaXacNhan.slice(0, 9); // Google Maps giới hạn tối đa 10 điểm (1 gốc + 9 dừng)
+                const points = [diemXuatPhat, ...hoDungTuyen.map(h => {
+                    const p = h.gps.split(',');
                     return [parseFloat(p[0]), parseFloat(p[1])];
-                }
-                return DEFAULT_CENTER;
+                })];
+
+                if (routePolyline) mainMiniMapInstance.removeLayer(routePolyline);
+                routePolyline = L.polyline(points, { color: '#3b82f6', weight: 4, opacity: 0.8, dashArray: '8, 8' }).addTo(mainMiniMapInstance);
+                L.marker(diemXuatPhat, { icon: L.divIcon({ className: '', html: '<div style="background:#3b82f6;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 6px rgba(0,0,0,0.6);"></div>' }) })
+                    .addTo(mainMiniMapInstance).bindPopup('<b>📍 Vị trí xuất phát (hiện tại)</b>');
+                mainMiniMapInstance.fitBounds(routePolyline.getBounds(), { padding: [30, 30] });
+
+                // Nút mở tuyến đường THẬT trên Google Maps (chỉ đường từng chặng thật sự, không chỉ là đường
+                // thẳng nối các điểm như bản đồ nội bộ).
+                const diemDen = hoDungTuyen[hoDungTuyen.length - 1].gps.split(',').map(s => s.trim()).join(',');
+                const diemGiua = hoDungTuyen.slice(0, -1).map(h => h.gps.split(',').map(s => s.trim()).join(',')).join('|');
+                const urlGG = `https://www.google.com/maps/dir/?api=1&origin=${diemXuatPhat[0]},${diemXuatPhat[1]}&destination=${diemDen}` + (diemGiua ? `&waypoints=${diemGiua}` : '') + `&travelmode=driving`;
+
+                let thongBao = `✅ Đã lập tuyến qua ${hoDungTuyen.length} hộ (có toạ độ đã xác nhận), xuất phát từ vị trí hiện tại của anh/chị.`;
+                if (soHoBiLoai > 0) thongBao += `\n\n⚠️ Đã BỎ QUA ${soHoBiLoai} hộ vì CHƯA có toạ độ xác nhận (dữ liệu cũ hoặc chưa chấm tay) — không đưa vào tuyến để tránh dẫn sai.`;
+                thongBao += `\n\nBấm OK để mở chỉ đường thật trên Google Maps (đi từng chặng), hoặc Cancel để chỉ xem đường nối trên bản đồ nội bộ.`;
+                if (confirm(thongBao)) window.open(urlGG, '_blank');
+            }, () => {
+                alert("❌ Không lấy được vị trí hiện tại của anh/chị — cần cho phép trình duyệt truy cập định vị. Không thể lập tuyến nếu thiếu điểm xuất phát.");
             });
-
-            if(routePolyline) mainMiniMapInstance.removeLayer(routePolyline);
-
-            routePolyline = L.polyline(points, { color: '#3b82f6', weight: 4, opacity: 0.8, dashArray: '8, 8' }).addTo(mainMiniMapInstance);
-            mainMiniMapInstance.fitBounds(routePolyline.getBounds(), { padding: [30, 30] });
-            alert(`✅ Đã thiết lập lộ trình kiểm tra qua ${points.length} hộ dân tại Phường Tân An, TP. Cần Thơ!`);
         }
 
         function xoaTuyenDuongTuanTra() {
@@ -3905,7 +4016,18 @@
             el.innerHTML = '<p class="text-gray-500 p-6 text-center">⏳ Đang tổng hợp dữ liệu...</p>';
             huyBieuDoDashboard();
 
-            const dsPhuongNay = layDuLieuThuocPhuongHienTai();
+            // SỬA LỖI QUAN TRỌNG: trước đây Dashboard luôn lấy TOÀN BỘ dữ liệu của phường đang chọn cho MỌI
+            // vai trò — kể cả CSKV chỉ được phân công 1 khu vực cũng thấy số liệu của CẢ phường. Giờ áp dụng
+            // ĐÚNG 3 cấp: CSKV chỉ thấy khu vực mình phụ trách; Chỉ huy phường thấy toàn phường (mọi khu vực);
+            // Admin/Chỉ huy TP (PC06) thấy toàn phường đang chọn + có thêm mục Toàn Thành Phố bên dưới.
+            const phamViKVDashboard = (currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length > 0)
+                ? currentUser.khuVucPhuTrach.map(k => k.toLowerCase()) : null;
+            const dsPhuongNay = layDuLieuThuocPhuongHienTai().filter(h => {
+                if (!phamViKVDashboard) return true;
+                const nhanKV = (layNhanKhuVucTuDiaChi(h.diaChi) || "Khu Vực 1").toLowerCase();
+                return phamViKVDashboard.includes(nhanKV);
+            });
+            const nhanPhamVi = phamViKVDashboard ? (' — ' + currentUser.khuVucPhuTrach.join(', ')) : ' (tất cả khu vực)';
             const soKhau = dsPhuongNay.reduce((t, h) => t + (h.thanhVien ? h.thanhVien.length : 0), 0);
             const soThuongTru = dsPhuongNay.filter(h => (h.dienNghiepVu || 'Thường trú') === 'Thường trú').length;
             const soTamTru = dsPhuongNay.filter(h => h.dienNghiepVu === 'Tạm trú' || h.dienNghiepVu === 'Lưu trú').length;
@@ -3932,7 +4054,7 @@
 
             el.innerHTML = `
                 <div class="mb-3">
-                    <p class="font-bold text-gray-100 text-sm mb-2">🏘️ ${escHtml(khuVucHienTai)}</p>
+                    <p class="font-bold text-gray-100 text-sm mb-2">🏘️ ${escHtml(khuVucHienTai)}${escHtml(nhanPhamVi)}</p>
                     <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
                         ${theKPI('🏠', dsPhuongNay.length, 'Tổng số hộ', 'linear-gradient(135deg,#1e3a8a,#1e40af)', '#93c5fd')}
                         ${theKPI('👥', soKhau, 'Tổng nhân khẩu', 'linear-gradient(135deg,#065f46,#047857)', '#6ee7b7')}
@@ -3950,7 +4072,7 @@
                             <div style="height:170px;"><canvas id="dbChartTuoiGioiTinh"></canvas></div>
                         </div>
                         <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
-                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">Số hộ theo khu vực</p>
+                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">${phamViKVDashboard ? 'Chi tiết khu vực phụ trách' : 'Số hộ theo khu vực'}</p>
                             <div style="height:170px;"><canvas id="dbChartKhuVuc"></canvas></div>
                         </div>
                     </div>
