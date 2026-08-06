@@ -4052,23 +4052,69 @@
 
         // Bấm vào 1 phường trong bảng xếp hạng Toàn Thành Phố -> xem chi tiết số hộ theo TỪNG khu vực của
         // đúng phường đó, không cần rời khỏi Dashboard hay đổi phường đang chọn ở màn hình chính.
+        // Xem TOÀN DIỆN 1 phường bất kỳ (không chỉ riêng phường đang chọn ở màn hình chính) — đủ KPI, đủ biểu
+        // đồ, đủ chi tiết khu vực, đúng yêu cầu "xem toàn diện từng phường kể cả các khu vực thuộc phường đó".
         function xemChiTietKhuVucDashboard(tenPhuong) {
             const el = document.getElementById('dashboardChiTietKhuVuc');
             const dsHo = duLieuThoTheoPhuongDashboard[tenPhuong] || [];
-            if (dashboardCharts.chiTietKV) { dashboardCharts.chiTietKV.destroy(); dashboardCharts.chiTietKV = null; }
+            ['chiTietKV', 'chiTietCuTru', 'chiTietTuoiGT'].forEach(k => { if (dashboardCharts[k]) { dashboardCharts[k].destroy(); dashboardCharts[k] = null; } });
 
             const theoKhuVuc = {};
-            dsHo.forEach(ho => { const k = layNhanKhuVucTuDiaChi(ho.diaChi) || 'Khu Vực 1'; theoKhuVuc[k] = (theoKhuVuc[k] || 0) + 1; });
+            let soThuongTru = 0, soTamTru = 0, soKhau = 0, soNam = 0, soNu = 0, soTreEm = 0, soLaoDong = 0, soCaoTuoi = 0;
+            const namNay = new Date().getFullYear();
+            dsHo.forEach(ho => {
+                const k = layNhanKhuVucTuDiaChi(ho.diaChi) || 'Khu Vực 1';
+                theoKhuVuc[k] = (theoKhuVuc[k] || 0) + 1;
+                if ((ho.dienNghiepVu || 'Thường trú') === 'Thường trú') soThuongTru++;
+                else if (ho.dienNghiepVu === 'Tạm trú' || ho.dienNghiepVu === 'Lưu trú') soTamTru++;
+                (ho.thanhVien || []).forEach(tv => {
+                    soKhau++;
+                    const gt = (tv.gioiTinh || '').toLowerCase();
+                    if (gt === 'nam') soNam++; else if (gt === 'nữ' || gt === 'nu') soNu++;
+                    if (tv.ngaySinh) {
+                        const m = String(tv.ngaySinh).match(/(\d{4})(?!.*\d{4})/);
+                        if (m) { const t = namNay - parseInt(m[1]); if (t >= 0 && t < 130) { if (t < 16) soTreEm++; else if (t <= 60) soLaoDong++; else soCaoTuoi++; } }
+                    }
+                });
+            });
             const tenKV = Object.keys(theoKhuVuc).sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
+            const khuThongTin = DANH_MUC_HANH_CHINH[tenPhuong];
+            const tongSoKhuVucDuKien = (khuThongTin && khuThongTin.info && khuThongTin.info.tongSoKhuVuc) || null;
+            const canhBaoDoPhu = tongSoKhuVucDuKien && tenKV.length < tongSoKhuVucDuKien
+                ? `<div class="bg-amber-950/40 border border-amber-700/50 rounded p-1.5 mb-2 text-[10px] text-amber-300">⚠️ Độ phủ: ${tenKV.length}/${tongSoKhuVucDuKien} khu vực đã có dữ liệu — chưa đại diện toàn bộ ${escHtml(tenPhuong)}.</div>` : '';
 
             el.innerHTML = `<div class="bg-gray-900/70 border border-fuchsia-800/50 rounded-lg p-2.5">
-                <p class="text-fuchsia-300 font-semibold mb-1 text-[11px]">📍 Chi tiết theo khu vực — ${escHtml(tenPhuong)} (${dsHo.length} hộ)</p>
-                <div style="height:${Math.max(140, tenKV.length * 26)}px;"><canvas id="dbChartChiTietKV"></canvas></div>
+                <p class="text-fuchsia-300 font-semibold mb-1.5 text-[12px]">📍 Xem Toàn Diện — ${escHtml(tenPhuong)} (${dsHo.length} hộ, ${soKhau} nhân khẩu)</p>
+                ${canhBaoDoPhu}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                    <div class="bg-gray-950/60 rounded-lg p-2">
+                        <p class="text-gray-400 text-[10px] mb-1">Phân bố cư trú</p>
+                        <div style="height:150px;"><canvas id="dbChartChiTietCuTru"></canvas></div>
+                    </div>
+                    <div class="bg-gray-950/60 rounded-lg p-2">
+                        <p class="text-gray-400 text-[10px] mb-1">Giới tính & Độ tuổi</p>
+                        <div style="height:150px;"><canvas id="dbChartChiTietTuoiGT"></canvas></div>
+                    </div>
+                    <div class="bg-gray-950/60 rounded-lg p-2">
+                        <p class="text-gray-400 text-[10px] mb-1">Theo khu vực (${tenKV.length} khu vực)</p>
+                        <div style="height:150px;"><canvas id="dbChartChiTietKV"></canvas></div>
+                    </div>
+                </div>
             </div>`;
+            dashboardCharts.chiTietCuTru = new Chart(document.getElementById('dbChartChiTietCuTru'), {
+                type: 'doughnut',
+                data: { labels: ['Thường trú', 'Tạm/Lưu trú', 'NOHN/Khác'], datasets: [{ data: [soThuongTru, soTamTru, dsHo.length - soThuongTru - soTamTru], backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'], borderWidth: 2, borderColor: '#0f172a' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 8 }, boxWidth: 8 } } } }
+            });
+            dashboardCharts.chiTietTuoiGT = new Chart(document.getElementById('dbChartChiTietTuoiGT'), {
+                type: 'bar',
+                data: { labels: ['Nam', 'Nữ', 'D.16t', '16-60t', 'Tr.60t'], datasets: [{ data: [soNam, soNu, soTreEm, soLaoDong, soCaoTuoi], backgroundColor: ['#0ea5e9', '#ec4899', '#22d3ee', '#818cf8', '#fbbf24'], borderRadius: 3 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#9ca3af', font: { size: 8 } }, grid: { display: false } }, y: { ticks: { color: '#9ca3af', font: { size: 8 } }, grid: { color: '#374151' } } } }
+            });
             dashboardCharts.chiTietKV = new Chart(document.getElementById('dbChartChiTietKV'), {
                 type: 'bar',
-                data: { labels: tenKV, datasets: [{ data: tenKV.map(k => theoKhuVuc[k]), backgroundColor: '#c026d3', borderRadius: 4 }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { color: '#374151' } }, y: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { display: false } } } }
+                data: { labels: tenKV, datasets: [{ data: tenKV.map(k => theoKhuVuc[k]), backgroundColor: '#c026d3', borderRadius: 3 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#9ca3af', font: { size: 8 } }, grid: { color: '#374151' } }, y: { ticks: { color: '#9ca3af', font: { size: 8 } }, grid: { display: false } } } }
             });
             el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
@@ -4205,7 +4251,13 @@
                     });
                     const tenPhuong = Object.keys(theoPhuong).sort((a, b) => theoPhuong[b].ho - theoPhuong[a].ho);
                     elTP.innerHTML = `<div class="border-t border-gray-700 pt-3">
-                        <p class="font-bold text-gray-100 text-sm mb-2">🏙️ Toàn Thành Phố — ${tenPhuong.length}/103 phường/xã đã có dữ liệu</p>
+                        <div class="flex justify-between items-center mb-2">
+                            <p class="font-bold text-gray-100 text-sm">🏙️ Toàn Thành Phố — ${tenPhuong.length}/103 phường/xã đã có dữ liệu</p>
+                            <select onchange="if(this.value) xemChiTietKhuVucDashboard(this.value)" class="bg-gray-900 border border-fuchsia-700 rounded px-2 py-1 text-[11px] text-fuchsia-300">
+                                <option value="">🔍 Xem toàn diện 1 phường...</option>
+                                ${tenPhuong.map(p => `<option value="${escHtml(p)}">${escHtml(p)} (${theoPhuong[p].ho} hộ)</option>`).join('')}
+                            </select>
+                        </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
                                 <p class="text-gray-300 font-semibold mb-1 text-[11px]">Xếp hạng số hộ theo phường</p>
