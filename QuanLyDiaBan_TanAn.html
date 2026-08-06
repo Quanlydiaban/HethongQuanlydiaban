@@ -168,7 +168,10 @@
         <!-- Bản đồ GIS & Thống kê -->
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-3">
             <div class="space-y-3 flex flex-col justify-between">
-                <p id="nguCanhTongQuan" class="text-[11px] text-fuchsia-300 font-semibold -mb-1"></p>
+                <div class="flex justify-between items-center -mb-1">
+                    <p id="nguCanhTongQuan" class="text-[11px] text-fuchsia-300 font-semibold"></p>
+                    <button id="btnXemToanTP" onclick="xemTongToanThanhPho()" class="hidden text-[10px] bg-fuchsia-800 hover:bg-fuchsia-700 px-2 py-0.5 rounded font-medium">🏙️ Xem Toàn TP</button>
+                </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div class="glass-card p-3 rounded-xl shadow relative border-l-4 border-blue-500">
                         <p class="text-gray-400 text-[10px] font-semibold uppercase">Tổng Nhân Khẩu</p>
@@ -811,6 +814,7 @@
             // với thông báo chính thức của Công an TP. Cần Thơ và cập nhật nếu sai.
             diaChiCongAnPhuong: ["Số 02, đường Nguyễn Tri Phương, Phường Tân An, Cần Thơ", "390 đường 30 Tháng 4, Phường Tân An, Cần Thơ"],
             diaChiCongAnChuaXacMinh: true,
+            tongSoKhuVuc: 12, // Tổng số khu vực thực tế của phường (dùng để tính % ĐỦ dữ liệu trên Dashboard — minh bạch độ phủ, tránh gây hiểu nhầm là đã khảo sát hết phường trong khi mới có 1 phần)
             hieuLuc: "01/07/2025"
         };
 
@@ -1806,6 +1810,8 @@
             document.getElementById('userBadgeRole').innerText = currentUser.role === 'admin' ? 'Quyền: Admin' : (currentUser.role === 'chi_huy_tp' ? 'Chỉ Huy TP' : (currentUser.role === 'chi_huy' ? 'Chỉ Huy' : (currentUser.role === 'can_bo' ? 'CSKV' : '⚠️ Chưa cấp quyền')));
             const btnTTP = document.getElementById('btnTimToanThanhPho');
             if (btnTTP) btnTTP.classList.toggle('hidden', !(currentUser.role === 'admin' || currentUser.role === 'chi_huy_tp'));
+            const btnXemTTP = document.getElementById('btnXemToanTP');
+            if (btnXemTTP) btnXemTTP.classList.toggle('hidden', !(currentUser.role === 'admin' || currentUser.role === 'chi_huy_tp'));
             const elCheDo = document.getElementById('badgeCheDoKetNoi');
             if (elCheDo) {
                 elCheDo.innerText = CHE_DO_FIREBASE ? '☁️ Máy chủ' : '💻 Cục bộ';
@@ -2351,14 +2357,51 @@
                     : '<p class="text-gray-500 p-3">Không tìm thấy phường khớp từ khoá.</p>';
                 return;
             }
-            el.innerHTML = ds.map(d => `
-                <div class="flex justify-between items-center border-b border-gray-800 p-2">
-                    <div class="min-w-0">
-                        <p class="text-white font-semibold">🚓 Công an ${escHtml(d.phuong)}</p>
-                        ${d.diaChiCA ? `<p class="text-[10px] text-gray-400">${escHtml(d.diaChiCA)}</p>` : '<p class="text-[10px] text-gray-600 italic">Chưa có địa chỉ dạng chữ</p>'}
+            el.innerHTML = ds.map(d => {
+                // Chỉ cho phép SỬA địa chỉ trực tiếp trong danh bạ nếu tài khoản có quyền ghi đúng phường đó
+                // (Admin, Chỉ huy TP, hoặc Chỉ huy/CSKV của đúng phường này) — khớp với Security Rules trên máy chủ.
+                const coQuyenSua = coQuyenXemPhuong(d.phuong) && (currentUser.role === 'admin' || currentUser.role === 'chi_huy_tp' || (currentUser.phuongPhuTrach || []).includes(d.phuong));
+                return `
+                <div class="border-b border-gray-800 p-2">
+                    <div class="flex justify-between items-center">
+                        <div class="min-w-0">
+                            <p class="text-white font-semibold">🚓 Công an ${escHtml(d.phuong)}</p>
+                            <p id="diaChiHienThi_${escHtml(d.id)}" class="text-[10px] ${d.diaChiCA ? 'text-gray-400' : 'text-gray-600 italic'}">${d.diaChiCA ? escHtml(d.diaChiCA) : 'Chưa có địa chỉ dạng chữ'}</p>
+                        </div>
+                        <div class="flex gap-1 flex-shrink-0">
+                            ${coQuyenSua ? `<button onclick="toggleSuaDiaChiDanhBa('${escHtml(d.id)}')" class="bg-fuchsia-700 hover:bg-fuchsia-600 px-2 py-1 rounded text-[11px] font-medium">✏️ Sửa</button>` : ''}
+                            <button onclick="chiDuongDanhBaCongAn('${escHtml(d.id).replace(/'/g, "&apos;")}')" class="bg-blue-700 hover:bg-blue-600 px-2.5 py-1 rounded text-[11px] font-medium">🧭 Chỉ Đường</button>
+                        </div>
                     </div>
-                    <button onclick="chiDuongDanhBaCongAn('${escHtml(d.id).replace(/'/g, "&apos;")}')" class="bg-blue-700 hover:bg-blue-600 px-2.5 py-1 rounded text-[11px] font-medium flex-shrink-0">🧭 Chỉ Đường</button>
-                </div>`).join('');
+                    ${coQuyenSua ? `<div id="khungSuaDiaChi_${escHtml(d.id)}" class="hidden flex gap-1.5 mt-1.5">
+                        <input type="text" id="inputSuaDiaChi_${escHtml(d.id)}" value="${d.diaChiCA ? escHtml(d.diaChiCA) : ''}" placeholder="Nhập địa chỉ trụ sở..." class="flex-1 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-[11px] text-white">
+                        <button onclick="luuDiaChiTrongDanhBa('${escHtml(d.id)}')" class="bg-emerald-700 hover:bg-emerald-600 px-2.5 py-1 rounded text-[11px] font-medium flex-shrink-0">💾 Lưu</button>
+                    </div>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        function toggleSuaDiaChiDanhBa(tenPhuong) {
+            const khung = document.getElementById('khungSuaDiaChi_' + tenPhuong);
+            if (khung) khung.classList.toggle('hidden');
+        }
+
+        async function luuDiaChiTrongDanhBa(tenPhuong) {
+            const diaChi = document.getElementById('inputSuaDiaChi_' + tenPhuong).value.trim();
+            if (!diaChi) return alert("Vui lòng nhập địa chỉ.");
+            try {
+                await dbFirestore.collection('dia_diem_dac_biet').doc(tenPhuong).set({ phuong: tenPhuong, diaChiCA: diaChi }, { merge: true });
+                ghiNhatKy('Cập nhật địa chỉ Công an phường (từ Danh Bạ)', tenPhuong + ': ' + diaChi);
+                document.getElementById('diaChiHienThi_' + tenPhuong).innerText = diaChi;
+                document.getElementById('diaChiHienThi_' + tenPhuong).className = 'text-[10px] text-gray-400';
+                const idx = danhBaCongAnDaTai.findIndex(d => d.id === tenPhuong);
+                if (idx >= 0) danhBaCongAnDaTai[idx].diaChiCA = diaChi;
+                toggleSuaDiaChiDanhBa(tenPhuong);
+                // Đồng bộ luôn sang ô địa chỉ ở khung bản đồ chính nếu đang xem đúng phường này
+                if (khuVucHienTai === tenPhuong) { const elChu = document.getElementById('diaChiCaChu'); if (elChu) elChu.value = diaChi; }
+            } catch (err) {
+                alert("❌ Lỗi lưu địa chỉ: " + err.message);
+            }
         }
 
         function chiDuongDanhBaCongAn(tenPhuongDich) {
@@ -4052,9 +4095,27 @@
             let theoKhuVuc = {};
             dsPhuongNay.forEach(h => { const k = layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1'; theoKhuVuc[k] = (theoKhuVuc[k] || 0) + 1; });
 
+            // MINH BẠCH ĐỘ PHỦ DỮ LIỆU: trước đây Dashboard ghi "(tất cả khu vực)" dễ gây hiểu nhầm là đã có
+            // dữ liệu đầy đủ toàn phường, trong khi thực tế có thể MỚI CHỈ 1/12 khu vực đã nhập liệu. Đây là
+            // yêu cầu "ĐỦ" (một trong 4 trụ cột) — báo cáo phải trung thực về mức độ hoàn thiện dữ liệu.
+            const khuThongTin = DANH_MUC_HANH_CHINH[khuVucHienTai];
+            const tongSoKhuVucDuKien = (khuThongTin && khuThongTin.info && khuThongTin.info.tongSoKhuVuc) || null;
+            const soKhuVucCoDuLieu = Object.keys(theoKhuVuc).length;
+            let canhBaoDoPhu = '';
+            if (!phamViKVDashboard && tongSoKhuVucDuKien && soKhuVucCoDuLieu < tongSoKhuVucDuKien) {
+                canhBaoDoPhu = `<div class="bg-amber-950/40 border border-amber-700/50 rounded-lg p-2 mb-2 text-[11px] text-amber-300">
+                    ⚠️ <b>Độ phủ dữ liệu: ${soKhuVucCoDuLieu}/${tongSoKhuVucDuKien} khu vực đã có dữ liệu</b> — số liệu bên dưới CHƯA đại diện cho toàn bộ ${escHtml(khuVucHienTai)}, còn ${tongSoKhuVucDuKien - soKhuVucCoDuLieu} khu vực chưa nhập liệu.
+                </div>`;
+            } else if (!phamViKVDashboard && !tongSoKhuVucDuKien) {
+                canhBaoDoPhu = `<div class="bg-gray-800/60 border border-gray-700 rounded-lg p-2 mb-2 text-[10px] text-gray-400">
+                    ℹ️ Đang hiển thị dữ liệu của ${soKhuVucCoDuLieu} khu vực đã nhập liệu (chưa xác định tổng số khu vực thực tế của ${escHtml(khuVucHienTai)} để tính % độ phủ).
+                </div>`;
+            }
+
             el.innerHTML = `
                 <div class="mb-3">
                     <p class="font-bold text-gray-100 text-sm mb-2">🏘️ ${escHtml(khuVucHienTai)}${escHtml(nhanPhamVi)}</p>
+                    ${canhBaoDoPhu}
                     <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
                         ${theKPI('🏠', dsPhuongNay.length, 'Tổng số hộ', 'linear-gradient(135deg,#1e3a8a,#1e40af)', '#93c5fd')}
                         ${theKPI('👥', soKhau, 'Tổng nhân khẩu', 'linear-gradient(135deg,#065f46,#047857)', '#6ee7b7')}
@@ -4116,7 +4177,7 @@
                     });
                     const tenPhuong = Object.keys(theoPhuong).sort((a, b) => theoPhuong[b].ho - theoPhuong[a].ho);
                     elTP.innerHTML = `<div class="border-t border-gray-700 pt-3">
-                        <p class="font-bold text-gray-100 text-sm mb-2">🏙️ Toàn Thành Phố — ${tenPhuong.length} phường có dữ liệu</p>
+                        <p class="font-bold text-gray-100 text-sm mb-2">🏙️ Toàn Thành Phố — ${tenPhuong.length}/103 phường/xã đã có dữ liệu</p>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
                                 <p class="text-gray-300 font-semibold mb-1 text-[11px]">Xếp hạng số hộ theo phường</p>
@@ -4260,6 +4321,38 @@
                 } else {
                     alert("❌ Lỗi: " + (err.message || err.code));
                 }
+            }
+        }
+
+        // Cho phép Admin/Chỉ huy TP (PC06) xem NGAY tổng số nhân khẩu/hộ của TOÀN THÀNH PHỐ tại ô Tổng quan
+        // chính, không cần mở Dashboard — đúng yêu cầu "xem toàn thành phố" ngay từ màn hình đầu tiên.
+        let dangXemToanTP = false;
+        async function xemTongToanThanhPho() {
+            const btn = document.getElementById('btnXemToanTP');
+            if (dangXemToanTP) {
+                dangXemToanTP = false;
+                btn.innerText = '🏙️ Xem Toàn TP';
+                capNhatGiaoDienSauKhiTai(); // Nạp lại đúng số liệu của phường đang chọn
+                return;
+            }
+            btn.innerText = '⏳ Đang tính...';
+            try {
+                const snap = await dbFirestore.collection('households').get();
+                let tongHo = 0, tongKhau = 0;
+                const soPhuongCoDL = new Set();
+                snap.docs.forEach(d => {
+                    const h = d.data();
+                    tongHo++; tongKhau += (h.thanhVien ? h.thanhVien.length : 0);
+                    soPhuongCoDL.add(h.phuong || 'Phường Tân An');
+                });
+                document.getElementById('statNhanKhau').innerText = tongKhau;
+                document.getElementById('statHoGiaDinh').innerText = tongHo;
+                document.getElementById('nguCanhTongQuan').innerText = `🏙️ TOÀN THÀNH PHỐ — ${soPhuongCoDL.size}/103 phường/xã có dữ liệu`;
+                dangXemToanTP = true;
+                btn.innerText = '↩️ Quay Lại Xem Theo Phường';
+            } catch (err) {
+                alert("❌ Lỗi tính tổng toàn thành phố: " + err.message);
+                btn.innerText = '🏙️ Xem Toàn TP';
             }
         }
 
