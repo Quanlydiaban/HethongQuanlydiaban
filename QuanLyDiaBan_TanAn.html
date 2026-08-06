@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Quản Lý Địa Bàn Cho CSKV - Phường Tân An, TP. Cần Thơ</title>
+    <title>Hệ Thống Quản Lý Địa Bàn Cho CSKV - Công an Phường Tân An, TP. Cần Thơ</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#8A0E1F">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -145,7 +145,7 @@
                 <button onclick="moModalHuongDanExcel()" class="bg-gray-700 hover:bg-gray-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">❓ Hướng Dẫn Mẫu Excel</button>
                 <button onclick="xuatBaoCaoExcelKV1()" class="bg-purple-600 hover:bg-purple-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📋 Xuất Mẫu KV1</button>
                 <button onclick="xuatBaoCaoExcelKV2()" class="bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📊 Xuất Mẫu KV2</button>
-                <button onclick="xuatBaoCaoThongKeTongHop()" class="bg-cyan-600 hover:bg-cyan-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📈 Báo Cáo Thống Kê</button>
+                <button onclick="moModalChonKyBaoCao()" class="bg-cyan-600 hover:bg-cyan-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📈 Báo Cáo Thống Kê</button>
                 <button onclick="moModalNhacCCCD()" class="bg-orange-600 hover:bg-orange-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔔 Nhắc Mốc CCCD</button>
                 <button onclick="moModalNhacHanTamTru()" class="bg-yellow-700 hover:bg-yellow-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🏠 Nhắc Hạn Tạm Trú</button>
                 <button onclick="moModalLichKiemTraDinhKy()" class="bg-lime-700 hover:bg-lime-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🗓️ Lịch Kiểm Tra Định Kỳ</button>
@@ -320,6 +320,7 @@
                             <span>🧭 Lập tuyến kiểm tra nhanh</span>
                         </button>
                         <button onclick="moDanhBaCongAn()" class="bg-red-700 hover:bg-red-600 px-2.5 py-1 rounded text-[11px] font-medium shadow">📇 Danh Bạ Công An Các Phường</button>
+                        <button onclick="document.getElementById('soTayPhapLyModal').classList.remove('hidden')" class="bg-amber-800 hover:bg-amber-700 px-2.5 py-1 rounded text-[11px] font-medium shadow">📖 Sổ Tay Luật Cư Trú</button>
                     </div>
                     <div class="flex items-center gap-1.5 mt-1.5">
                         <span class="text-[11px] text-gray-400 flex-shrink-0">🚓 Địa chỉ trụ sở Công an phường:</span>
@@ -380,7 +381,7 @@
             <div id="printArea" class="p-3 overflow-y-auto space-y-3 flex-grow text-xs bg-gray-900/50">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
                     <div class="space-y-2.5 bg-gray-900 p-3 rounded-lg border border-gray-700">
-                        <p><strong class="text-gray-400">Số Hồ sơ:</strong> <span id="modalHsct" class="font-mono text-blue-300 font-bold"></span></p>
+                        <p><strong class="text-gray-400">Số Hồ sơ:</strong> <span id="modalHsct" class="font-mono text-blue-300 font-bold"></span> <button type="button" onclick="hienModalQRHoSo()" class="text-[10px] bg-indigo-700 hover:bg-indigo-600 px-2 py-0.5 rounded ml-1">📱 Mã QR</button></p>
                         <div>
                             <label class="text-gray-400 block mb-0.5">Họ tên Chủ hộ:</label>
                             <input type="text" id="editChuHo" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white w-full font-semibold">
@@ -397,6 +398,18 @@
                                 <option value="Lưu trú">🟠 Lưu trú</option>
                                 <option value="NOHN">🔴 NOHN (Nơi ở hiện nay)</option>
                             </select>
+                            <label class="text-gray-400 block mb-0.5 text-[10px]">Loại hình nơi ở (theo Điều 26.2 TT116/2026/TT-BCA):</label>
+                            <select id="editLoaiHinhNoiO" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white w-full mb-2 text-[11px]">
+                                <option value="Hộ gia đình">🏠 Hộ gia đình</option>
+                                <option value="Ký túc xá/Nhà ở học sinh, sinh viên">🎓 Ký túc xá / Nhà ở học sinh, sinh viên</option>
+                                <option value="Nhà ở người lao động/Lán trại công trường">👷 Nhà ở người lao động / Lán trại công trường</option>
+                                <option value="Nhà cho thuê/mượn/ở nhờ">🔑 Nhà cho thuê / cho mượn / ở nhờ</option>
+                                <option value="Cơ sở tín ngưỡng, tôn giáo">🛕 Cơ sở tín ngưỡng, tôn giáo</option>
+                                <option value="Cơ sở trợ giúp xã hội">🤝 Cơ sở trợ giúp xã hội</option>
+                                <option value="Cơ sở chữa bệnh">🏥 Cơ sở chữa bệnh</option>
+                                <option value="Cơ sở lưu trú du lịch">🏨 Cơ sở lưu trú du lịch</option>
+                                <option value="Phương tiện dùng để cư trú">🚐 Phương tiện dùng để cư trú</option>
+                            </select>
 
                             <div id="khungNgayHetHan" class="hidden mb-2">
                                 <label class="text-gray-400 block mb-0.5 font-semibold text-amber-300">Ngày hết hạn Tạm/Lưu trú:</label>
@@ -408,7 +421,10 @@
 
                             <div class="flex items-center justify-between bg-gray-800 rounded px-2 py-1.5 mt-1">
                                 <span class="text-gray-400">🗓️ Kiểm tra định kỳ gần nhất: <span id="hienThiNgayKiemTra" class="text-white font-medium">Chưa từng</span></span>
-                                <button type="button" onclick="danhDauDaKiemTra()" class="bg-yellow-700 hover:bg-yellow-600 px-2 py-1 rounded text-[11px]">✅ Đánh dấu đã kiểm tra hôm nay</button>
+                                <div class="flex gap-1">
+                                    <button type="button" onclick="danhDauDaKiemTra('Định kỳ')" class="bg-yellow-700 hover:bg-yellow-600 px-2 py-1 rounded text-[11px]" title="Kiểm tra theo lịch định kỳ hàng tháng">✅ Định Kỳ</button>
+                                    <button type="button" onclick="danhDauDaKiemTra('Đột xuất')" class="bg-orange-700 hover:bg-orange-600 px-2 py-1 rounded text-[11px]" title="Kiểm tra đột xuất — theo Điều 26 TT116/2026/TT-BCA">⚡ Đột Xuất</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -663,6 +679,50 @@
 
             <input type="text" id="timKiemNhatKy" oninput="renderNhatKyDiaBan()" placeholder="🔍 Tìm theo tiêu đề, địa chỉ, mô tả..." class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
             <div id="noiDungNhatKyDiaBan" class="overflow-x-auto max-h-64 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <div id="soTayPhapLyModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+        <div class="glass-card w-full max-w-3xl rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[88vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-amber-400">📖 Sổ Tay Tra Cứu Nhanh — Luật Cư Trú & TT116/2026/TT-BCA</h3>
+                <button onclick="document.getElementById('soTayPhapLyModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <p class="text-gray-500 text-[10px]">Trích dẫn tóm lược để tra cứu nhanh tại hiện trường — KHÔNG thay thế văn bản gốc. Nguồn: Luật Cư trú số 68/2020/QH14 (hợp nhất, sửa đổi bởi Luật số 118/2025/QH15) và Thông tư 116/2026/TT-BCA ngày 29/6/2026.</p>
+            <input type="text" id="timKiemSoTayPL" oninput="locSoTayPhapLy()" placeholder="🔍 Tìm nhanh theo từ khoá (VD: tạm vắng, chủ hộ, biểu mẫu...)" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+            <div id="dsSoTayPhapLy" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <div id="qrHoSoModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-[60]">
+        <div class="glass-card w-full max-w-xs rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs text-center">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-indigo-400">📱 Mã QR Hồ Sơ</h3>
+                <button onclick="document.getElementById('qrHoSoModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <p class="text-gray-400">In dán tại nhà (hoặc lưu trong hồ sơ giấy) — CSKV quét bằng camera điện thoại là <b>mở thẳng đúng hồ sơ</b> này trong phần mềm, không cần gõ tìm kiếm khi đến kiểm tra thực địa.</p>
+            <div id="qrHoSoCanvas" class="bg-white p-3 rounded-xl mx-auto w-fit flex justify-center items-center"></div>
+            <p id="qrHoSoTenHo" class="text-white font-semibold"></p>
+            <button onclick="taiXuongQRHoSo()" class="w-full bg-indigo-600 hover:bg-indigo-700 rounded px-3 py-1.5 font-medium">⬇️ Tải Ảnh Mã QR (để in)</button>
+        </div>
+    </div>
+
+    <div id="kyBaoCaoModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+        <div class="glass-card w-full max-w-sm rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-cyan-400">📈 Chọn Kỳ Báo Cáo</h3>
+                <button onclick="document.getElementById('kyBaoCaoModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <p class="text-gray-400">Theo đúng chu kỳ báo cáo quy định tại Điều 20.12, Thông tư 116/2026/TT-BCA (mẫu CT13) — thống kê tình hình, kết quả đăng ký, quản lý cư trú theo ngày/tuần/tháng/quý/06 tháng/năm.</p>
+            <div class="grid grid-cols-2 gap-1.5">
+                <button onclick="xuatBaoCaoThongKeTongHop('ngay')" class="bg-gray-800 hover:bg-cyan-800 rounded px-2 py-2 font-medium">Hôm nay</button>
+                <button onclick="xuatBaoCaoThongKeTongHop('tuan')" class="bg-gray-800 hover:bg-cyan-800 rounded px-2 py-2 font-medium">Tuần này</button>
+                <button onclick="xuatBaoCaoThongKeTongHop('thang')" class="bg-gray-800 hover:bg-cyan-800 rounded px-2 py-2 font-medium">Tháng này</button>
+                <button onclick="xuatBaoCaoThongKeTongHop('quy')" class="bg-gray-800 hover:bg-cyan-800 rounded px-2 py-2 font-medium">Quý này</button>
+                <button onclick="xuatBaoCaoThongKeTongHop('6thang')" class="bg-gray-800 hover:bg-cyan-800 rounded px-2 py-2 font-medium">6 tháng</button>
+                <button onclick="xuatBaoCaoThongKeTongHop('nam')" class="bg-gray-800 hover:bg-cyan-800 rounded px-2 py-2 font-medium">Năm nay</button>
+            </div>
+            <button onclick="xuatBaoCaoThongKeTongHop('toanbo')" class="w-full bg-cyan-700 hover:bg-cyan-600 rounded px-3 py-1.5 font-medium">📋 Toàn bộ (không giới hạn kỳ)</button>
         </div>
     </div>
 
@@ -1497,11 +1557,13 @@
                     danhSachHoGiaDinh = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
                     phanTichDuLieuPhanCap();
                     capNhatGiaoDienSauKhiTai();
+                    if (!daTuMoHoSoTuQR) { daTuMoHoSoTuQR = true; tuDongMoHoSoTuUrlQR(); } // Chỉ tự mở 1 LẦN DUY NHẤT lúc tải đầu tiên, không lặp lại mỗi lần đồng bộ dữ liệu
                 }, err => {
                     console.error("Lỗi đồng bộ Firestore:", err);
                     alert("⚠️ Mất kết nối đồng bộ dữ liệu với máy chủ. Kiểm tra lại internet hoặc quyền truy cập (Security Rules).");
                 });
         }
+        let daTuMoHoSoTuQR = false;
 
         // Ghi 1 hộ (mới hoặc cập nhật) lên Firestore. Nếu hộ chưa có "id" Firestore -> tạo mới.
         async function luuHoLenFirestore(ho) {
@@ -2834,10 +2896,21 @@
         // Danh sách các từ chỉ QUAN HỆ (không phải TÊN NGƯỜI) — dùng để phát hiện và tự sửa trường hợp cột
         // "Chủ hộ" trong file Excel bị đọc nhầm giá trị từ cột "Quan hệ với chủ hộ" (2 cột dễ trùng từ khóa
         // dò cột do tên tiêu đề lồng nhau, VD "Quan hệ VỚI CHỦ HỘ" chứa sẵn cụm "chủ hộ").
-        const TU_CHI_QUAN_HE_PHO_BIEN = ['chủ hộ','vợ','chồng','con','con đẻ','con nuôi','con dâu','con rể',
-            'cháu','cháu nội','cháu ngoại','cha','mẹ','cha mẹ','ông','bà','ông nội','bà nội','ông ngoại','bà ngoại',
-            'anh','chị','em','anh trai','chị gái','em trai','em gái','bố','ba','mợ','dì','chú','bác','cô','thím',
-            'em dâu','em rể','khác','người ở nhờ','người thuê nhà','thành viên'];
+        // CẬP NHẬT theo ĐÚNG danh mục chính thức tại Điều 6 khoản 1, Thông tư 116/2026/TT-BCA ngày 29/6/2026
+        // (quy định chi tiết một số điều và biện pháp thi hành Luật Cư trú) — đầy đủ, chính xác thuật ngữ.
+        const TU_CHI_QUAN_HE_PHO_BIEN = ['chủ hộ','vợ','chồng',
+            'cha đẻ','mẹ đẻ','cha vợ','mẹ vợ','cha chồng','mẹ chồng','cha nuôi','mẹ nuôi','cha dượng','mẹ kế',
+            'con đẻ','con dâu','con rể','con nuôi','con riêng của vợ','con riêng của chồng','con riêng',
+            'ông nội','bà nội','ông ngoại','bà ngoại','anh ruột','chị ruột','em ruột','cháu ruột',
+            'anh cùng cha khác mẹ','chị cùng cha khác mẹ','em cùng cha khác mẹ',
+            'anh cùng mẹ khác cha','chị cùng mẹ khác cha','em cùng mẹ khác cha',
+            'anh rể','em rể','chị dâu','em dâu',
+            'cụ nội','cụ ngoại','cháu nội','cháu ngoại',
+            'bác ruột','chú ruột','cậu ruột','cô ruột','dì ruột','chắt ruột',
+            'người giám hộ','người được giám hộ','ở thuê','ở mượn','cùng ở thuê','cùng ở mượn','cùng ở nhờ',
+            // Giữ thêm 1 số cách gọi thông dụng ngoài đời (không phải thuật ngữ chính thức) để vẫn nhận diện đúng khi cán bộ gõ tắt
+            'con','cháu','cha','mẹ','ông','bà','anh','chị','em','bố','ba','mợ','dì','chú','bác','cô','thím',
+            'khác','người ở nhờ','người thuê nhà','thành viên'];
         function laTuChiQuanHe(s) {
             const t = boDauTiengViet(s || '').trim();
             return TU_CHI_QUAN_HE_PHO_BIEN.some(tu => t === boDauTiengViet(tu));
@@ -3329,6 +3402,48 @@
             });
         }
 
+        // ================== MÃ QR HỒ SƠ (khả thi cao — không phụ thuộc bên thứ ba) ==================
+        // Mã QR mã hoá 1 đường link kèm ?tim=HSCT — khi quét bằng camera điện thoại rồi mở link đó, ứng dụng
+        // TỰ ĐỘNG đăng nhập (nếu đã lưu sẵn) và mở thẳng đúng hồ sơ này, khỏi cần gõ tìm kiếm thủ công khi
+        // cán bộ đến kiểm tra thực địa — đúng tinh thần "khả thi cao, không cần bên thứ ba".
+        function hienModalQRHoSo() {
+            if (currentSelectedHoIndex === null) return;
+            const ho = danhSachHoGiaDinh[currentSelectedHoIndex];
+            document.getElementById('qrHoSoTenHo').innerText = 'Hộ: ' + (ho.chuHo || '') + ' — HSCT: ' + (ho.hsct || '');
+            document.getElementById('qrHoSoCanvas').innerHTML = '';
+            const urlHienTai = location.origin + location.pathname;
+            const urlQR = urlHienTai + '?tim=' + encodeURIComponent(ho.hsct || '');
+            new QRCode(document.getElementById("qrHoSoCanvas"), { text: urlQR, width: 200, height: 200 });
+            document.getElementById('qrHoSoModal').classList.remove('hidden');
+        }
+
+        function taiXuongQRHoSo() {
+            setTimeout(() => {
+                const canvas = document.querySelector('#qrHoSoCanvas canvas');
+                if (!canvas) return alert("Chưa tạo được mã QR, vui lòng thử lại.");
+                const a = document.createElement('a');
+                a.href = canvas.toDataURL('image/png');
+                a.download = 'MaQR_' + (document.getElementById('modalHsct').innerText || 'HoSo') + '.png';
+                a.click();
+            }, 100);
+        }
+
+        // Khi tải trang, nếu URL có ?tim=HSCT (từ việc quét mã QR đã in) -> tự động tìm và mở đúng hồ sơ đó
+        // ngay sau khi dữ liệu tải xong, không cần cán bộ gõ tìm kiếm lại.
+        function tuDongMoHoSoTuUrlQR() {
+            const thamSo = new URLSearchParams(location.search);
+            const hsctCanTim = thamSo.get('tim');
+            if (!hsctCanTim) return;
+            const idx = danhSachHoGiaDinh.findIndex(h => h.hsct === hsctCanTim);
+            if (idx >= 0) {
+                xemChiTiet(idx);
+                // Xoá tham số khỏi URL sau khi đã mở, tránh mở lại hồ sơ này mỗi lần F5
+                history.replaceState({}, '', location.pathname);
+            } else {
+                alert("⚠️ Không tìm thấy hồ sơ có mã HSCT: " + hsctCanTim + " trong dữ liệu phường đang xem. Có thể hồ sơ thuộc phường khác — vui lòng chuyển đúng phường rồi thử quét lại.");
+            }
+        }
+
         function xemChiTiet(idx) {
             currentSelectedHoIndex = idx;
             const ho = danhSachHoGiaDinh[idx];
@@ -3350,8 +3465,9 @@
                 else { elTT.innerText = 'Chưa có toạ độ'; elTT.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-gray-800 text-gray-400'; }
             }
             document.getElementById('editDienNV').value = ho.dienNghiepVu || 'Thường trú';
+            document.getElementById('editLoaiHinhNoiO').value = ho.loaiHinhNoiO || 'Hộ gia đình';
             document.getElementById('editNgayHetHan').value = ho.ngayHetHan || '';
-            document.getElementById('hienThiNgayKiemTra').innerText = ho.ngayKiemTraGanNhat ? new Date(ho.ngayKiemTraGanNhat).toLocaleDateString('vi-VN') : 'Chưa từng';
+            document.getElementById('hienThiNgayKiemTra').innerText = ho.ngayKiemTraGanNhat ? (new Date(ho.ngayKiemTraGanNhat).toLocaleDateString('vi-VN') + (ho.loaiKiemTraGanNhat ? ' (' + ho.loaiKiemTraGanNhat + ')' : '')) : 'Chưa từng';
             doiDienNVTrongForm();
 
             xoaAnhNha();
@@ -3569,15 +3685,25 @@
         }
 
         // Đánh dấu hộ này vừa được kiểm tra định kỳ (lưu ngay, không cần bấm "Lưu Hồ Sơ" riêng)
-        async function danhDauDaKiemTra() {
+        // Theo Điều 26 khoản 1, TT116/2026/TT-BCA: "Hình thức kiểm tra cư trú được tiến hành ĐỊNH KỲ, ĐỘT XUẤT
+        // hoặc do yêu cầu phòng, chống tội phạm, bảo đảm an ninh, trật tự." — ghi rõ loại hình kiểm tra và lý
+        // do (nếu đột xuất) để đúng quy định, phục vụ thống kê/báo cáo sau này.
+        async function danhDauDaKiemTra(loaiKiemTra) {
             if (currentSelectedHoIndex === null) return;
             const ho = danhSachHoGiaDinh[currentSelectedHoIndex];
+            let ghiChuLoai = loaiKiemTra || 'Định kỳ';
+            if (loaiKiemTra === 'Đột xuất') {
+                const lyDo = prompt("Lý do kiểm tra đột xuất (VD: theo yêu cầu phòng chống tội phạm, tin báo của công dân...):", "");
+                if (lyDo === null) return; // Huỷ nếu không nhập
+                ghiChuLoai = 'Đột xuất' + (lyDo.trim() ? ' — ' + lyDo.trim() : '');
+            }
             ho.ngayKiemTraGanNhat = new Date().toISOString();
-            document.getElementById('hienThiNgayKiemTra').innerText = new Date(ho.ngayKiemTraGanNhat).toLocaleDateString('vi-VN');
+            ho.loaiKiemTraGanNhat = ghiChuLoai;
+            document.getElementById('hienThiNgayKiemTra').innerText = new Date(ho.ngayKiemTraGanNhat).toLocaleDateString('vi-VN') + ' (' + ghiChuLoai + ')';
             try {
                 if (CHE_DO_FIREBASE) { await luuHoLenFirestore(ho); }
                 else { localStorage.setItem("danhSachHoGiaDinhCacheGIS_V5", JSON.stringify(danhSachHoGiaDinh)); }
-                ghiNhatKy('Kiểm tra định kỳ', 'Hộ: ' + (ho.chuHo || ho.hsct));
+                ghiNhatKy('Kiểm tra cư trú (' + ghiChuLoai.split(' — ')[0] + ')', 'Hộ: ' + (ho.chuHo || ho.hsct) + (ghiChuLoai.includes('—') ? ' - ' + ghiChuLoai.split(' — ')[1] : ''));
             } catch (err) { alert("❌ Lỗi lưu: " + err.message); }
         }
 
@@ -3631,6 +3757,7 @@
             }
 
             ho.dienNghiepVu = document.getElementById('editDienNV').value;
+            ho.loaiHinhNoiO = document.getElementById('editLoaiHinhNoiO').value;
             ho.ngayHetHan = (ho.dienNghiepVu === 'Tạm trú' || ho.dienNghiepVu === 'Lưu trú') ? document.getElementById('editNgayHetHan').value : '';
             ho.anhNha = document.getElementById('base64AnhNha').value;
 
@@ -4436,11 +4563,65 @@
             }
         }
 
-        function xuatBaoCaoThongKeTongHop() {
+        // ================== SỔ TAY TRA CỨU NHANH LUẬT CƯ TRÚ / TT116 (khả thi cao) ==================
+        // Nội dung trích tóm lược TRỰC TIẾP từ Luật Cư trú số 68/2020/QH14 (bản hợp nhất) và Thông tư
+        // 116/2026/TT-BCA ngày 29/6/2026 — đã đọc trực tiếp văn bản gốc trong Project trước khi soạn.
+        const DU_LIEU_SO_TAY_PHAP_LY = [
+            { dieu: "Điều 5 TT116/2026", tieuDe: "Các trường hợp tạm thời CHƯA được thay đổi nơi cư trú", noiDung: "1) Người đang bị hạn chế quyền tự do cư trú (bị áp dụng biện pháp cấm đi khỏi nơi cư trú, tạm giữ, tạm giam, đang chấp hành án phạt tù, quản chế...); 2) Người đang sinh sống tại địa điểm/khu vực bị cách ly do phòng chống dịch bệnh, tình trạng khẩn cấp; 3) Người đang bị áp dụng hình phạt cấm cư trú tại nơi đó." },
+            { dieu: "Điều 6.1 TT116/2026", tieuDe: "Danh mục ĐẦY ĐỦ mối quan hệ với chủ hộ", noiDung: "Vợ, chồng, cha đẻ, mẹ đẻ, cha vợ, mẹ vợ, cha chồng, mẹ chồng, cha nuôi, mẹ nuôi, cha dượng, mẹ kế, con đẻ, con dâu, con rể, con nuôi, con riêng của vợ/chồng; ông/bà nội, ông/bà ngoại, anh/chị/em ruột, cháu ruột; anh/chị/em cùng cha khác mẹ hoặc cùng mẹ khác cha; anh rể, em rể, chị dâu, em dâu; cụ nội/ngoại, cháu nội/ngoại; bác/chú/cậu/cô/dì ruột, chắt ruột; người giám hộ, người được giám hộ; ở thuê, ở mượn, ở nhờ." },
+            { dieu: "Điều 25 TT116/2026", tieuDe: "Trách nhiệm của Công an cấp xã (phường)", noiDung: "Thu thập, cập nhật, chỉnh sửa thông tin công dân vào CSDL về cư trú theo thẩm quyền; tiếp nhận phản hồi của người dân về thông tin sai lệch và kịp thời cập nhật; phối hợp rà soát tình trạng cư trú người điều khiển/nhân viên phương tiện vận tải hành khách trên địa bàn; phối hợp khai báo tạm vắng với người đi nghĩa vụ quân sự; định kỳ, đột xuất kiểm tra cư trú." },
+            { dieu: "Điều 26 TT116/2026", tieuDe: "Kiểm tra cư trú", noiDung: "Hình thức: ĐỊNH KỲ, ĐỘT XUẤT hoặc theo yêu cầu phòng chống tội phạm, bảo đảm an ninh trật tự. Đối tượng/địa bàn kiểm tra: công dân, hộ gia đình, ký túc xá/nhà ở học sinh-sinh viên, nhà ở người lao động/lán trại công trường, nhà cho thuê/mượn/ở nhờ, cơ sở tín ngưỡng-tôn giáo, cơ sở trợ giúp xã hội, cơ sở chữa bệnh, cơ sở lưu trú du lịch, phương tiện dùng để cư trú." },
+            { dieu: "Điều 20 TT116/2026", tieuDe: "Biểu mẫu CT01–CT16", noiDung: "CT01: Tờ khai thay đổi thông tin cư trú (thường trú, tạm trú, tách hộ, gia hạn, xác nhận...). CT02: cho người VN định cư nước ngoài về sinh sống. CT03: Phiếu khai báo tạm vắng. CT04: Phiếu tiếp nhận hồ sơ, hẹn trả kết quả. CT13: Thống kê tình hình/kết quả đăng ký, quản lý cư trú theo ngày/tuần/tháng/quý/6 tháng/năm. CT14: Phiếu thông báo lưu trú." },
+            { dieu: "Điều 8.2 Luật Cư trú", tieuDe: "Quyền bảo mật thông tin của công dân", noiDung: "Công dân được bảo đảm bí mật thông tin cá nhân, thông tin về hộ gia đình trong Cơ sở dữ liệu về cư trú, trừ trường hợp cung cấp theo quy định của pháp luật." },
+            { dieu: "Điều 7.13 Luật Cư trú", tieuDe: "Hành vi NGHIÊM CẤM về dữ liệu cư trú", noiDung: "Nghiêm cấm truy nhập, khai thác, hủy hoại, làm cản trở/gián đoạn hoạt động, thay đổi, xóa, phát tán, cung cấp trái phép thông tin trong Cơ sở dữ liệu về cư trú." },
+            { dieu: "Điều 36.3 Luật Cư trú", tieuDe: "Yêu cầu an toàn dữ liệu cư trú", noiDung: "Mọi sự truy nhập để thay đổi thông tin cư trú của công dân phải được sự phê duyệt của thủ trưởng cơ quan đăng ký cư trú hoặc cơ quan có thẩm quyền; nghiêm cấm cung cấp/trao đổi/sao chép/in trái phép thông tin từ CSDL về cư trú." },
+            { dieu: "Điều 10 Luật Cư trú", tieuDe: "Chủ hộ và hộ gia đình", noiDung: "Chủ hộ là người có năng lực hành vi dân sự đầy đủ do các thành viên hộ gia đình thống nhất đề cử; hộ chỉ có 1 người thì người đó là chủ hộ. Trường hợp không thống nhất được thì do Toà án quyết định." }
+        ];
+
+        function locSoTayPhapLy() {
+            const tuKhoa = boDauTiengViet(document.getElementById('timKiemSoTayPL').value.trim());
+            const ds = tuKhoa ? DU_LIEU_SO_TAY_PHAP_LY.filter(m => boDauTiengViet(m.tieuDe + ' ' + m.noiDung + ' ' + m.dieu).includes(tuKhoa)) : DU_LIEU_SO_TAY_PHAP_LY;
+            const el = document.getElementById('dsSoTayPhapLy');
+            if (ds.length === 0) { el.innerHTML = '<p class="text-gray-500 p-3">Không tìm thấy nội dung khớp từ khoá.</p>'; return; }
+            el.innerHTML = ds.map(m => `
+                <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
+                    <p class="text-amber-400 font-bold">${escHtml(m.dieu)} — ${escHtml(m.tieuDe)}</p>
+                    <p class="text-gray-300 mt-1">${escHtml(m.noiDung)}</p>
+                </div>`).join('');
+        }
+        // Đổ danh sách ngay khi cần (gọi lại mỗi lần mở modal, phòng khi phần tử chưa tồn tại lúc load trang)
+        document.addEventListener('DOMContentLoaded', () => { try { locSoTayPhapLy(); } catch(e) {} });
+
+        function moModalChonKyBaoCao() {
+            document.getElementById('kyBaoCaoModal').classList.remove('hidden');
+        }
+
+        function xuatBaoCaoThongKeTongHop(kyBaoCao) {
+            document.getElementById('kyBaoCaoModal').classList.add('hidden');
             const dsBaoCao = layDuLieuThuocPhuongHienTai();
             if (dsBaoCao.length === 0) return alert("Không có dữ liệu của " + khuVucHienTai + " để xuất báo cáo thống kê!");
             const namHienTai = new Date().getFullYear();
             const wb = XLSX.utils.book_new();
+
+            // Xác định khoảng thời gian của KỲ BÁO CÁO — theo đúng chu kỳ mẫu CT13 (Điều 20.12 TT116/2026/TT-BCA):
+            // ngày / tuần / tháng / quý / 06 tháng / năm. "toanbo" = không giới hạn (giữ hành vi cũ).
+            const bayGio = new Date();
+            let tuNgay = null, denNgay = bayGio, tenKy = "Toàn bộ (không giới hạn kỳ)";
+            if (kyBaoCao === 'ngay') { tuNgay = new Date(bayGio.getFullYear(), bayGio.getMonth(), bayGio.getDate()); tenKy = "Hôm nay (" + bayGio.toLocaleDateString('vi-VN') + ")"; }
+            else if (kyBaoCao === 'tuan') { const d = new Date(bayGio); const thu = (d.getDay() + 6) % 7; tuNgay = new Date(d.getFullYear(), d.getMonth(), d.getDate() - thu); tenKy = "Tuần này (từ " + tuNgay.toLocaleDateString('vi-VN') + ")"; }
+            else if (kyBaoCao === 'thang') { tuNgay = new Date(bayGio.getFullYear(), bayGio.getMonth(), 1); tenKy = "Tháng " + (bayGio.getMonth() + 1) + "/" + bayGio.getFullYear(); }
+            else if (kyBaoCao === 'quy') { const quy = Math.floor(bayGio.getMonth() / 3); tuNgay = new Date(bayGio.getFullYear(), quy * 3, 1); tenKy = "Quý " + (quy + 1) + "/" + bayGio.getFullYear(); }
+            else if (kyBaoCao === '6thang') { const nua = bayGio.getMonth() < 6 ? 0 : 6; tuNgay = new Date(bayGio.getFullYear(), nua, 1); tenKy = (nua === 0 ? "6 tháng đầu năm " : "6 tháng cuối năm ") + bayGio.getFullYear(); }
+            else if (kyBaoCao === 'nam') { tuNgay = new Date(bayGio.getFullYear(), 0, 1); tenKy = "Năm " + bayGio.getFullYear(); }
+
+            function trongKy(chuoiNgayVN) {
+                if (!tuNgay) return true; // "toanbo" -> không lọc
+                if (!chuoiNgayVN) return false;
+                const m = String(chuoiNgayVN).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+                if (!m) return false;
+                const d = new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]));
+                return d >= tuNgay && d <= denNgay;
+            }
 
             // Sheet 1: Theo Khu vực / Tổ
             let theoKV = {};
@@ -4496,11 +4677,13 @@
             wsHo['!cols'] = [{ wch: 6 }, { wch: 16 }, { wch: 24 }, { wch: 40 }, { wch: 14 }, { wch: 14 }];
             XLSX.utils.book_append_sheet(wb, wsHo, "Danh Sach Ho");
 
-            // Sheet 4: Biến động nhân khẩu (chết / chuyển đi / xóa khẩu / ở nước ngoài)
+            // Sheet 4: Biến động nhân khẩu (chết / chuyển đi / xóa khẩu / ở nước ngoài) — LỌC theo đúng kỳ báo cáo đã chọn
             let rowsBienDong = [["Họ Tên", "Trạng Thái", "Ngày Biến Động", "Ghi Chú / Quốc Gia", "Hộ (Chủ hộ)", "Địa Chỉ"]];
+            let soBienDongTrongKy = 0;
             dsBaoCao.forEach(h => (h.thanhVien || []).forEach(tv => {
-                if (tv.trangThaiBienDong && tv.trangThaiBienDong !== 'Đang cư trú') {
+                if (tv.trangThaiBienDong && tv.trangThaiBienDong !== 'Đang cư trú' && trongKy(tv.ngayBienDong)) {
                     rowsBienDong.push([tv.hoTen || '', tv.trangThaiBienDong, tv.ngayBienDong || '', tv.ghiChuBienDong || '', h.chuHo || '', h.diaChi || '']);
+                    soBienDongTrongKy++;
                 }
             }));
             if (rowsBienDong.length > 1) {
@@ -4509,7 +4692,26 @@
                 XLSX.utils.book_append_sheet(wb, wsBD, "Bien_Dong_Nhan_Khau");
             }
 
-            XLSX.writeFile(wb, "Bao_Cao_Thong_Ke_Tong_Hop_Phuong_Tan_An_" + new Date().toISOString().slice(0,10) + ".xlsx");
+            // Sheet 5 (đưa lên đầu): Tóm tắt kỳ báo cáo — theo tinh thần mẫu CT13, Điều 20.12 TT116/2026/TT-BCA
+            // ("thống kê tình hình, kết quả đăng ký, quản lý cư trú theo ngày/tuần/tháng/quý/06 tháng/năm")
+            const wsKy = XLSX.utils.aoa_to_sheet([
+                ["BÁO CÁO THỐNG KÊ TÌNH HÌNH ĐĂNG KÝ, QUẢN LÝ CƯ TRÚ"],
+                ["(Theo tinh thần mẫu CT13 — Điều 20.12, Thông tư 116/2026/TT-BCA)"],
+                [],
+                ["Đơn vị báo cáo", khuVucHienTai],
+                ["Kỳ báo cáo", tenKy],
+                ["Ngày xuất báo cáo", bayGio.toLocaleDateString('vi-VN') + " " + bayGio.toLocaleTimeString('vi-VN')],
+                [],
+                ["Tổng số hộ hiện quản lý (thời điểm báo cáo)", dsBaoCao.length],
+                ["Tổng nhân khẩu hiện quản lý (thời điểm báo cáo)", dsBaoCao.reduce((t, h) => t + (h.thanhVien ? h.thanhVien.length : 0), 0)],
+                ["Số nhân khẩu biến động TRONG KỲ", soBienDongTrongKy],
+                [],
+                ["Lưu ý", "Số liệu 'hiện quản lý' là số liệu tại THỜI ĐIỂM xuất báo cáo (không tách được theo từng kỳ do hệ thống chưa lưu lịch sử biến động số hộ theo thời gian). Số 'biến động trong kỳ' đã lọc chính xác theo khoảng thời gian đã chọn."]
+            ]);
+            wsKy['!cols'] = [{ wch: 40 }, { wch: 40 }];
+            XLSX.utils.book_append_sheet(wb, wsKy, "0_Tom_Tat_Ky_Bao_Cao");
+
+            XLSX.writeFile(wb, "Bao_Cao_" + (kyBaoCao || 'toanbo') + "_" + khuVucHienTai.replace(/\s+/g, '_') + "_" + new Date().toISOString().slice(0,10) + ".xlsx");
         }
 
         function xuatBaoCaoExcelKV1() {
