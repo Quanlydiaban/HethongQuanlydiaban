@@ -691,10 +691,13 @@
             <input type="text" id="timKiemDanhBaCongAn" oninput="renderDanhBaCongAn()" placeholder="🔍 Tìm theo tên phường..." class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
             <div class="flex items-center gap-1.5">
                 <span class="text-gray-400 flex-shrink-0">Chỉ đường xuất phát từ:</span>
-                <select id="diemXuatPhatDanhBa" class="flex-1 bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
-                    <option value="hien_tai">📍 Vị trí hiện tại của tôi</option>
+                <select id="diemXuatPhatDanhBa" onchange="doiKieuXuatPhatDanhBa()" class="flex-1 bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <option value="hien_tai">📍 Vị trí hiện tại của tôi (theo GPS/mạng của thiết bị)</option>
+                    <option value="dia_chi_tuy_chon">✏️ Nhập địa chỉ khác...</option>
                 </select>
             </div>
+            <input type="text" id="diaChiXuatPhatTuyChon" placeholder="Nhập địa chỉ xuất phát, VD: 123 Nguyễn Văn Linh, Cần Thơ" class="hidden w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+            <p class="text-[10px] text-amber-400">⚠️ "Vị trí hiện tại" do chính Google Maps tự dò theo thiết bị — trên MÁY TÍNH thường kém chính xác (định vị theo mạng Wifi/IP), trên ĐIỆN THOẠI THẬT (GPS vệ tinh) chính xác hơn nhiều. Nếu thấy sai, dùng "Nhập địa chỉ khác" để chỉ định rõ điểm xuất phát.</p>
             <div id="noiDungDanhBaCongAn">Đang tải...</div>
         </div>
     </div>
@@ -2404,6 +2407,11 @@
             }
         }
 
+        function doiKieuXuatPhatDanhBa() {
+            const kieu = document.getElementById('diemXuatPhatDanhBa').value;
+            document.getElementById('diaChiXuatPhatTuyChon').classList.toggle('hidden', kieu !== 'dia_chi_tuy_chon');
+        }
+
         function chiDuongDanhBaCongAn(tenPhuongDich) {
             const dich = danhBaCongAnDaTai.find(d => d.id === tenPhuongDich);
             if (!dich || !dich.toaDoCA) return alert("Không tìm thấy toạ độ cho phường này.");
@@ -2411,8 +2419,16 @@
             const xuatPhat = document.getElementById('diemXuatPhatDanhBa').value;
 
             if (xuatPhat === 'hien_tai') {
-                // Để chính Google Maps tự nhận diện vị trí hiện tại (đáng tin cậy hơn định vị qua trình duyệt)
+                // Để chính Google Maps tự nhận diện vị trí hiện tại (đáng tin cậy hơn định vị qua trình duyệt) —
+                // LƯU Ý: độ chính xác của bước này do THIẾT BỊ quyết định, không phải do toạ độ Công an phường
+                // (toạ độ đích luôn chính xác vì đã được cán bộ xác nhận thủ công).
                 window.open(`https://www.google.com/maps/dir/?api=1&destination=${diemDen}&travelmode=driving`, '_blank');
+            } else if (xuatPhat === 'dia_chi_tuy_chon') {
+                const diaChiTuyChon = document.getElementById('diaChiXuatPhatTuyChon').value.trim();
+                if (!diaChiTuyChon) return alert("Vui lòng nhập địa chỉ xuất phát.");
+                // Dùng ĐỊA CHỈ DẠNG CHỮ trực tiếp làm điểm xuất phát — để chính Google Maps tự định vị địa chỉ
+                // này (đáng tin cậy hơn tự định vị bằng thiết bị), không phụ thuộc GPS/mạng của máy đang dùng.
+                window.open(`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(diaChiTuyChon)}&destination=${diemDen}&travelmode=driving`, '_blank');
             } else {
                 // Chỉ đường GIỮA 2 trụ sở Công an phường bất kỳ đã có trong danh bạ (VD: từ CA Tân An đến CA Cái Răng)
                 const goc = danhBaCongAnDaTai.find(d => d.id === xuatPhat);
@@ -3148,8 +3164,20 @@
             document.getElementById('statHoGiaDinh').innerText = danhSachHoGiaDinh.length;
             const elNgu = document.getElementById('nguCanhTongQuan');
             if (elNgu) {
-                const kvDangLoc = document.getElementById('filterKhuVuc') ? document.getElementById('filterKhuVuc').value : '';
-                elNgu.innerText = '📍 ' + khuVucHienTai + (kvDangLoc ? ' — ' + kvDangLoc : ' (tất cả khu vực)');
+                // SỬA LỖI QUAN TRỌNG: trước đây nhãn này chỉ phản ánh Ô LỌC KHU VỰC đang chọn — với tài khoản
+                // CSKV (chỉ được giao 1 khu vực), nếu họ CHƯA bấm chọn lọc cụ thể, nhãn vẫn hiện nhầm "(tất cả
+                // khu vực)" dù thực tế họ KHÔNG BAO GIỜ xem được khu vực nào khác ngoài khu vực được giao. Giờ
+                // hiện ĐÚNG phạm vi quyền hạn thật của từng vai trò, không phụ thuộc trạng thái ô lọc.
+                let phamViThat;
+                if (currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length > 0) {
+                    phamViThat = currentUser.khuVucPhuTrach.join(', ') + ' (khu vực được giao)';
+                } else if (currentUser.role === 'chi_huy' || currentUser.role === 'chi_huy_tp' || currentUser.role === 'admin') {
+                    const kvDangLoc = document.getElementById('filterKhuVuc') ? document.getElementById('filterKhuVuc').value : '';
+                    phamViThat = kvDangLoc ? kvDangLoc : 'toàn bộ khu vực trong phường';
+                } else {
+                    phamViThat = 'chưa được cấp quyền';
+                }
+                elNgu.innerText = '📍 ' + khuVucHienTai + ' — ' + phamViThat;
             }
             document.getElementById('cntThuongTru').innerText = cntTT;
             document.getElementById('cntTamTru').innerText = cntTamT;
