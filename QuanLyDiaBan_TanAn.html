@@ -160,6 +160,7 @@
                 </label>
                 <button id="btnBatThongBao" onclick="xinPhepThongBao()" class="bg-pink-700 hover:bg-pink-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔔 Bật Thông Báo</button>
                 <button id="btnXoaDL" onclick="moModalXoaDuLieu()" class="hidden bg-rose-600 hover:bg-rose-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🗑️ Xóa DL</button>
+                <button id="btnBanGiao" onclick="moModalBanGiao()" class="hidden bg-teal-700 hover:bg-teal-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔄 Bàn Giao Địa Bàn</button>
                 <button onclick="moModalDoiMatKhau()" class="bg-slate-700 hover:bg-slate-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔑 Đổi Mật Khẩu</button>
                 <button onclick="dangXuat()" class="bg-red-600/80 hover:bg-red-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔒 Thoát</button>
             </div>
@@ -525,6 +526,7 @@
                     <select id="inputVaiTroCSKV" onchange="doiVaiTroTrongForm()" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
                         <option value="can_bo">Cảnh sát khu vực (1 khu vực trong 1 phường)</option>
                         <option value="chi_huy">Chỉ huy phường (toàn bộ 1 phường)</option>
+                        <option value="can_bo_du_lieu">Cán bộ dữ liệu (toàn bộ 1 phường, không có quyền xóa/quản trị)</option>
                         <option value="chi_huy_tp">Chỉ huy cấp Thành phố / PC06 (xem tất cả 103 phường)</option>
                     </select>
                 </div>
@@ -682,6 +684,32 @@
         </div>
     </div>
 
+    <div id="banGiaoModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50">
+        <div class="glass-card w-full max-w-md rounded-xl shadow-2xl p-4 space-y-3 border border-teal-800 text-xs">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-teal-400">🔄 Bàn Giao Địa Bàn</h3>
+                <button onclick="document.getElementById('banGiaoModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <p class="text-gray-400">Dùng khi cán bộ nghỉ hưu, chuyển công tác — chuyển giao TOÀN BỘ phạm vi phụ trách (phường/khu vực) sang người kế nhiệm trong 1 thao tác, có ghi lại biên bản.</p>
+            <div>
+                <label class="text-gray-400 block mb-1">Người bàn giao (đang phụ trách):</label>
+                <select id="banGiaoNguoiCu" onchange="hienThiPhamViBanGiao()" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <option value="">-- Chọn cán bộ --</option>
+                </select>
+            </div>
+            <div id="banGiaoPhamViHienThi" class="hidden bg-gray-900/70 border border-gray-800 rounded p-2 text-gray-300"></div>
+            <div>
+                <label class="text-gray-400 block mb-1">Email người nhận bàn giao:</label>
+                <input type="email" id="banGiaoEmailMoi" placeholder="email@gmail.com (đã đăng ký tài khoản trước đó)" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+            </div>
+            <div>
+                <label class="text-gray-400 block mb-1">Ghi chú bàn giao (lý do, ngày hiệu lực...):</label>
+                <textarea id="banGiaoGhiChu" rows="2" placeholder="VD: Đồng chí A nghỉ hưu từ 01/09/2026, bàn giao lại cho đồng chí B" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></textarea>
+            </div>
+            <button onclick="thucHienBanGiao()" class="w-full bg-teal-700 hover:bg-teal-600 rounded px-3 py-2 font-bold">🔄 Xác Nhận Bàn Giao</button>
+        </div>
+    </div>
+
     <div id="xoaDuLieuModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50">
         <div class="glass-card w-full max-w-md rounded-xl shadow-2xl p-4 space-y-3 border border-rose-800 text-xs">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
@@ -689,6 +717,10 @@
                 <button onclick="document.getElementById('xoaDuLieuModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
             </div>
             <p class="text-gray-400">Phường: <b class="text-white"><span id="xoaDLTenPhuong"></span></b>. Chọn đúng phạm vi cần xóa — <b class="text-rose-400">không thể hoàn tác</b>.</p>
+            <div id="khungXoaDLChonPhuong" class="hidden">
+                <label class="text-gray-400 block mb-1">Chọn phường (chỉ Admin mới đổi được, không cần rời màn hình chính):</label>
+                <select id="xoaDLChonPhuong" onchange="napDanhSachXoaDLTheoPhuong(this.value)" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white mb-2"></select>
+            </div>
             <div>
                 <label class="text-gray-400 block mb-1">Phạm vi xóa:</label>
                 <select id="xoaDLPhamVi" onchange="doiPhamViXoaDL()" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
@@ -1049,7 +1081,7 @@
         function coQuyenXemPhuong(tenPhuong) {
             if (!currentUser) return false;
             if (currentUser.role === 'admin' || currentUser.role === 'chi_huy_tp') return true;
-            if ((currentUser.role === 'chi_huy' || currentUser.role === 'can_bo') && currentUser.phuongPhuTrach) {
+            if ((currentUser.role === 'chi_huy' || currentUser.role === 'can_bo_du_lieu' || currentUser.role === 'can_bo') && currentUser.phuongPhuTrach) {
                 return currentUser.phuongPhuTrach.includes(tenPhuong);
             }
             return false;
@@ -1069,25 +1101,60 @@
         let tamEmailDangNhap = "";
         
         let ketQuaTimKiemMarker = null;
+        // SỬA LỖI KHÓ TÌM ĐỊA CHỈ: trước đây chỉ thử tìm ĐÚNG 1 LẦN với nguyên văn địa chỉ đã gõ (kể cả số
+        // nhà/tên khu dân cư như "01 B5 KDC 91B") — bản đồ mở thường KHÔNG có dữ liệu chi tiết đến từng số
+        // nhà/lô trong khu dân cư, nên rất hay tìm không ra, dù tên ĐƯỜNG chính vẫn có. Giờ tìm kiếm THEO BẬC
+        // THANG: (1) thử nguyên văn trước, (2) nếu không thấy, tự động bỏ bớt số nhà/tên khu dân cư/số lô chỉ
+        // giữ lại tên đường chính để thử lại, (3) nếu vẫn không thấy, đề nghị đưa bản đồ về tâm khu vực để tự
+        // chấm tay — không còn báo "không tìm thấy" suông mà không có hướng xử lý tiếp theo.
         async function timKiemDiaChiTrenBanDo() {
             const kw = document.getElementById('timKiemDiaChiInput').value.trim();
             if (!kw || !mainMiniMapInstance) return;
             const khu = DANH_MUC_HANH_CHINH[khuVucHienTai] || {};
             const c = khu.center || DEFAULT_CENTER;
-            // Ưu tiên kết quả gần khu vực đang xem bằng viewbox quanh tâm phường (~6km)
             const d = 0.06;
             const viewbox = `${c[1]-d},${c[0]+d},${c[1]+d},${c[0]-d}`;
-            const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=vn&viewbox=${viewbox}&bounded=0&q=${encodeURIComponent(kw + ", Cần Thơ, Việt Nam")}`;
-            try {
+
+            async function thuTim(chuoiTim) {
+                const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=vn&viewbox=${viewbox}&bounded=0&q=${encodeURIComponent(chuoiTim)}`;
                 const res = await fetch(url, { headers: { 'Accept-Language': 'vi' } });
                 const data = await res.json();
-                if (!data || data.length === 0) { alert("Không tìm thấy địa chỉ phù hợp. Hãy thử nhập cụ thể hơn (số nhà, tên đường)."); return; }
-                const lat = parseFloat(data[0].lat), lon = parseFloat(data[0].lon);
+                return (data && data.length > 0) ? data[0] : null;
+            }
+
+            try {
+                let ketQua = await thuTim(kw + ", Cần Thơ, Việt Nam");
+                let laKetQuaDonGianHoa = false;
+
+                if (!ketQua) {
+                    // Bậc 2: bỏ số nhà/số lô/tên khu dân cư (KDC, Kv, số...), chỉ giữ tên đường chữ cái
+                    const kwDonGian = kw.replace(/\b(KDC|Kv|kv|khu\s*d[aâ]n\s*c[uư])\s*[\d\w]*/gi, '')
+                        .replace(/^\s*\d+[a-zA-Z]?\s+/, '') // bỏ số nhà đầu chuỗi (VD "01 B5 ..." -> "B5 ...")
+                        .replace(/^\s*[A-Z]\d+\s+/i, '') // bỏ tiếp ký hiệu lô kiểu "B5 " — bắt buộc có số theo sau chữ cái, tránh cắt nhầm chữ cái đầu của tên đường thật (VD "Nguyễn")
+                        .trim();
+                    if (kwDonGian && kwDonGian !== kw) {
+                        await new Promise(r => setTimeout(r, 1100)); // tôn trọng giới hạn 1 yêu cầu/giây của bản đồ mở
+                        ketQua = await thuTim(kwDonGian + ", " + khuVucHienTai + ", Cần Thơ, Việt Nam");
+                        laKetQuaDonGianHoa = !!ketQua;
+                    }
+                }
+
+                if (!ketQua) {
+                    if (confirm("Không tìm thấy địa chỉ \"" + kw + "\" trên bản đồ mở — thường gặp với địa chỉ dạng khu dân cư/số lô chưa có dữ liệu chi tiết.\n\nBấm OK để đưa bản đồ về khu vực " + khuVucHienTai + ", sau đó anh/chị có thể tự phóng to và chấm tay đúng vị trí (chính xác hơn tìm kiếm tự động với loại địa chỉ này).")) {
+                        mainMiniMapInstance.setView(c, 16);
+                    }
+                    return;
+                }
+
+                const lat = parseFloat(ketQua.lat), lon = parseFloat(ketQua.lon);
                 if (ketQuaTimKiemMarker) mainMiniMapInstance.removeLayer(ketQuaTimKiemMarker);
                 ketQuaTimKiemMarker = L.marker([lat, lon], {
                     icon: L.divIcon({ className: '', html: '<div style="background:#3b82f6;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(59,130,246,0.8);"></div>' })
-                }).addTo(mainMiniMapInstance).bindPopup("📍 " + (data[0].display_name || kw)).openPopup();
-                mainMiniMapInstance.setView([lat, lon], 17);
+                }).addTo(mainMiniMapInstance).bindPopup(
+                    "📍 " + (ketQua.display_name || kw) +
+                    (laKetQuaDonGianHoa ? "<br><span style='color:#f59e0b;font-size:10px;'>⚠️ Chỉ tìm được theo TÊN ĐƯỜNG (đã bỏ số nhà/số lô do không có dữ liệu chi tiết) — vị trí này CHỈ MANG TÍNH THAM KHẢO khu vực, cần tự xác định lại chính xác vị trí nhà.</span>" : "")
+                ).openPopup();
+                mainMiniMapInstance.setView([lat, lon], laKetQuaDonGianHoa ? 16 : 17);
             } catch (err) {
                 alert("Không thể tra cứu địa chỉ lúc này (cần kết nối internet). Vui lòng thử lại.");
             }
@@ -1574,6 +1641,10 @@
                 if (!rec.vaiTro) return Object.assign({ role: 'chua_cap_quyen', khuVucPhuTrach: null, phuongPhuTrach: null }, thongTin2FA);
                 if (rec.vaiTro === 'chi_huy_tp') return Object.assign({ role: 'chi_huy_tp', khuVucPhuTrach: null, phuongPhuTrach: null }, thongTin2FA);
                 if (rec.vaiTro === 'chi_huy') return Object.assign({ role: 'chi_huy', khuVucPhuTrach: null, phuongPhuTrach: rec.phuong ? [rec.phuong] : null }, thongTin2FA);
+                // "Cán bộ dữ liệu": dưới Chỉ huy phường 1 bậc, trên CSKV 1 bậc — xem/sửa dữ liệu TOÀN PHƯỜNG
+                // (mọi khu vực, giống phạm vi dữ liệu của Chỉ huy) nhưng KHÔNG có các quyền mang tính "chỉ huy"
+                // (xóa dữ liệu hàng loạt, quản lý phân quyền người khác, đặt lại 2FA người khác, xem toàn TP).
+                if (rec.vaiTro === 'can_bo_du_lieu') return Object.assign({ role: 'can_bo_du_lieu', khuVucPhuTrach: null, phuongPhuTrach: rec.phuong ? [rec.phuong] : null }, thongTin2FA);
                 return Object.assign({ role: 'can_bo', khuVucPhuTrach: rec.khuVuc || null, phuongPhuTrach: rec.phuong ? [rec.phuong] : null }, thongTin2FA);
             } catch (err) {
                 console.error("Lỗi tra cứu quyền Firestore:", err);
@@ -1630,8 +1701,8 @@
         // Xóa toàn bộ hộ của phường đang chọn trên Firestore (dùng cho nút "🗑️ Xóa DL")
         // khuVucCanXoa = null -> xóa toàn bộ phường; nếu có giá trị -> chỉ xóa đúng khu vực đó (lọc theo địa
         // chỉ, vì Firestore không lưu sẵn trường "khuVuc" riêng — khu vực được suy ra từ "diaChi").
-        async function xoaDuLieuPhuongTrenFirestore(khuVucCanXoa) {
-            const snap = await dbFirestore.collection('households').where('phuong', '==', khuVucHienTai).get();
+        async function xoaDuLieuPhuongTrenFirestore(khuVucCanXoa, tenPhuong) {
+            const snap = await dbFirestore.collection('households').where('phuong', '==', tenPhuong || khuVucHienTai).get();
             const CO_LO = 400;
             const docs = khuVucCanXoa
                 ? snap.docs.filter(d => (layNhanKhuVucTuDiaChi(d.data().diaChi) || 'Khu Vực 1') === khuVucCanXoa)
@@ -1673,20 +1744,36 @@
             }
         }
 
+        // SỬA LỖI: trước đây lưu THẲNG ảnh gốc (thường 3-10MB từ camera điện thoại) vào Firestore — vượt xa
+        // giới hạn 1MB/tài liệu của Firestore, gây lỗi "longer than 1048487 bytes" khi lưu. Giờ TỰ ĐỘNG NÉN
+        // ảnh (resize xuống tối đa 1000px + nén chất lượng JPEG) trước khi lưu — vẫn đủ rõ để nhận diện nhà,
+        // dung lượng giảm còn khoảng vài chục KB đến dưới 300KB, không còn lỗi vượt giới hạn.
         function xuLyTaiAnh(event) {
             const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const base64Img = e.target.result;
-                    document.getElementById('previewAnhNha').src = base64Img;
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const KICH_THUOC_TOI_DA = 1000; // px — đủ rõ để xem trên màn hình, không cần giữ nguyên độ phân giải camera
+                    let w = img.width, h = img.height;
+                    if (w > h && w > KICH_THUOC_TOI_DA) { h = Math.round(h * KICH_THUOC_TOI_DA / w); w = KICH_THUOC_TOI_DA; }
+                    else if (h > KICH_THUOC_TOI_DA) { w = Math.round(w * KICH_THUOC_TOI_DA / h); h = KICH_THUOC_TOI_DA; }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    let base64Nen = canvas.toDataURL('image/jpeg', 0.75);
+                    // Nếu vẫn còn quá lớn (ảnh gốc cực kỳ chi tiết) -> nén thêm 1 nấc chất lượng thấp hơn nữa
+                    if (base64Nen.length > 700000) base64Nen = canvas.toDataURL('image/jpeg', 0.5);
+                    document.getElementById('previewAnhNha').src = base64Nen;
                     document.getElementById('previewAnhNha').classList.remove('hidden');
                     document.getElementById('khungAnhNha').querySelector('span').classList.add('hidden');
-                    document.getElementById('base64AnhNha').value = base64Img;
+                    document.getElementById('base64AnhNha').value = base64Nen;
                     document.getElementById('btnXoaAnh').classList.remove('hidden');
-                }
-                reader.readAsDataURL(file);
-            }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         }
 
         function xoaAnhNha() {
@@ -1923,7 +2010,7 @@
             }
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('userNameDisplay').innerText = currentUser.email;
-            document.getElementById('userBadgeRole').innerText = currentUser.role === 'admin' ? 'Quyền: Admin' : (currentUser.role === 'chi_huy_tp' ? 'Chỉ Huy TP' : (currentUser.role === 'chi_huy' ? 'Chỉ Huy' : (currentUser.role === 'can_bo' ? 'CSKV' : '⚠️ Chưa cấp quyền')));
+            document.getElementById('userBadgeRole').innerText = currentUser.role === 'admin' ? 'Quyền: Admin' : (currentUser.role === 'chi_huy_tp' ? 'Chỉ Huy TP' : (currentUser.role === 'chi_huy' ? 'Chỉ Huy' : (currentUser.role === 'can_bo_du_lieu' ? 'Cán Bộ Dữ Liệu' : (currentUser.role === 'can_bo' ? 'CSKV' : '⚠️ Chưa cấp quyền'))));
             const btnTTP = document.getElementById('btnTimToanThanhPho');
             if (btnTTP) btnTTP.classList.toggle('hidden', !(currentUser.role === 'admin' || currentUser.role === 'chi_huy_tp'));
             const btnXemTTP = document.getElementById('btnXemToanTP');
@@ -1936,6 +2023,10 @@
             //     nên KHÔNG được xóa dữ liệu phường mà mình không trực tiếp phụ trách — tránh lạm quyền.
             const btnXoaDL = document.getElementById('btnXoaDL');
             if (btnXoaDL) btnXoaDL.classList.toggle('hidden', !(currentUser.role === 'admin' || currentUser.role === 'chi_huy'));
+            // Bàn giao địa bàn = thao tác thay đổi PHÂN QUYỀN của người khác — chỉ Admin mới có quyền quản lý
+            // phân quyền (giống hệt panel RBAC hiện tại cũng chỉ Admin mới sửa được), giữ nhất quán kiến trúc.
+            const btnBanGiao = document.getElementById('btnBanGiao');
+            if (btnBanGiao) btnBanGiao.classList.toggle('hidden', currentUser.role !== 'admin');
             const elCheDo = document.getElementById('badgeCheDoKetNoi');
             if (elCheDo) {
                 elCheDo.innerText = CHE_DO_FIREBASE ? '☁️ Máy chủ' : '💻 Cục bộ';
@@ -1966,7 +2057,7 @@
 
             // TỪ CHỐI MẶC ĐỊNH: tài khoản không rõ (chưa được cấp quyền) hoặc CSKV/Chỉ huy phường CHƯA được
             // gán phường phụ trách sẽ KHÔNG thấy phường nào cả, thay vì mặc định lọt vào xem hết 103 phường.
-            const canXemMotSoPhuong = (currentUser.role === 'can_bo' || currentUser.role === 'chi_huy');
+            const canXemMotSoPhuong = (currentUser.role === 'can_bo' || currentUser.role === 'chi_huy' || currentUser.role === 'can_bo_du_lieu');
             if (canXemMotSoPhuong && (!currentUser.phuongPhuTrach || currentUser.phuongPhuTrach.length === 0)) {
                 selKV.innerHTML = '<option value="">-- Chưa được cấp quyền xem phường nào --</option>';
                 return;
@@ -2016,7 +2107,7 @@
             const canhBao = document.getElementById('canhBaoChuaPhanKhuVuc');
             if (!selKv) return;
 
-            if (currentUser.role === 'admin' || currentUser.role === 'chi_huy' || currentUser.role === 'chi_huy_tp') {
+            if (currentUser.role === 'admin' || currentUser.role === 'chi_huy' || currentUser.role === 'chi_huy_tp' || currentUser.role === 'can_bo_du_lieu') {
                 if (canhBao) canhBao.classList.add('hidden');
                 selKv.disabled = false;
                 return;
@@ -2211,6 +2302,7 @@
                 if (!r.vaiTro) nhanVaiTro = '<span class="text-orange-400 font-bold">⏳ Đã khai báo — ĐANG CHỜ được cấp quyền</span>';
                 else if (r.vaiTro === 'chi_huy_tp') nhanVaiTro = '<span class="text-red-400">Chỉ huy cấp Thành phố — Toàn bộ các phường</span>';
                 else if (r.vaiTro === 'chi_huy') nhanVaiTro = '<span class="text-amber-400">Chỉ huy — ' + escHtml(r.phuong || '?') + '</span>';
+                else if (r.vaiTro === 'can_bo_du_lieu') nhanVaiTro = '<span class="text-fuchsia-400">Cán bộ dữ liệu — ' + escHtml(r.phuong || '?') + '</span>';
                 else nhanVaiTro = '<span class="text-emerald-400">' + escHtml(r.phuong || '?') + ' — ' + (r.khuVuc || []).join(', ') + '</span>';
                 const dongCanBo = (r.hoTen || r.donVi || r.chucVu || r.sdt)
                     ? `<p class="text-[10px] text-gray-400">${escHtml(r.hoTen || '(chưa rõ tên)')}${r.chucVu ? ' — ' + escHtml(r.chucVu) : ''}${r.donVi ? ' — ' + escHtml(r.donVi) : ''}${r.sdt ? ' — ☎ ' + escHtml(r.sdt) : ''}</p>` : '';
@@ -2291,7 +2383,7 @@
                             khuVucHienTai = currentUser.phuongPhuTrach[0];
                         }
                         localStorage.setItem("currentUserAuthGIS_V5", JSON.stringify(currentUser));
-                        document.getElementById('userBadgeRole').innerText = currentUser.role === 'chi_huy_tp' ? 'Chỉ Huy TP' : (currentUser.role === 'chi_huy' ? 'Chỉ Huy' : (currentUser.role === 'can_bo' ? 'CSKV' : '⚠️ Chưa cấp quyền'));
+                        document.getElementById('userBadgeRole').innerText = currentUser.role === 'chi_huy_tp' ? 'Chỉ Huy TP' : (currentUser.role === 'chi_huy' ? 'Chỉ Huy' : (currentUser.role === 'can_bo_du_lieu' ? 'Cán Bộ Dữ Liệu' : (currentUser.role === 'can_bo' ? 'CSKV' : '⚠️ Chưa cấp quyền')));
                         capNhatDanhSachPhuongTrongDropdown();
                         apDungGioiHanKhuVucTheoQuyen();
                         veLaiRanhGioiPhuong();
@@ -3229,7 +3321,7 @@
                 let matchKv = !kv || nhanKV === kv;
                 let dien = ho.dienNghiepVu || "Thường trú";
                 let matchNv = !nv || dien.includes(nv);
-                let matchKw = !kw || ho.chuHo.toLowerCase().includes(kw) || ho.hsct.toLowerCase().includes(kw) || (ho.thanhVien && ho.thanhVien.some(tv => (tv.cccd && tv.cccd.toLowerCase().includes(kw)) || (tv.hoTen && tv.hoTen.toLowerCase().includes(kw))));
+                let matchKw = !kw || ho.chuHo.toLowerCase().includes(kw) || ho.hsct.toLowerCase().includes(kw) || (ho.diaChi && ho.diaChi.toLowerCase().includes(kw)) || (ho.thanhVien && ho.thanhVien.some(tv => (tv.cccd && tv.cccd.toLowerCase().includes(kw)) || (tv.hoTen && tv.hoTen.toLowerCase().includes(kw))));
                 let matchThieuCCCD = !chiThieuCCCD || (ho.thanhVien && ho.thanhVien.some(tv => !tv.cccd || !tv.cccd.trim()));
                 let matchBienDong = !chiCoBienDong || (ho.thanhVien && ho.thanhVien.some(tv => tv.trangThaiBienDong && tv.trangThaiBienDong !== 'Đang cư trú'));
                 let matchNuocNgoai = !chiNguoiNuocNgoai || (ho.thanhVien && ho.thanhVien.some(tv => tv.quocTich && !boDauTiengViet(tv.quocTich).includes('viet nam')));
@@ -3315,7 +3407,7 @@
                 let phamViThat;
                 if (currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length > 0) {
                     phamViThat = currentUser.khuVucPhuTrach.join(', ') + ' (khu vực được giao)';
-                } else if (currentUser.role === 'chi_huy' || currentUser.role === 'chi_huy_tp' || currentUser.role === 'admin') {
+                } else if (currentUser.role === 'chi_huy' || currentUser.role === 'chi_huy_tp' || currentUser.role === 'admin' || currentUser.role === 'can_bo_du_lieu') {
                     const kvDangLoc = document.getElementById('filterKhuVuc') ? document.getElementById('filterKhuVuc').value : '';
                     phamViThat = kvDangLoc ? kvDangLoc : 'toàn bộ khu vực trong phường';
                 } else {
@@ -3831,6 +3923,10 @@
             ho.loaiHinhNoiO = document.getElementById('editLoaiHinhNoiO').value;
             ho.ngayHetHan = (ho.dienNghiepVu === 'Tạm trú' || ho.dienNghiepVu === 'Lưu trú') ? document.getElementById('editNgayHetHan').value : '';
             ho.anhNha = document.getElementById('base64AnhNha').value;
+            if (ho.anhNha && ho.anhNha.length > 900000) {
+                alert("⚠️ Ảnh vẫn còn quá lớn sau khi nén (thường do ảnh gốc có độ phân giải cực cao). Vui lòng chụp lại ảnh khác hoặc chọn ảnh có kích thước nhỏ hơn, rồi lưu lại.");
+                return;
+            }
 
             if (CHE_DO_FIREBASE) {
                 try {
@@ -3861,19 +3957,22 @@
             const isAdmin = currentUser.role === 'admin';
             const isChiHuyTp = currentUser.role === 'chi_huy_tp';
             const isChiHuy = currentUser.role === 'chi_huy';
+            const isCanBoDuLieu = currentUser.role === 'can_bo_du_lieu';
             document.getElementById('rbacRoleBadge').innerHTML = isAdmin
                 ? '<span class="text-red-400">Quản trị viên (Admin - Toàn quyền, mọi phường)</span>'
                 : isChiHuyTp
                     ? '<span class="text-red-400">Chỉ huy cấp Thành phố (xem toàn bộ các phường)</span>'
                     : isChiHuy
                         ? '<span class="text-amber-400">Chỉ huy phường (xem toàn bộ dữ liệu 1 phường)</span>'
-                        : currentUser.role === 'can_bo'
-                            ? '<span class="text-blue-400">Cảnh sát khu vực (CSKV)</span>'
-                            : '<span class="text-rose-400">⚠️ CHƯA ĐƯỢC CẤP QUYỀN — không xem được dữ liệu nào</span>';
+                        : isCanBoDuLieu
+                            ? '<span class="text-fuchsia-400">Cán bộ dữ liệu (xem/sửa toàn bộ dữ liệu 1 phường, không có quyền xóa/quản trị)</span>'
+                            : currentUser.role === 'can_bo'
+                                ? '<span class="text-blue-400">Cảnh sát khu vực (CSKV)</span>'
+                                : '<span class="text-rose-400">⚠️ CHƯA ĐƯỢC CẤP QUYỀN — không xem được dữ liệu nào</span>';
             const elKV = document.getElementById('rbacKhuVucCuaToi');
             if (isAdmin || isChiHuyTp) {
                 elKV.innerHTML = '';
-            } else if (isChiHuy) {
+            } else if (isChiHuy || isCanBoDuLieu) {
                 elKV.innerHTML = 'Phường phụ trách: <span class="text-emerald-400 font-semibold">' + (currentUser.phuongPhuTrach ? currentUser.phuongPhuTrach.join(', ') : '(chưa gán)') + '</span>';
             } else if (currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length > 0) {
                 elKV.innerHTML = 'Phường: <span class="text-emerald-400 font-semibold">' + (currentUser.phuongPhuTrach ? currentUser.phuongPhuTrach.join(', ') : '?') + '</span> — Khu vực: <span class="text-emerald-400 font-semibold">' + currentUser.khuVucPhuTrach.join(', ') + '</span>';
@@ -4042,16 +4141,121 @@
         // cũng thấy nút này. Giờ: (1) chỉ Admin/Chỉ huy phường mới thấy nút (đã gài ở kichHoatGiaoDienChinh);
         // (2) có thể xóa ĐÚNG 1 khu vực cụ thể, không cần xóa cả phường; (3) xóa toàn phường bắt buộc gõ đúng
         // tên phường để xác nhận — nhân đôi lớp an toàn cho hành động phá hủy lớn nhất.
-        function moModalXoaDuLieu() {
-            document.getElementById('xoaDLTenPhuong').innerText = khuVucHienTai;
+        // ================== BÀN GIAO ĐỊA BÀN (khi cán bộ nghỉ hưu/chuyển công tác) ==================
+        function moModalBanGiao() {
+            const selCu = document.getElementById('banGiaoNguoiCu');
+            const dsCoTheBanGiao = danhSachPhanQuyen.filter(r => r.vaiTro && r.vaiTro !== 'chi_huy_tp'); // Chỉ huy TP không gắn với 1 phường cụ thể nên không áp dụng bàn giao kiểu này
+            selCu.innerHTML = '<option value="">-- Chọn cán bộ --</option>' +
+                dsCoTheBanGiao.map(r => `<option value="${escHtml(r.email)}">${escHtml(r.hoTen || r.email)} — ${escHtml(r.vaiTro === 'chi_huy' ? 'Chỉ huy' : (r.vaiTro === 'can_bo_du_lieu' ? 'Cán bộ dữ liệu' : 'CSKV'))} (${escHtml(r.phuong || '?')}${r.khuVuc && r.khuVuc.length ? ' - ' + r.khuVuc.join(', ') : ''})</option>`).join('');
+            document.getElementById('banGiaoPhamViHienThi').classList.add('hidden');
+            document.getElementById('banGiaoEmailMoi').value = '';
+            document.getElementById('banGiaoGhiChu').value = '';
+            document.getElementById('banGiaoModal').classList.remove('hidden');
+        }
+
+        function hienThiPhamViBanGiao() {
+            const email = document.getElementById('banGiaoNguoiCu').value;
+            const el = document.getElementById('banGiaoPhamViHienThi');
+            if (!email) { el.classList.add('hidden'); return; }
+            const r = danhSachPhanQuyen.find(x => x.email === email);
+            if (!r) { el.classList.add('hidden'); return; }
+            el.innerHTML = `📋 Phạm vi sẽ bàn giao:<br><b class="text-teal-300">${escHtml(r.vaiTro === 'chi_huy' ? 'Chỉ huy phường' : (r.vaiTro === 'can_bo_du_lieu' ? 'Cán bộ dữ liệu' : 'CSKV'))} — ${escHtml(r.phuong || '?')}</b>${r.khuVuc && r.khuVuc.length ? ' — Khu vực: <b class="text-teal-300">' + escHtml(r.khuVuc.join(', ')) + '</b>' : ''}`;
+            el.classList.remove('hidden');
+        }
+
+        async function thucHienBanGiao() {
+            const emailCu = document.getElementById('banGiaoNguoiCu').value;
+            const emailMoi = document.getElementById('banGiaoEmailMoi').value.trim().toLowerCase();
+            const ghiChu = document.getElementById('banGiaoGhiChu').value.trim();
+            if (!emailCu) return alert("Vui lòng chọn cán bộ đang bàn giao.");
+            if (!emailMoi || !emailMoi.includes('@')) return alert("Vui lòng nhập đúng email người nhận bàn giao.");
+            if (emailCu === emailMoi) return alert("Người bàn giao và người nhận không được trùng nhau.");
+            const banGhiCu = danhSachPhanQuyen.find(r => r.email === emailCu);
+            if (!banGhiCu) return alert("Không tìm thấy thông tin cán bộ đang bàn giao.");
+
+            const moTaPhamVi = (banGhiCu.vaiTro === 'chi_huy' ? 'Chỉ huy phường' : (banGhiCu.vaiTro === 'can_bo_du_lieu' ? 'Cán bộ dữ liệu' : 'CSKV')) +
+                ' — ' + (banGhiCu.phuong || '?') + (banGhiCu.khuVuc && banGhiCu.khuVuc.length ? ' (' + banGhiCu.khuVuc.join(', ') + ')' : '');
+            if (!confirm("Xác nhận bàn giao:\n\nTỪ: " + emailCu + " (" + moTaPhamVi + ")\nĐẾN: " + emailMoi + "\n\nSau khi bàn giao, tài khoản CŨ sẽ về trạng thái \"chưa cấp quyền\" (vẫn giữ lịch sử để tra cứu), tài khoản MỚI sẽ nhận đúng phạm vi này ngay lập tức.")) return;
+
+            try {
+                // 1) Gỡ quyền tài khoản CŨ — GIỮ LẠI thông tin cá nhân (họ tên/đơn vị/chức vụ/SĐT) để còn tra
+                //    cứu lịch sử, chỉ xoá phần vaiTro/phuong/khuVuc (đưa về "chưa cấp quyền").
+                await dbFirestore.collection('permissions').doc(emailCu).update({
+                    vaiTro: firebase.firestore.FieldValue.delete(),
+                    phuong: firebase.firestore.FieldValue.delete(),
+                    khuVuc: firebase.firestore.FieldValue.delete()
+                });
+                // 2) Gán ĐÚNG phạm vi đó cho tài khoản MỚI — giữ lại thông tin cá nhân họ đã tự khai báo
+                //    trước đó (nếu có) bằng merge, chỉ ghi đè phần vaiTro/phuong/khuVuc.
+                await dbFirestore.collection('permissions').doc(emailMoi).set({
+                    email: emailMoi, vaiTro: banGhiCu.vaiTro, phuong: banGhiCu.phuong || null, khuVuc: banGhiCu.khuVuc || []
+                }, { merge: true });
+                // 3) Ghi biên bản bàn giao vào Nhật Ký địa bàn của đúng phường đó — có ngày, từ ai, đến ai, ghi chú
+                if (banGhiCu.phuong) {
+                    await dbFirestore.collection('nhat_ky_dia_ban').add({
+                        tieuDe: 'Bàn giao địa bàn: ' + emailCu + ' → ' + emailMoi,
+                        loaiVu: 'Khác', ngayXayRa: new Date().toISOString().slice(0, 10),
+                        diaChi: '', moTa: 'Phạm vi bàn giao: ' + moTaPhamVi + (ghiChu ? '. Ghi chú: ' + ghiChu : ''),
+                        trangThai: 'Đã xử lý', phuong: banGhiCu.phuong,
+                        nguoiTao: currentUser.email, thoiGianTao: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                ghiNhatKy('Bàn giao địa bàn', emailCu + ' → ' + emailMoi + ' (' + moTaPhamVi + ')');
+                document.getElementById('banGiaoModal').classList.add('hidden');
+                alert("✅ Đã bàn giao thành công.\n\nBáo cho " + emailMoi + " đăng nhập lại (hoặc F5 nếu đang mở sẵn) để nhận quyền mới.");
+            } catch (err) {
+                alert("❌ Lỗi bàn giao: " + err.message);
+            }
+        }
+
+        async function moModalXoaDuLieu() {
+            const khungChonPhuong = document.getElementById('khungXoaDLChonPhuong');
+            if (currentUser.role === 'admin') {
+                // CHỈ Admin mới được chọn BẤT KỲ phường nào để xóa — không cần chuyển màn hình chính trước.
+                // Chỉ huy/Cán bộ dữ liệu bị khoá cứng đúng 1 phường của mình (an toàn hơn), nên không cần ô này.
+                khungChonPhuong.classList.remove('hidden');
+                const selP = document.getElementById('xoaDLChonPhuong');
+                if (selP.options.length <= 1) {
+                    selP.innerHTML = '<option value="">-- Chọn phường --</option>' +
+                        Object.keys(DANH_MUC_HANH_CHINH).sort((a, b) => a.localeCompare(b, 'vi')).map(p => `<option value="${escHtml(p)}">${escHtml(p)}</option>`).join('');
+                }
+                selP.value = khuVucHienTai;
+            } else {
+                khungChonPhuong.classList.add('hidden');
+            }
+            await napDanhSachXoaDLTheoPhuong(khuVucHienTai);
+            document.getElementById('xoaDuLieuModal').classList.remove('hidden');
+        }
+
+        // Nạp danh sách hộ + khu vực của ĐÚNG phường được chọn để xóa — dùng truy vấn RIÊNG (.get() 1 lần,
+        // không dùng kênh đồng bộ realtime chính) để không phải chuyển cả màn hình chính sang phường khác chỉ
+        // để xóa dữ liệu của phường đó.
+        let danhSachXoaDLHienTai = [];
+        let phuongDangXoaDL = '';
+        async function napDanhSachXoaDLTheoPhuong(tenPhuong) {
+            phuongDangXoaDL = tenPhuong;
+            document.getElementById('xoaDLTenPhuong').innerText = tenPhuong;
             const selKV = document.getElementById('xoaDLPhamVi');
-            const cacKhuVuc = [...new Set(danhSachHoGiaDinh.map(h => layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1'))].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
+            selKV.innerHTML = '<option value="">Đang tải danh sách khu vực...</option>';
+            try {
+                if (tenPhuong === khuVucHienTai && CHE_DO_FIREBASE) {
+                    danhSachXoaDLHienTai = danhSachHoGiaDinh; // Đúng phường đang xem sẵn -> dùng luôn, khỏi truy vấn lại
+                } else if (CHE_DO_FIREBASE) {
+                    const snap = await dbFirestore.collection('households').where('phuong', '==', tenPhuong).get();
+                    danhSachXoaDLHienTai = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+                } else {
+                    danhSachXoaDLHienTai = danhSachHoGiaDinh.filter(h => (h.phuong || "Phường Tân An") === tenPhuong);
+                }
+            } catch (err) {
+                selKV.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
+                return alert("❌ Lỗi tải dữ liệu phường " + tenPhuong + ": " + err.message);
+            }
+            const cacKhuVuc = [...new Set(danhSachXoaDLHienTai.map(h => layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1'))].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
             selKV.innerHTML = '<option value="">-- Chọn khu vực cụ thể để xóa --</option>' +
-                cacKhuVuc.map(k => `<option value="${escHtml(k)}">${escHtml(k)} (${danhSachHoGiaDinh.filter(h => (layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1') === k).length} hộ)</option>`).join('') +
-                `<option value="__TOAN_PHUONG__">⚠️ TOÀN BỘ ${escHtml(khuVucHienTai)} (${danhSachHoGiaDinh.length} hộ)</option>`;
+                cacKhuVuc.map(k => `<option value="${escHtml(k)}">${escHtml(k)} (${danhSachXoaDLHienTai.filter(h => (layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1') === k).length} hộ)</option>`).join('') +
+                `<option value="__TOAN_PHUONG__">⚠️ TOÀN BỘ ${escHtml(tenPhuong)} (${danhSachXoaDLHienTai.length} hộ)</option>`;
             document.getElementById('khungXacNhanXoaToanPhuong').classList.add('hidden');
             document.getElementById('xacNhanTenPhuongXoa').value = '';
-            document.getElementById('xoaDuLieuModal').classList.remove('hidden');
         }
 
         function doiPhamViXoaDL() {
@@ -4066,19 +4270,19 @@
 
             if (laToanPhuong) {
                 const goTen = document.getElementById('xacNhanTenPhuongXoa').value.trim();
-                if (goTen !== khuVucHienTai) return alert("Tên phường gõ xác nhận không khớp. Vui lòng gõ chính xác: " + khuVucHienTai);
-                if (!confirm("XÁC NHẬN LẦN CUỐI: Xóa TOÀN BỘ " + danhSachHoGiaDinh.length + " hộ của " + khuVucHienTai + "? KHÔNG THỂ hoàn tác.")) return;
+                if (goTen !== phuongDangXoaDL) return alert("Tên phường gõ xác nhận không khớp. Vui lòng gõ chính xác: " + phuongDangXoaDL);
+                if (!confirm("XÁC NHẬN LẦN CUỐI: Xóa TOÀN BỘ " + danhSachXoaDLHienTai.length + " hộ của " + phuongDangXoaDL + "? KHÔNG THỂ hoàn tác.")) return;
             } else {
-                const soHoBiXoa = danhSachHoGiaDinh.filter(h => (layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1') === phamVi).length;
-                if (!confirm("Xác nhận xóa " + soHoBiXoa + " hộ thuộc " + phamVi + " (" + khuVucHienTai + ")? KHÔNG THỂ hoàn tác.")) return;
+                const soHoBiXoa = danhSachXoaDLHienTai.filter(h => (layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1') === phamVi).length;
+                if (!confirm("Xác nhận xóa " + soHoBiXoa + " hộ thuộc " + phamVi + " (" + phuongDangXoaDL + ")? KHÔNG THỂ hoàn tác.")) return;
             }
 
             try {
                 if (CHE_DO_FIREBASE) {
-                    await xoaDuLieuPhuongTrenFirestore(laToanPhuong ? null : phamVi);
+                    await xoaDuLieuPhuongTrenFirestore(laToanPhuong ? null : phamVi, phuongDangXoaDL);
                 } else {
                     danhSachHoGiaDinh = danhSachHoGiaDinh.filter(ho => {
-                        const dungPhuong = (ho.phuong || "Phường Tân An") === khuVucHienTai;
+                        const dungPhuong = (ho.phuong || "Phường Tân An") === phuongDangXoaDL;
                         if (!dungPhuong) return true; // Giữ nguyên hộ của phường khác
                         if (laToanPhuong) return false; // Xóa hết hộ của phường này
                         return (layNhanKhuVucTuDiaChi(ho.diaChi) || 'Khu Vực 1') !== phamVi; // Chỉ xóa đúng khu vực chọn
@@ -4086,7 +4290,7 @@
                     localStorage.setItem("danhSachHoGiaDinhCacheGIS_V5", JSON.stringify(danhSachHoGiaDinh));
                     capNhatGiaoDienSauKhiTai();
                 }
-                ghiNhatKy('Xóa dữ liệu', khuVucHienTai + ' — ' + (laToanPhuong ? 'TOÀN BỘ PHƯỜNG' : phamVi));
+                ghiNhatKy('Xóa dữ liệu', phuongDangXoaDL + ' — ' + (laToanPhuong ? 'TOÀN BỘ PHƯỜNG' : phamVi));
                 document.getElementById('xoaDuLieuModal').classList.add('hidden');
                 alert("✅ Đã xóa xong.");
             } catch (err) {
