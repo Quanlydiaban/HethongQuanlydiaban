@@ -3261,7 +3261,19 @@
             let theoKhuVuc = {};
 
             const namHienTai = new Date().getFullYear();
-            const dsPhuongNay = layDuLieuThuocPhuongHienTai();
+
+            // SỬA LỖI NGHIÊM TRỌNG: trước đây hàm này luôn tính TỔNG CẢ PHƯỜNG cho mọi vai trò — kể cả CSKV
+            // chỉ được giao 1 khu vực vẫn thấy số liệu (Tổng nhân khẩu, Tổng hộ, biểu đồ Cư trú/Giới tính/Độ
+            // tuổi) của TOÀN PHƯỜNG do các cán bộ khác nhập, không đúng với khu vực mình phụ trách — sai lệch
+            // dữ liệu, không trung thực với đúng phạm vi công tác. Giờ áp dụng ĐÚNG bộ lọc khu vực (giống hệt
+            // logic đã dùng ở bảng danh sách hộ) NGAY TỪ ĐẦU, để MỌI con số/biểu đồ bên dưới đều tự động đúng.
+            const phamViKV = (currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length > 0)
+                ? currentUser.khuVucPhuTrach.map(k => k.toLowerCase()) : null;
+            const dsPhuongNay = layDuLieuThuocPhuongHienTai().filter(h => {
+                if (!phamViKV) return true;
+                const nhanKV = (layNhanKhuVucTuDiaChi(h.diaChi) || "Khu Vực 1").toLowerCase();
+                return phamViKV.includes(nhanKV);
+            });
 
             dsPhuongNay.forEach(h => {
                 tongNhanKhau += h.thanhVien ? h.thanhVien.length : 0;
@@ -3293,7 +3305,7 @@
             });
 
             document.getElementById('statNhanKhau').innerText = tongNhanKhau;
-            document.getElementById('statHoGiaDinh').innerText = danhSachHoGiaDinh.length;
+            document.getElementById('statHoGiaDinh').innerText = dsPhuongNay.length;
             const elNgu = document.getElementById('nguCanhTongQuan');
             if (elNgu) {
                 // SỬA LỖI QUAN TRỌNG: trước đây nhãn này chỉ phản ánh Ô LỌC KHU VỰC đang chọn — với tài khoản
