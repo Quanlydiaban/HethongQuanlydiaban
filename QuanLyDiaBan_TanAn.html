@@ -450,12 +450,17 @@
                     <div class="bg-gray-900 p-3 rounded-lg border border-gray-700 flex flex-col no-print">
                         <div class="flex-grow">
                             <label class="text-gray-400 block font-semibold text-emerald-300 mb-2">📸 Ảnh chụp nhà / Hiện trạng:</label>
-                            <div class="flex items-center gap-2 mb-2">
+                            <div class="flex items-center gap-2 mb-2 flex-wrap">
                                 <label class="cursor-pointer bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded text-xs text-white transition font-medium">
-                                    Tải ảnh / Chụp ảnh
-                                    <input type="file" id="uploadAnhNha" accept="image/*" capture="environment" class="hidden" onchange="xuLyTaiAnh(event)">
+                                    📷 Chụp Ảnh Mới
+                                    <input type="file" id="uploadAnhNhaChup" accept="image/*" capture="environment" class="hidden" onchange="xuLyTaiAnh(event)">
+                                </label>
+                                <label class="cursor-pointer bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded text-xs text-white transition font-medium">
+                                    🖼️ Chọn Từ Thư Viện
+                                    <input type="file" id="uploadAnhNhaThuVien" accept="image/*" class="hidden" onchange="xuLyTaiAnh(event)">
                                 </label>
                                 <button onclick="xoaAnhNha()" class="text-xs text-rose-400 underline hidden hover:text-rose-300" id="btnXoaAnh">Xóa ảnh</button>
+                                <p id="trangThaiXuLyAnh" class="hidden text-[11px] text-amber-400 font-semibold animate-pulse">⏳ Đang xử lý ảnh, vui lòng đợi vài giây trước khi bấm Lưu Hồ Sơ...</p>
                             </div>
                             <div id="khungAnhNha" class="w-full h-[180px] bg-gray-800 border-2 border-dashed border-gray-600 rounded flex items-center justify-center overflow-hidden">
                                 <span class="text-gray-500 text-xs text-center px-4">Chưa có ảnh. Nhấn nút trên để chụp hoặc chọn ảnh gán vào hồ sơ.</span>
@@ -874,6 +879,17 @@
         if (CHE_DO_FIREBASE) {
             firebase.initializeApp(FIREBASE_CONFIG);
             dbFirestore = firebase.firestore();
+            // QUAN TRỌNG CHO CÔNG TÁC THỰC ĐỊA: bật LƯU TẠM NGOẠI TUYẾN — khi cán bộ chụp ảnh/chấm định vị/lưu
+            // hồ sơ ở nơi sóng 4G yếu hoặc mất mạng tạm thời, thao tác vẫn được LƯU TẠM TRÊN CHÍNH ĐIỆN THOẠI
+            // và TỰ ĐỘNG ĐỒNG BỘ LÊN MÁY CHỦ ngay khi có sóng trở lại — không còn tình trạng "lưu xong nhưng
+            // mất" chỉ vì đúng lúc đó mất sóng. Đây là tính năng gốc của Firebase, trước đây chưa được bật.
+            dbFirestore.enablePersistence({ synchronizeTabs: true }).catch(err => {
+                if (err.code === 'failed-precondition') {
+                    console.warn("Lưu tạm ngoại tuyến: đang mở nhiều tab cùng lúc, chỉ tab đầu tiên bật được — không ảnh hưởng hoạt động chính.");
+                } else if (err.code === 'unimplemented') {
+                    console.warn("Trình duyệt này không hỗ trợ lưu tạm ngoại tuyến — vẫn hoạt động bình thường khi có mạng.");
+                }
+            });
             authFirebase = firebase.auth();
             try { fcmMessaging = firebase.messaging(); } catch (e) { console.warn("Trình duyệt này không hỗ trợ Thông báo đẩy:", e.message); }
         } else {
@@ -1749,9 +1765,16 @@
         // giới hạn 1MB/tài liệu của Firestore, gây lỗi "longer than 1048487 bytes" khi lưu. Giờ TỰ ĐỘNG NÉN
         // ảnh (resize xuống tối đa 1000px + nén chất lượng JPEG) trước khi lưu — vẫn đủ rõ để nhận diện nhà,
         // dung lượng giảm còn khoảng vài chục KB đến dưới 300KB, không còn lỗi vượt giới hạn.
+        // Cờ báo ảnh đang được nén — QUAN TRỌNG: chặn không cho lưu hồ sơ nếu bấm "Lưu" quá nhanh ngay sau khi
+        // vừa chụp/chọn ảnh, trước khi quá trình nén (chạy ngầm, có thể mất 1-3 giây với ảnh camera thực tế)
+        // kịp hoàn tất — đây chính là nguyên nhân khiến ảnh bị lưu RỖNG khi thao tác nhanh ngoài hiện trường.
+        let dangXuLyAnh = false;
         function xuLyTaiAnh(event) {
             const file = event.target.files[0];
             if (!file) return;
+            dangXuLyAnh = true;
+            const elTrangThai = document.getElementById('trangThaiXuLyAnh');
+            if (elTrangThai) elTrangThai.classList.remove('hidden');
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
@@ -1766,11 +1789,21 @@
                     let base64Nen = canvas.toDataURL('image/jpeg', 0.75);
                     // Nếu vẫn còn quá lớn (ảnh gốc cực kỳ chi tiết) -> nén thêm 1 nấc chất lượng thấp hơn nữa
                     if (base64Nen.length > 700000) base64Nen = canvas.toDataURL('image/jpeg', 0.5);
+                    // Vẫn còn lớn -> nén nấc 3: giảm luôn cả kích thước ảnh (không chỉ chất lượng), đủ dùng để
+                    // nhận diện nhà, gần như chắc chắn lọt qua giới hạn lưu trữ.
+                    if (base64Nen.length > 850000) {
+                        const canvas2 = document.createElement('canvas');
+                        canvas2.width = Math.round(w * 0.6); canvas2.height = Math.round(h * 0.6);
+                        canvas2.getContext('2d').drawImage(img, 0, 0, canvas2.width, canvas2.height);
+                        base64Nen = canvas2.toDataURL('image/jpeg', 0.55);
+                    }
                     document.getElementById('previewAnhNha').src = base64Nen;
                     document.getElementById('previewAnhNha').classList.remove('hidden');
                     document.getElementById('khungAnhNha').querySelector('span').classList.add('hidden');
                     document.getElementById('base64AnhNha').value = base64Nen;
                     document.getElementById('btnXoaAnh').classList.remove('hidden');
+                    dangXuLyAnh = false;
+                    if (elTrangThai) elTrangThai.classList.add('hidden');
                 };
                 img.src = e.target.result;
             };
@@ -1783,7 +1816,8 @@
             document.getElementById('khungAnhNha').querySelector('span').classList.remove('hidden');
             document.getElementById('base64AnhNha').value = "";
             document.getElementById('btnXoaAnh').classList.add('hidden');
-            document.getElementById('uploadAnhNha').value = "";
+            document.getElementById('uploadAnhNhaChup').value = "";
+            document.getElementById('uploadAnhNhaThuVien').value = "";
         }
 
         // ================== XÁC THỰC TOTP THẬT (RFC 6238) — dùng cho tài khoản ADMIN ==================
@@ -3992,6 +4026,9 @@
 
         async function luuThongTinHo() {
             if (currentSelectedHoIndex === null) return;
+            if (dangXuLyAnh) {
+                return alert("⏳ Ảnh vừa chụp/chọn còn đang được xử lý (nén lại để đủ nhẹ khi lưu) — vui lòng đợi vài giây rồi bấm Lưu Hồ Sơ lại. Đây là nguyên nhân hay gặp khiến ảnh bị lưu thiếu khi thao tác quá nhanh ngoài hiện trường.");
+            }
             let ho = danhSachHoGiaDinh[currentSelectedHoIndex];
             
             ho.chuHo = document.getElementById('editChuHo').value;
@@ -4014,10 +4051,16 @@
             ho.dienNghiepVu = document.getElementById('editDienNV').value;
             ho.loaiHinhNoiO = document.getElementById('editLoaiHinhNoiO').value;
             ho.ngayHetHan = (ho.dienNghiepVu === 'Tạm trú' || ho.dienNghiepVu === 'Lưu trú') ? document.getElementById('editNgayHetHan').value : '';
-            ho.anhNha = document.getElementById('base64AnhNha').value;
-            if (ho.anhNha && ho.anhNha.length > 900000) {
-                alert("⚠️ Ảnh vẫn còn quá lớn sau khi nén (thường do ảnh gốc có độ phân giải cực cao). Vui lòng chụp lại ảnh khác hoặc chọn ảnh có kích thước nhỏ hơn, rồi lưu lại.");
-                return;
+            const anhMoiChon = document.getElementById('base64AnhNha').value;
+            if (anhMoiChon && anhMoiChon.length > 900000) {
+                // SỬA LỖI NGHIÊM TRỌNG: trước đây nếu ảnh còn hơi lớn, code HUỶ TOÀN BỘ việc lưu (kể cả toạ độ
+                // định vị vừa xác nhận, địa chỉ, mọi thay đổi khác) — không chỉ mỗi tấm ảnh. Đây là nguyên nhân
+                // thật khiến "mất cả ảnh lẫn định vị" dù đã bấm Lưu Hồ Sơ ngoài hiện trường. Giờ CHỈ bỏ qua
+                // đúng tấm ảnh quá khổ (giữ nguyên ảnh CŨ đã lưu trước đó, nếu có — không đụng đến), còn TẤT
+                // CẢ thông tin khác (toạ độ, địa chỉ...) vẫn được lưu bình thường.
+                alert("⚠️ Ảnh vừa chọn vẫn còn quá lớn sau khi nén nên KHÔNG được lưu (giữ nguyên ảnh cũ nếu có) — nhưng toạ độ/địa chỉ/các thông tin khác VẪN ĐƯỢC LƯU BÌNH THƯỜNG.\n\nVui lòng chụp lại ảnh khác (rõ nét vừa phải, không cần độ phân giải cao) rồi thử tải lên lại sau.");
+            } else {
+                ho.anhNha = anhMoiChon;
             }
 
             if (CHE_DO_FIREBASE) {
@@ -4034,11 +4077,19 @@
                 capNhatGiaoDienSauKhiTai();
             }
             dongModal();
-            alert("✅ Đã cập nhật Hồ Sơ Cư Trú thành công!");
+            // QUAN TRỌNG CHO CÔNG TÁC THỰC ĐỊA: với "lưu tạm ngoại tuyến" đã bật, lệnh lưu ở trên LUÔN thành
+            // công ngay cả khi KHÔNG có mạng (chỉ lưu tạm trên máy, đợi có sóng mới đồng bộ) — cần báo rõ 2
+            // trạng thái khác nhau để cán bộ không hiểu nhầm là đã lên máy chủ trong khi thực ra đang chờ.
+            if (CHE_DO_FIREBASE && navigator.onLine === false) {
+                alert("📴 Đã lưu TẠM trên điện thoại (đang KHÔNG có mạng) — dữ liệu, ảnh, toạ độ sẽ TỰ ĐỘNG đồng bộ lên máy chủ ngay khi có sóng trở lại. Không cần làm lại, nhưng đừng xoá app/xoá dữ liệu trình duyệt trước khi có mạng.");
+            } else {
+                alert("✅ Đã cập nhật Hồ Sơ Cư Trú thành công!");
+            }
         }
 
         function dongModal() {
             document.getElementById('detailModal').classList.add('hidden');
+            dangXuLyAnh = false; // Đề phòng đóng modal giữa lúc ảnh đang xử lý dở, tránh khoá nhầm lần lưu kế tiếp
             const bannerCu = document.getElementById('bannerChamTayModal');
             if (bannerCu) bannerCu.remove(); // Dọn sạch banner chấm tay (nếu đang dở dang) để không sót lại lần mở sau
             if (mapInstance) { mapInstance.remove(); mapInstance = null; }
