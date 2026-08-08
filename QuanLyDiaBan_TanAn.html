@@ -305,6 +305,7 @@
                         </label>
                         <button onclick="xuatHinhVeThanhGeoJSON()" title="Xuất ranh giới đã vẽ của phường đang chọn ra file .geojson" class="bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1 rounded text-[11px] font-medium shadow">📤 Xuất Ranh Giới (.geojson)</button>
                         <button onclick="luuHinhVeThanhRanhGioiChinhThuc()" class="bg-green-600 hover:bg-green-700 px-2.5 py-1 rounded text-[11px] font-medium shadow">💾 Lưu Ranh Giới</button>
+                        <button onclick="batDauVeRanhGioiPhu()" class="bg-orange-600 hover:bg-orange-700 px-2.5 py-1 rounded text-[11px] font-medium shadow">🏘️ Thêm Ranh Giới Phụ (KDC...)</button>
                         <label class="flex items-center gap-1 bg-gray-800 hover:bg-gray-700 px-2.5 py-1 rounded text-[11px] cursor-pointer select-none">
                             <input type="checkbox" id="chkTienIchGIS" onchange="bamTienIchGIS(this.checked)" class="accent-amber-500">
                             <span>📍 Tiện ích quanh khu vực</span>
@@ -2430,6 +2431,15 @@
             mainMiniMapInstance.addControl(drawControl);
 
             mainMiniMapInstance.on(L.Draw.Event.CREATED, function (e) {
+                // Nếu đang ở chế độ "vẽ ranh giới phụ" (KDC/tổ dân phố...) -> KHÔNG gộp vào nhóm ranh giới
+                // chính, mà hỏi tên rồi lưu RIÊNG thành 1 lớp phụ có tên, không lẫn với ranh giới phường.
+                if (dangVeRanhGioiPhu) {
+                    dangVeRanhGioiPhu = false;
+                    const ten = prompt("Đặt tên cho ranh giới phụ này (VD: KDC 91B, Tổ dân phố 5...):", "");
+                    if (!ten || !ten.trim()) { alert("Đã huỷ — chưa đặt tên nên không lưu."); return; }
+                    luuRanhGioiPhu(ten.trim(), e.layer.toGeoJSON());
+                    return;
+                }
                 drawnItems.addLayer(e.layer);
             });
             // Khi cán bộ kéo-sửa đỉnh đa giác (edit toolbar) hoặc xóa hình, tự động lưu lại ngay để không mất thao tác
@@ -2444,39 +2454,78 @@
         }
 
         // ================== RANH GIỚI GIS: minh họa / nhập chính thức / vẽ tay ==================
-        function khoaLuuRanhGioi(tenPhuong) { return "ranhGioiGIS_" + tenPhuong; }
+        function khoaLuuRanhGioi(tenPhuong) { return "ranhGioiGIS_" + tenPhuong; } // Khoá cũ (localStorage) — chỉ còn dùng để TỰ ĐỘNG ĐỒNG BỘ dữ liệu cũ lên máy chủ 1 lần, không dùng làm nguồn chính nữa
 
-        function veLaiRanhGioiPhuong() {
+        let lopRanhGioiPhu = null; // Nhóm hiển thị riêng cho các ranh giới PHỤ (KDC, tổ dân phố...) — tách biệt với drawnItems (ranh giới CHÍNH)
+        let dangVeRanhGioiPhu = false;
+
+        // SỬA LỖI KIẾN TRÚC: trước đây ranh giới CHỈ lưu trên trình duyệt (localStorage) — y hệt lỗi Công an
+        // phường đã sửa trước đây. Giờ lưu lên Firestore (collection dùng chung "dia_diem_dac_biet", cùng tài
+        // liệu với vị trí/địa chỉ Công an phường) để MỌI cán bộ, MỌI thiết bị đều thấy đúng 1 ranh giới thống
+        // nhất — không còn tình trạng mỗi máy tự vẽ 1 kiểu. Đồng thời hỗ trợ THÊM nhiều "ranh giới phụ" có
+        // tên riêng (VD: KDC 91B, Tổ dân phố 5...) — không giới hạn số lượng, mỗi lớp hiển thị + xoá riêng.
+        async function veLaiRanhGioiPhuong() {
             if (!mainMiniMapInstance || !drawnItems) return;
             drawnItems.clearLayers();
             if (wardBoundaryLayer) { mainMiniMapInstance.removeLayer(wardBoundaryLayer); wardBoundaryLayer = null; }
+            if (lopRanhGioiPhu) { mainMiniMapInstance.removeLayer(lopRanhGioiPhu); }
+            lopRanhGioiPhu = L.featureGroup().addTo(mainMiniMapInstance);
 
             const khu = DANH_MUC_HANH_CHINH[khuVucHienTai];
-            const daLuu = localStorage.getItem(khoaLuuRanhGioi(khuVucHienTai));
+            let ranhGioiChinh = null, ranhGioiPhuMap = {};
 
-            if (daLuu) {
-                // Ưu tiên ranh giới GeoJSON chính thức đã được cán bộ nhập/vẽ/lưu trước đó
-                // -> nạp thẳng vào nhóm drawnItems để có thể CHỈNH SỬA (kéo đỉnh) ngay bằng công cụ vẽ.
+            if (CHE_DO_FIREBASE) {
                 try {
-                    const geo = JSON.parse(daLuu);
-                    const tam = L.geoJSON(geo, {
+                    const doc = await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).get();
+                    if (doc.exists) {
+                        if (doc.data().ranhGioiChinh) ranhGioiChinh = doc.data().ranhGioiChinh;
+                        if (doc.data().ranhGioiPhu) ranhGioiPhuMap = doc.data().ranhGioiPhu;
+                    }
+                } catch (err) { console.warn("Không tải được ranh giới từ máy chủ:", err.message); }
+
+                // Tự động đồng bộ ranh giới CŨ (kiểu localStorage) lên máy chủ nếu máy chủ CHƯA có — chỉ 1 lần,
+                // tránh cán bộ mất công vẽ lại từ đầu chỉ vì đổi cách lưu trữ.
+                if (!ranhGioiChinh) {
+                    const kieuCu = localStorage.getItem(khoaLuuRanhGioi(khuVucHienTai));
+                    if (kieuCu) {
+                        try {
+                            ranhGioiChinh = JSON.parse(kieuCu);
+                            await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).set({ phuong: khuVucHienTai, ranhGioiChinh }, { merge: true });
+                        } catch (e) { console.warn("Không đồng bộ được ranh giới cũ:", e.message); }
+                    }
+                }
+            } else {
+                const daLuu = localStorage.getItem(khoaLuuRanhGioi(khuVucHienTai));
+                if (daLuu) { try { ranhGioiChinh = JSON.parse(daLuu); } catch (e) {} }
+            }
+
+            // Vẽ các ranh giới PHỤ (KDC, tổ dân phố...) — màu cam, có tên riêng trong popup + nút xoá
+            Object.keys(ranhGioiPhuMap).forEach(ten => {
+                try {
+                    const lop = L.geoJSON(ranhGioiPhuMap[ten], { style: { color: "#f97316", weight: 3, opacity: 0.95, fillColor: "#f97316", fillOpacity: 0.15 } });
+                    lop.eachLayer(l => l.bindPopup(`<b style="color:#f97316;">🏘️ ${escHtml(ten)}</b><br><span style="font-size:10px;color:#94a3b8">Ranh giới phụ — dùng chung mọi thiết bị</span><br><button onclick="xoaRanhGioiPhu('${escHtml(ten).replace(/'/g, "&apos;")}')" style="font-size:10px;color:#f87171;text-decoration:underline;margin-top:4px;">Xoá ranh giới phụ này</button>`));
+                    lopRanhGioiPhu.addLayer(lop);
+                } catch (e) { console.warn("Lỗi vẽ ranh giới phụ", ten, e.message); }
+            });
+
+            if (ranhGioiChinh) {
+                try {
+                    const tam = L.geoJSON(ranhGioiChinh, {
                         style: { color: "#22c55e", weight: 3, opacity: 0.95, fillColor: "#22c55e", fillOpacity: 0.10 }
                     });
                     tam.eachLayer(l => { l.bindPopup("<b style='color:#22c55e;'>✅ Ranh giới GIS chính thức - " + khuVucHienTai + "</b><br><span style='font-size:10px;color:#94a3b8'>Dùng công cụ ✏️ Sửa lớp để kéo chỉnh đỉnh cho khớp bản đồ vệ tinh, hệ thống sẽ tự lưu lại.</span>"); drawnItems.addLayer(l); });
-                    if (drawnItems.getBounds().isValid()) mainMiniMapInstance.fitBounds(drawnItems.getBounds(), { padding: [20, 20] });
+                    const tongBounds = L.featureGroup([drawnItems, lopRanhGioiPhu]);
+                    if (tongBounds.getBounds().isValid()) mainMiniMapInstance.fitBounds(tongBounds.getBounds(), { padding: [20, 20] });
                     return;
                 } catch (e) { console.warn("Lỗi đọc ranh giới đã lưu:", e); }
             }
 
             if (khu && khu.bounds) {
-                // Ranh giới minh họa gần đúng -> cũng nạp vào drawnItems để cán bộ có thể kéo sửa lại
-                // cho khớp bản đồ vệ tinh rồi bấm "💾 Lưu ranh giới" để chính thức hóa.
                 const poly = L.polygon(khu.bounds, {
                     color: "#f43f5e", weight: 3, opacity: 0.9, fillColor: "#ef4444", fillOpacity: 0.12, dashArray: "6, 6"
                 }).bindPopup("<b style='color:#f43f5e;'>⚠️ Ranh giới MINH HỌA GẦN ĐÚNG - " + khuVucHienTai + "</b><br><span style='font-size:10px;color:#94a3b8'>Bật lớp Vệ Tinh, dùng công cụ ✏️ Sửa lớp để kéo từng đỉnh khớp với địa giới thật, sau đó bấm '💾 Lưu ranh giới'.</span>");
                 drawnItems.addLayer(poly);
             } else {
-                // Chưa có bounds nào cả -> chỉ đặt tâm bản đồ vào vị trí trụ sở, nhắc cán bộ tự vẽ hoặc nhập ranh giới
                 mainMiniMapInstance.setView(khu ? khu.center : DEFAULT_CENTER, 15);
                 L.popup({ closeOnClick: true })
                     .setLatLng(khu ? khu.center : DEFAULT_CENTER)
@@ -2485,14 +2534,57 @@
             }
         }
 
-        function luuHinhVeThanhRanhGioiChinhThuc(imLang) {
+        async function luuHinhVeThanhRanhGioiChinhThuc(imLang) {
             if (!drawnItems || drawnItems.getLayers().length === 0) {
                 if (!imLang) alert("Chưa có hình nào trên bản đồ để lưu. Hãy dùng công cụ 🔷 Vẽ đa giác hoặc ✏️ Sửa lớp trước.");
                 return;
             }
             const geo = drawnItems.toGeoJSON();
-            localStorage.setItem(khoaLuuRanhGioi(khuVucHienTai), JSON.stringify(geo));
-            if (!imLang) alert("✅ Đã lưu ranh giới hiện tại làm ranh giới GIS CHÍNH THỨC cho " + khuVucHienTai + ". Lần mở sau sẽ tự hiển thị (viền xanh lá).");
+            try {
+                if (CHE_DO_FIREBASE) {
+                    await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).set({ phuong: khuVucHienTai, ranhGioiChinh: geo }, { merge: true });
+                    ghiNhatKy('Cập nhật ranh giới GIS chính', khuVucHienTai);
+                } else {
+                    localStorage.setItem(khoaLuuRanhGioi(khuVucHienTai), JSON.stringify(geo));
+                }
+                if (!imLang) alert("✅ Đã lưu ranh giới hiện tại làm ranh giới GIS CHÍNH THỨC cho " + khuVucHienTai + " — lưu lên máy chủ, mọi thiết bị đều thấy ngay.");
+            } catch (err) {
+                alert("❌ Lỗi lưu ranh giới lên máy chủ: " + err.message);
+            }
+        }
+
+        // Bắt đầu chế độ vẽ 1 RANH GIỚI PHỤ mới (VD: KDC 91B) — tách biệt hoàn toàn khỏi ranh giới chính của phường
+        function batDauVeRanhGioiPhu() {
+            if (!CHE_DO_FIREBASE) return alert("Tính năng này cần kết nối máy chủ để dùng chung được nhiều thiết bị.");
+            dangVeRanhGioiPhu = true;
+            alert("🏘️ Chế độ vẽ RANH GIỚI PHỤ đã bật.\n\nBấm nút vẽ đa giác (🔷, góc bản đồ) rồi vẽ theo đúng đường bao thật (khuyến nghị bật lớp Vệ Tinh trước). Vẽ xong hệ thống sẽ hỏi đặt tên (VD: KDC 91B) và lưu riêng, không lẫn với ranh giới chính của phường.");
+        }
+
+        async function luuRanhGioiPhu(ten, geojson) {
+            try {
+                await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).set({
+                    phuong: khuVucHienTai,
+                    ranhGioiPhu: { [ten]: geojson }
+                }, { merge: true });
+                ghiNhatKy('Thêm ranh giới phụ', khuVucHienTai + ' — ' + ten);
+                alert("✅ Đã lưu ranh giới phụ \"" + ten + "\" — dùng chung mọi thiết bị.");
+                veLaiRanhGioiPhuong();
+            } catch (err) {
+                alert("❌ Lỗi lưu ranh giới phụ: " + err.message);
+            }
+        }
+
+        async function xoaRanhGioiPhu(ten) {
+            if (!confirm("Xoá ranh giới phụ \"" + ten + "\"? Không thể hoàn tác.")) return;
+            try {
+                await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).update({
+                    ['ranhGioiPhu.' + ten]: firebase.firestore.FieldValue.delete()
+                });
+                ghiNhatKy('Xoá ranh giới phụ', khuVucHienTai + ' — ' + ten);
+                veLaiRanhGioiPhuong();
+            } catch (err) {
+                alert("❌ Lỗi xoá: " + err.message);
+            }
         }
 
         // Định vị và đánh dấu trên bản đồ vị trí UBND phường + Công an phường (phân biệt rõ với marker hộ dân).
