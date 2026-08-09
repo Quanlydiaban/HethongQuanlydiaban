@@ -1676,16 +1676,24 @@
         function dangKyLangNgheHoGiaDinh() {
             if (huyLangNgheHoGiaDinh) { huyLangNgheHoGiaDinh(); huyLangNgheHoGiaDinh = null; }
             if (!coQuyenXemPhuong(khuVucHienTai)) { danhSachHoGiaDinh = []; phanTichDuLieuPhanCap(); capNhatGiaoDienSauKhiTai(); return; }
+            // Hiện rõ trạng thái "Đang tải..." NGAY LẬP TỨC, khác hẳn con số "0" — tránh gây hiểu nhầm "mất dữ
+            // liệu" mỗi khi mạng chập chờn (đổi Wifi/4G ngoài hiện trường) trong lúc chờ đồng bộ xong.
+            const elNK = document.getElementById('statNhanKhau'), elHo = document.getElementById('statHoGiaDinh');
+            if (elNK) elNK.innerText = '...'; if (elHo) elHo.innerText = '...';
+            let laLanDauTien = true;
             huyLangNgheHoGiaDinh = dbFirestore.collection('households')
                 .where('phuong', '==', khuVucHienTai)
                 .onSnapshot(snap => {
+                    laLanDauTien = false;
                     danhSachHoGiaDinh = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
                     phanTichDuLieuPhanCap();
                     capNhatGiaoDienSauKhiTai();
                     if (!daTuMoHoSoTuQR) { daTuMoHoSoTuQR = true; tuDongMoHoSoTuUrlQR(); } // Chỉ tự mở 1 LẦN DUY NHẤT lúc tải đầu tiên, không lặp lại mỗi lần đồng bộ dữ liệu
                 }, err => {
                     console.error("Lỗi đồng bộ Firestore:", err);
-                    alert("⚠️ Mất kết nối đồng bộ dữ liệu với máy chủ. Kiểm tra lại internet hoặc quyền truy cập (Security Rules).");
+                    // Hiện rõ "⚠️ Lỗi mạng" thay vì để nguyên "..." hoặc "0" — tránh nhầm là dữ liệu trống thật.
+                    if (elNK) elNK.innerText = '⚠️'; if (elHo) elHo.innerText = '⚠️';
+                    alert("⚠️ Mất kết nối đồng bộ dữ liệu với máy chủ (mạng yếu/chập chờn). Số liệu hiển thị KHÔNG đáng tin lúc này — vui lòng kiểm tra internet rồi tải lại trang, KHÔNG phải dữ liệu đã mất.");
                 });
         }
         let daTuMoHoSoTuQR = false;
@@ -2057,7 +2065,9 @@
             //   - Chỉ huy TP/PC06: vai trò GIÁM SÁT liên phường, không trực tiếp sở hữu dữ liệu từng phường
             //     nên KHÔNG được xóa dữ liệu phường mà mình không trực tiếp phụ trách — tránh lạm quyền.
             const btnXoaDL = document.getElementById('btnXoaDL');
-            if (btnXoaDL) btnXoaDL.classList.toggle('hidden', !(currentUser.role === 'admin' || currentUser.role === 'chi_huy'));
+            // Theo yêu cầu rõ ràng của Admin: CHỈ Admin mới được xóa dữ liệu, tránh người khác (kể cả Chỉ huy
+            // phường) lỡ bấm nhầm. Ai cần xóa dữ liệu khu vực/phường nào thì liên hệ Admin thực hiện.
+            if (btnXoaDL) btnXoaDL.classList.toggle('hidden', currentUser.role !== 'admin');
             // Bàn giao địa bàn = thao tác thay đổi PHÂN QUYỀN của người khác — chỉ Admin mới có quyền quản lý
             // phân quyền (giống hệt panel RBAC hiện tại cũng chỉ Admin mới sửa được), giữ nhất quán kiến trúc.
             const btnBanGiao = document.getElementById('btnBanGiao');
