@@ -145,6 +145,7 @@
                     <span>📂 Nhập Excel</span>
                     <input type="file" id="excelFile" accept=".xlsx, .xls" class="hidden" onchange="nhapFileExcel(event)">
                 </label>
+                <button onclick="hoanTacLanNhapExcelGanNhat()" class="bg-orange-700 hover:bg-orange-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow" title="Chỉ xóa đúng những hộ CHÍNH BẠN vừa nhập gần nhất — không đụng đến dữ liệu người khác">↩️ Hoàn Tác Lần Nhập Của Tôi</button>
                 <button onclick="moModalHuongDanExcel()" class="bg-gray-700 hover:bg-gray-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">❓ Hướng Dẫn Mẫu Excel</button>
                 <button onclick="xuatBaoCaoExcelKV1()" class="bg-purple-600 hover:bg-purple-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📋 Xuất Mẫu KV1</button>
                 <button onclick="xuatBaoCaoExcelKV2()" class="bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📊 Xuất Mẫu KV2</button>
@@ -420,6 +421,10 @@
                                 <label class="text-gray-400 block mb-0.5 font-semibold text-amber-300">Ngày hết hạn Tạm/Lưu trú:</label>
                                 <input type="date" id="editNgayHetHan" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white w-full">
                             </div>
+                            <div id="khungDiaChiThuongTruGoc" class="hidden mb-2">
+                                <label class="text-gray-400 block mb-0.5 font-semibold text-amber-300">Nơi đăng ký thường trú gốc (nếu khác nơi ở hiện tại):</label>
+                                <input type="text" id="editDiaChiThuongTruGoc" placeholder="VD: Ấp 2, xã Hòa An, huyện Phụng Hiệp, Hậu Giang" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white w-full">
+                            </div>
 
                             <label class="text-gray-400 block mb-0.5">Ghi chú:</label>
                             <textarea id="editGhiChu" rows="2" placeholder="Ghi chú tay..." class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white w-full"></textarea>
@@ -616,13 +621,19 @@
 
             <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5 space-y-1">
                 <p class="font-semibold text-gray-200">📌 Về "Diện cư trú" (Thường trú / Tạm trú / Lưu trú / NOHN)</p>
-                <p class="text-gray-400">Đây chỉ là <b>1 cột phân loại</b> trong cùng 1 file dữ liệu, không cần tách file riêng cho từng diện — cứ ghi đúng giá trị vào cột "Diện" là hệ thống tự lọc/thống kê được theo từng loại (dùng ô "Bộ Lọc Nâng Cao" hoặc nút "📈 Báo Cáo Thống Kê").</p>
+                <p class="text-gray-400">Đây chỉ là <b>1 cột phân loại</b> trong cùng 1 file dữ liệu, không cần tách file riêng cho từng diện — cứ ghi đúng giá trị vào cột "Diện" là hệ thống tự lọc/thống kê được theo từng loại (dùng ô "Bộ Lọc Nâng Cao" hoặc nút "📈 Báo Cáo Thống Kê"). Có thể tải riêng từng mẫu (Thường trú/Tạm trú/Lưu trú/NOHN) ở nút "⬆️ Nhập Excel" để có sẵn cột đúng chuẩn cho từng loại.</p>
+            </div>
+
+            <div class="bg-emerald-950/40 border border-emerald-700/50 rounded-lg p-2.5 space-y-1">
+                <p class="font-semibold text-emerald-400">🔄 Nhập lại người đã có sẵn trong hệ thống — an toàn, KHÔNG tạo trùng lặp</p>
+                <p class="text-gray-300">Nếu 1 người đã từng được nhập trước đó (VD: trước ghi diện "Thường trú", nay chuyển sang "Tạm trú" và nhập lại qua file mới), hệ thống <b>tự động nhận diện đúng người đó</b> (khớp Số HSCT hoặc số CCCD trùng khớp) và <b>cập nhật lại đúng diện cư trú mới</b> vào hồ sơ sẵn có — không tạo thêm bản ghi trùng lặp, không mất ảnh nhà/toạ độ GPS đã lưu trước đó.</p>
             </div>
 
             <div class="flex justify-end gap-2 pt-1">
                 <button onclick="taiMauExcelThuongTru()" class="bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded font-medium">⬇️ Mẫu Thường Trú</button>
                 <button onclick="taiMauExcelTamTru()" class="bg-amber-600 hover:bg-amber-700 px-3 py-1.5 rounded font-medium">⬇️ Mẫu Tạm Trú</button>
-                <button onclick="taiMauExcelLuuTru()" class="bg-rose-600 hover:bg-rose-700 px-3 py-1.5 rounded font-medium">⬇️ Mẫu Lưu Trú/NOHN</button>
+                <button onclick="taiMauExcelLuuTru()" class="bg-rose-600 hover:bg-rose-700 px-3 py-1.5 rounded font-medium">⬇️ Mẫu Lưu Trú</button>
+                <button onclick="taiMauExcelNOHN()" class="bg-fuchsia-700 hover:bg-fuchsia-600 px-3 py-1.5 rounded font-medium">⬇️ Mẫu NOHN</button>
                 <button onclick="dongModalHuongDanExcel()" class="bg-gray-700 px-3 py-1.5 rounded">Đóng</button>
             </div>
         </div>
@@ -1689,6 +1700,17 @@
                 .onSnapshot(snap => {
                     laLanDauTien = false;
                     danhSachHoGiaDinh = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+                    // Vá ngầm trường "khuVuc" cho các hộ CŨ được tạo trước khi có trường này (VD nhập Excel/tạo
+                    // tay từ trước) — không có trường này thì Security Rules không kiểm tra được, CSKV sẽ
+                    // không xóa được các hộ cũ dù đúng khu vực mình phụ trách.
+                    if (currentUser.role === 'can_bo' || currentUser.role === 'admin' || currentUser.role === 'chi_huy' || currentUser.role === 'can_bo_du_lieu') {
+                        const canVa = danhSachHoGiaDinh.filter(h => !h.khuVuc && h.id);
+                        if (canVa.length > 0 && canVa.length < 500) {
+                            const lo = dbFirestore.batch();
+                            canVa.forEach(h => { const kv = layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1'; h.khuVuc = kv; lo.update(dbFirestore.collection('households').doc(h.id), { khuVuc: kv }); });
+                            lo.commit().catch(e => console.warn("Không vá được trường khuVuc cho dữ liệu cũ:", e.message));
+                        }
+                    }
                     phanTichDuLieuPhanCap();
                     capNhatGiaoDienSauKhiTai();
                     if (!daTuMoHoSoTuQR) { daTuMoHoSoTuQR = true; tuDongMoHoSoTuUrlQR(); } // Chỉ tự mở 1 LẦN DUY NHẤT lúc tải đầu tiên, không lặp lại mỗi lần đồng bộ dữ liệu
@@ -1703,6 +1725,9 @@
 
         // Ghi 1 hộ (mới hoặc cập nhật) lên Firestore. Nếu hộ chưa có "id" Firestore -> tạo mới.
         async function luuHoLenFirestore(ho) {
+            // Luôn tính và lưu tường minh trường "khuVuc" (không chỉ suy luận từ địa chỉ ở phía client) — để
+            // Security Rules trên máy chủ có thể kiểm tra được, phục vụ phân quyền XÓA đúng khu vực cho CSKV.
+            ho.khuVuc = layNhanKhuVucTuDiaChi(ho.diaChi) || 'Khu Vực 1';
             const { id, ...duLieu } = ho;
             if (id) {
                 await dbFirestore.collection('households').doc(id).set(duLieu);
@@ -1714,16 +1739,60 @@
 
         // Ghi hàng loạt hộ mới (lúc nhập Excel) lên Firestore theo từng lô tối đa 400 thao tác/lô
         // (giới hạn Firestore là 500 — chừa dư cho an toàn).
+        // SỬA LỖI NGHIÊM TRỌNG: trước đây MỖI LẦN nhập Excel luôn tạo hồ sơ MỚI hoàn toàn cho MỌI dòng, không
+        // hề kiểm tra xem người/hộ đó đã tồn tại trong hệ thống chưa. Hậu quả: nhập lại đúng những người đã có
+        // sẵn (VD: trước đó nhập diện "Thường trú"/"NOHN", nay nhập file "Tạm trú" cho chính những người này)
+        // sẽ tạo THÊM 1 bản ghi trùng lặp — bản ghi CŨ (diện sai) vẫn còn nguyên, khiến danh sách lẫn lộn,
+        // trông như "nhập Tạm trú lại ra Thường trú". Giờ tự động PHÁT HIỆN hộ đã tồn tại (khớp đúng Số HSCT,
+        // hoặc bất kỳ thành viên nào trùng CCCD) và CẬP NHẬT đúng diện cư trú + thông tin mới nhất vào hồ sơ
+        // đó, thay vì tạo bản ghi mới — giữ nguyên ảnh nhà/toạ độ GPS/ghi chú đã có (không bị Excel ghi đè mất).
         async function luuDanhSachMoiLenFirestore(danhSachMoi) {
             const CO_LO = 400;
+            const hoTheoHsct = {}, hoTheoCccd = {};
+            danhSachHoGiaDinh.forEach(ho => {
+                if (ho.hsct) hoTheoHsct[ho.hsct] = ho;
+                (ho.thanhVien || []).forEach(tv => { if (tv.cccd) hoTheoCccd[tv.cccd] = ho; });
+            });
+            let soHoCapNhat = 0, soHoTaoMoi = 0;
+
             for (let i = 0; i < danhSachMoi.length; i += CO_LO) {
                 const lo = dbFirestore.batch();
-                danhSachMoi.slice(i, i + CO_LO).forEach(ho => {
-                    const ref = dbFirestore.collection('households').doc();
-                    lo.set(ref, ho);
+                danhSachMoi.slice(i, i + CO_LO).forEach(hoMoi => {
+                    hoMoi.khuVuc = layNhanKhuVucTuDiaChi(hoMoi.diaChi) || 'Khu Vực 1';
+                    let hoTrung = (hoMoi.hsct && hoTheoHsct[hoMoi.hsct]) || null;
+                    if (!hoTrung) {
+                        for (const tv of (hoMoi.thanhVien || [])) {
+                            if (tv.cccd && hoTheoCccd[tv.cccd]) { hoTrung = hoTheoCccd[tv.cccd]; break; }
+                        }
+                    }
+                    if (hoTrung && hoTrung.id) {
+                        // CẬP NHẬT hộ đã có — CHỈ ghi đè các trường Excel thật sự cung cấp (diện cư trú, địa
+                        // chỉ, chủ hộ, thành viên, hạn tạm trú...); KHÔNG đụng đến anhNha/gps/ghiChu đã lưu
+                        // trước đó vì Excel không mang các thông tin này.
+                        const ref = dbFirestore.collection('households').doc(hoTrung.id);
+                        lo.set(ref, {
+                            hsct: hoMoi.hsct, diaChi: hoMoi.diaChi, phuong: hoMoi.phuong, khuVuc: hoMoi.khuVuc,
+                            chuHo: hoMoi.chuHo, dienNghiepVu: hoMoi.dienNghiepVu,
+                            diaChiThuongTruGoc: hoMoi.diaChiThuongTruGoc, ngayHetHan: hoMoi.ngayHetHan || '',
+                            thanhVien: hoMoi.thanhVien
+                        }, { merge: true });
+                        soHoCapNhat++;
+                        // Cập nhật map tra cứu ngay để các dòng SAU trong CÙNG lần import cũng nhận diện đúng
+                        // hộ này (tránh tự tạo trùng lặp NGAY TRONG 1 lần import nếu có nhiều dòng cùng khớp).
+                        if (hoMoi.hsct) hoTheoHsct[hoMoi.hsct] = hoTrung;
+                        (hoMoi.thanhVien || []).forEach(tv => { if (tv.cccd) hoTheoCccd[tv.cccd] = hoTrung; });
+                    } else {
+                        const ref = dbFirestore.collection('households').doc();
+                        lo.set(ref, hoMoi);
+                        soHoTaoMoi++;
+                        const hoGiaLap = Object.assign({ id: ref.id }, hoMoi);
+                        if (hoMoi.hsct) hoTheoHsct[hoMoi.hsct] = hoGiaLap;
+                        (hoMoi.thanhVien || []).forEach(tv => { if (tv.cccd) hoTheoCccd[tv.cccd] = hoGiaLap; });
+                    }
                 });
                 await lo.commit();
             }
+            return { soHoCapNhat, soHoTaoMoi };
         }
 
         // Xóa toàn bộ hộ của phường đang chọn trên Firestore (dùng cho nút "🗑️ Xóa DL")
@@ -2068,9 +2137,9 @@
             //   - Chỉ huy TP/PC06: vai trò GIÁM SÁT liên phường, không trực tiếp sở hữu dữ liệu từng phường
             //     nên KHÔNG được xóa dữ liệu phường mà mình không trực tiếp phụ trách — tránh lạm quyền.
             const btnXoaDL = document.getElementById('btnXoaDL');
-            // Theo yêu cầu rõ ràng của Admin: CHỈ Admin mới được xóa dữ liệu, tránh người khác (kể cả Chỉ huy
-            // phường) lỡ bấm nhầm. Ai cần xóa dữ liệu khu vực/phường nào thì liên hệ Admin thực hiện.
-            if (btnXoaDL) btnXoaDL.classList.toggle('hidden', currentUser.role !== 'admin');
+            // Theo yêu cầu: Admin xóa được mọi nơi; CSKV được tự xóa ĐÚNG khu vực mình phụ trách (giới hạn
+            // chặt ở modal + Security Rules bên dưới); Chỉ huy/Cán bộ dữ liệu KHÔNG có quyền xóa.
+            if (btnXoaDL) btnXoaDL.classList.toggle('hidden', !(currentUser.role === 'admin' || currentUser.role === 'can_bo'));
             // Bàn giao địa bàn = thao tác thay đổi PHÂN QUYỀN của người khác — chỉ Admin mới có quyền quản lý
             // phân quyền (giống hệt panel RBAC hiện tại cũng chỉ Admin mới sửa được), giữ nhất quán kiến trúc.
             const btnBanGiao = document.getElementById('btnBanGiao');
@@ -3169,6 +3238,21 @@
             return layNhanKhuVucTuDiaChi(tenFile);
         }
 
+        // SỬA LỖI NGHIÊM TRỌNG: trước đây nếu file Excel KHÔNG có cột "Diện/Loại hình/Trạng thái" tường minh
+        // (rất hay gặp — nhiều đơn vị chỉ có cột "Tạm trú" hoặc "Nơi thường trú" chứa ĐỊA CHỈ chứ không phải
+        // 1 cột riêng ghi rõ diện), toàn bộ hộ trong file bị ÂM THẦM gán nhầm thành "Thường trú" — dù file rõ
+        // ràng là dữ liệu Tạm trú/Lưu trú/NOHN. Giờ THỬ đoán diện theo TÊN FILE trước (cách đặt tên file mẫu
+        // của hệ thống đã có sẵn "TAM_TRU_...", "LUU_TRU_...", "NOHN_..." — rất đáng tin cậy), nếu tên file
+        // không có gợi ý gì thì HỎI RÕ người dùng thay vì âm thầm mặc định sai.
+        function doanDienTuTenFile(tenFile) {
+            const t = boDauTiengViet(tenFile || '');
+            if (t.includes('nohn')) return 'NOHN';
+            if (t.includes('luu_tru') || t.includes('luutru') || (t.includes('luu') && t.includes('tru'))) return 'Lưu trú';
+            if (t.includes('tam_tru') || t.includes('tamtru') || (t.includes('tam') && t.includes('tru'))) return 'Tạm trú';
+            if (t.includes('thuong_tru') || t.includes('thuongtru') || (t.includes('thuong') && t.includes('tru'))) return 'Thường trú';
+            return null;
+        }
+
         // Hàm chuẩn hóa & nhận diện "Khu Vực" DÙNG CHUNG cho toàn bộ ứng dụng (lọc, thống kê, biểu đồ, báo cáo).
         // Bỏ dấu tiếng Việt trước khi so khớp để nhận diện đúng dù dữ liệu ghi "Khu Vực 7", "Khu vuc 7",
         // "KV 7", "kv7"... đều quy về CÙNG MỘT nhãn chuẩn "Khu Vực 7" -> lọc 1 lần là ra đủ, không sót do gõ khác kiểu.
@@ -3218,6 +3302,57 @@
             return full;
         }
 
+        // ================== HOÀN TÁC LẦN NHẬP EXCEL GẦN NHẤT (chỉ đúng dữ liệu của CHÍNH MÌNH) ==================
+        // Giải quyết đúng yêu cầu: CSKV nhập sai file Excel thì TỰ sửa được, nhưng KHÔNG được đụng đến dữ liệu
+        // do CSKV KHÁC nhập — kể cả khi 2 người cùng phụ trách chung 1 khu vực. Cơ chế: mỗi hộ khi tạo qua Excel
+        // được gắn nhãn "nguoiTao" (ai nhập) + "lanNhapId" (lần nhập nào) — hoàn tác CHỈ xóa đúng các hộ có
+        // nguoiTao == chính tài khoản đang đăng nhập VÀ thuộc lanNhapId GẦN NHẤT của người đó. Hộ do người khác
+        // nhập, hoặc hộ đã có sẵn từ trước chỉ được CẬP NHẬT (không phải tạo mới) sẽ KHÔNG bao giờ bị đụng tới.
+        async function hoanTacLanNhapExcelGanNhat() {
+            if (!CHE_DO_FIREBASE) return alert("Tính năng này cần kết nối máy chủ.");
+            try {
+                const snap = await dbFirestore.collection('households')
+                    .where('phuong', '==', khuVucHienTai)
+                    .where('nguoiTao', '==', currentUser.email)
+                    .get();
+                if (snap.empty) return alert("Không tìm thấy hộ nào do chính tài khoản " + currentUser.email + " nhập qua Excel tại " + khuVucHienTai + " — có thể chưa từng nhập, hoặc dữ liệu đã được người khác chỉnh sửa lại (không còn thuộc lần nhập của bạn).");
+
+                // Gom nhóm theo lanNhapId, tìm nhóm GẦN NHẤT (dựa vào phần timestamp nhúng sẵn trong ID)
+                let theoLanNhap = {};
+                snap.docs.forEach(d => {
+                    const dl = d.data();
+                    const id = dl.lanNhapId || '(không rõ lần nhập)';
+                    if (!theoLanNhap[id]) theoLanNhap[id] = [];
+                    theoLanNhap[id].push({ ref: d.ref, chuHo: dl.chuHo, diaChi: dl.diaChi });
+                });
+                const cacLanNhap = Object.keys(theoLanNhap).filter(id => id !== '(không rõ lần nhập)');
+                if (cacLanNhap.length === 0) return alert("Không xác định được lần nhập gần nhất (dữ liệu cũ trước khi có tính năng này). Vui lòng liên hệ Admin để xóa thủ công nếu cần.");
+                cacLanNhap.sort((a, b) => {
+                    const tA = parseInt((a.match(/nhap_(\d+)_/) || [0, 0])[1]);
+                    const tB = parseInt((b.match(/nhap_(\d+)_/) || [0, 0])[1]);
+                    return tB - tA;
+                });
+                const lanGanNhat = cacLanNhap[0];
+                const dsHoSeXoa = theoLanNhap[lanGanNhat];
+                const tGio = parseInt((lanGanNhat.match(/nhap_(\d+)_/) || [0, 0])[1]);
+                const thoiGianStr = tGio ? new Date(tGio).toLocaleString('vi-VN') : '(không rõ thời gian)';
+
+                const xemTruoc = dsHoSeXoa.slice(0, 5).map(h => '• ' + (h.chuHo || '?') + ' — ' + (h.diaChi || '')).join('\n') + (dsHoSeXoa.length > 5 ? '\n... và ' + (dsHoSeXoa.length - 5) + ' hộ khác' : '');
+                if (!confirm("Hoàn tác lần nhập Excel GẦN NHẤT của bạn (" + thoiGianStr + ") tại " + khuVucHienTai + "?\n\nSẽ XÓA " + dsHoSeXoa.length + " hộ:\n" + xemTruoc + "\n\nCHỈ xóa đúng những hộ do CHÍNH BẠN nhập lần này — không đụng đến dữ liệu của cán bộ khác. Không thể hoàn tác lại được.")) return;
+
+                const CO_LO = 400;
+                for (let i = 0; i < dsHoSeXoa.length; i += CO_LO) {
+                    const lo = dbFirestore.batch();
+                    dsHoSeXoa.slice(i, i + CO_LO).forEach(h => lo.delete(h.ref));
+                    await lo.commit();
+                }
+                ghiNhatKy('Tự hoàn tác lần nhập Excel', khuVucHienTai + ' — xóa ' + dsHoSeXoa.length + ' hộ (lần nhập lúc ' + thoiGianStr + ')');
+                alert("✅ Đã hoàn tác — xóa " + dsHoSeXoa.length + " hộ do chính bạn vừa nhập nhầm.");
+            } catch (err) {
+                alert("❌ Lỗi hoàn tác: " + err.message);
+            }
+        }
+
         function nhapFileExcel(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -3229,6 +3364,11 @@
             }
             
             const khuVucTuTenFile = layKhuVucTuTenFile(file.name);
+            // Mã định danh RIÊNG cho LẦN NHẬP này — dùng để sau này CSKV có thể tự "Hoàn tác" ĐÚNG lần nhập
+            // của CHÍNH MÌNH nếu lỡ nhập sai file, mà không đụng đến dữ liệu do người khác nhập, kể cả cùng
+            // chung 1 khu vực.
+            const lanNhapId = 'nhap_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+            const dienTuTenFile = doanDienTuTenFile(file.name); // Gợi ý diện cư trú theo tên file — dùng khi file không có cột "Diện" tường minh
 
             const reader = new FileReader();
             reader.onload = async function(e) {
@@ -3236,7 +3376,7 @@
                     const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
                     const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
                     
-                    let mapCol = { hsct: -1, hoTen: -1, ngaySinh: -1, quanHe: -1, diaChi: -1, phuongXa: -1, chuHo: -1, cccd: -1, gioiTinh: -1, dienNV: -1, danToc: -1, tonGiao: -1, queQuan: -1, ngheNghiep: -1, sdt: -1, quocTich: -1, ngayHetHan: -1 };
+                    let mapCol = { hsct: -1, hoTen: -1, ngaySinh: -1, quanHe: -1, diaChi: -1, phuongXa: -1, chuHo: -1, cccd: -1, gioiTinh: -1, dienNV: -1, danToc: -1, tonGiao: -1, queQuan: -1, ngheNghiep: -1, sdt: -1, quocTich: -1, ngayHetHan: -1, noiThuongTruGoc: -1 };
                     
                     for (let i = 0; i < Math.min(20, rows.length); i++) {
                         let r = rows[i] || [];
@@ -3250,6 +3390,10 @@
                             if (mapCol.ngaySinh === -1 && ((t.includes('ngày') && t.includes('sinh')) || t === 'ns' || t === 'ngaysinh')) mapCol.ngaySinh = j;
                             if (mapCol.quanHe === -1 && (t.includes('quan') && t.includes('hệ'))) mapCol.quanHe = j;
                             if (mapCol.diaChi === -1 && ((t.includes('địa') && t.includes('chỉ')) || (t.includes('nơi') && t.includes('cư')) || (t.includes('tạm') && t.includes('trú')))) mapCol.diaChi = j;
+                            // Cột "Nơi thường trú" / "Địa chỉ thường trú gốc": ĐỊA CHỈ GỐC nơi công dân đăng ký
+                            // thường trú (thường ở phường/tỉnh KHÁC) — khác hẳn cột "diện cư trú" (chỉ ghi 1 từ
+                            // trạng thái). Trước đây khai báo biến nhưng CHƯA từng dò cột này, dữ liệu bị bỏ sót.
+                            if (mapCol.noiThuongTruGoc === -1 && t.includes('nơi') && t.includes('thường') && t.includes('trú')) mapCol.noiThuongTruGoc = j;
                             if (mapCol.phuongXa === -1 && (t.includes('phường') || t.includes('xã'))) mapCol.phuongXa = j;
                             if (mapCol.chuHo === -1 && (t.includes('chủ') && t.includes('hộ')) && !(t.includes('quan') && t.includes('hệ'))) mapCol.chuHo = j;
                             if (mapCol.cccd === -1 && (t.includes('cccd') || (t.includes('định') && t.includes('danh')) || t.includes('cmnd') || t === 'đdcn')) mapCol.cccd = j;
@@ -3288,10 +3432,20 @@
                         if (laTuChiQuanHe(tenChuHoCol)) tenChuHoCol = '';
                         
                         let rawDien = (mapCol.dienNV !== -1 && mapCol.dienNV !== undefined) ? String(r[mapCol.dienNV] || '').trim() : '';
-                        let dienNV = rawDien !== '' ? rawDien : 'Thường trú';
                         const validDiens = ['thường', 'tạm', 'lưu', 'nohn'];
-                        let isValidDien = validDiens.some(d => dienNV.toLowerCase().includes(d));
-                        if (!isValidDien) {
+                        let isValidDien = rawDien !== '' && validDiens.some(d => rawDien.toLowerCase().includes(d));
+                        // SỬA LỖI NGHIÊM TRỌNG: trước đây khi KHÔNG có cột "Diện" hợp lệ, code mặc định thẳng
+                        // "Thường trú" — HOÀN TOÀN BỎ QUA gợi ý đã đoán đúng từ tên file (VD file tên
+                        // "TAM_TRU_KHU_VUC_7..." rõ ràng là dữ liệu Tạm trú). Giờ ưu tiên dùng gợi ý từ tên
+                        // file trước, chỉ khi tên file CŨNG không gợi ý được gì mới mặc định "Thường trú".
+                        let dienNV;
+                        if (isValidDien) {
+                            dienNV = rawDien.toLowerCase().includes('thường') ? 'Thường trú'
+                                : rawDien.toLowerCase().includes('nohn') ? 'NOHN'
+                                : rawDien.toLowerCase().includes('lưu') ? 'Lưu trú' : 'Tạm trú';
+                        } else if (dienTuTenFile) {
+                            dienNV = dienTuTenFile;
+                        } else {
                             dienNV = 'Thường trú';
                         }
                         
@@ -3306,12 +3460,14 @@
                                 phuong: khuVucHienTai, // Gắn theo phường đang chọn trên bản đồ lúc nhập -> tách biệt dữ liệu khi dùng chung phần mềm cho nhiều phường
                                 chuHo: chuHoFinal, 
                                 dienNghiepVu: dienNV,
+                                diaChiThuongTruGoc: (mapCol.noiThuongTruGoc !== -1 && r[mapCol.noiThuongTruGoc]) ? String(r[mapCol.noiThuongTruGoc]).trim() : '', // Nơi đăng ký thường trú GỐC (thường ở nơi khác) — quan trọng với hồ sơ Tạm trú/Lưu trú
                                 ghiChu: '', 
                                 anhNha: '', 
                                 thanhVien: [], 
-                                gps: '' // Chưa xác định toạ độ chính xác — trước đây hệ thống tự "chấm" 1 điểm ngẫu nhiên gần
+                                gps: '', // Chưa xác định toạ độ chính xác — trước đây hệ thống tự "chấm" 1 điểm ngẫu nhiên gần
                                         // tâm phường trông như tọa độ thật nhưng KHÔNG chính xác, gây hiểu nhầm khi dẫn đường.
                                         // Nay để trống thật, cán bộ bấm "📍 Xác định toạ độ chính xác" trong Chi tiết hộ để định vị đúng theo địa chỉ.
+                                nguoiTao: currentUser.email, lanNhapId: lanNhapId // Gắn nhãn "ai nhập, lần nào" — phục vụ tự hoàn tác an toàn
                             };
                         }
                         // Nếu file KHÔNG có cột "Chủ hộ" riêng (hoặc giá trị đó không hợp lệ) và DÒNG NÀY đúng là
@@ -3392,11 +3548,36 @@
                     let danhSachMoi = Object.values(mapHoMoi);
                     if (danhSachMoi.length === 0) return alert("Không tìm thấy dữ liệu hợp lệ trong file Excel!");
 
+                    let ketQuaLuu = { soHoCapNhat: 0, soHoTaoMoi: danhSachMoi.length };
                     if (CHE_DO_FIREBASE) {
-                        await luuDanhSachMoiLenFirestore(danhSachMoi); // onSnapshot sẽ tự cập nhật giao diện
-                        ghiNhatKy('Nhập Excel', `${danhSachMoi.length} hộ - file: ${file.name}`);
+                        ketQuaLuu = await luuDanhSachMoiLenFirestore(danhSachMoi); // onSnapshot sẽ tự cập nhật giao diện
+                        ghiNhatKy('Nhập Excel', `${danhSachMoi.length} hộ (${ketQuaLuu.soHoCapNhat} cập nhật, ${ketQuaLuu.soHoTaoMoi} mới) - file: ${file.name}`);
                     } else {
-                        danhSachHoGiaDinh = [...danhSachHoGiaDinh, ...danhSachMoi];
+                        // Chế độ offline (localStorage): áp dụng CÙNG logic phát hiện trùng theo Số HSCT/CCCD
+                        // như bản Firestore ở trên, tránh tạo hồ sơ trùng lặp khi không có mạng.
+                        const hoTheoHsct = {}, hoTheoCccd = {};
+                        danhSachHoGiaDinh.forEach(ho => {
+                            if (ho.hsct) hoTheoHsct[ho.hsct] = ho;
+                            (ho.thanhVien || []).forEach(tv => { if (tv.cccd) hoTheoCccd[tv.cccd] = ho; });
+                        });
+                        danhSachMoi.forEach(hoMoi => {
+                            let hoTrung = (hoMoi.hsct && hoTheoHsct[hoMoi.hsct]) || null;
+                            if (!hoTrung) {
+                                for (const tv of (hoMoi.thanhVien || [])) {
+                                    if (tv.cccd && hoTheoCccd[tv.cccd]) { hoTrung = hoTheoCccd[tv.cccd]; break; }
+                                }
+                            }
+                            if (hoTrung) {
+                                Object.assign(hoTrung, { hsct: hoMoi.hsct, diaChi: hoMoi.diaChi, phuong: hoMoi.phuong, khuVuc: hoMoi.khuVuc, chuHo: hoMoi.chuHo, dienNghiepVu: hoMoi.dienNghiepVu, diaChiThuongTruGoc: hoMoi.diaChiThuongTruGoc, ngayHetHan: hoMoi.ngayHetHan || '', thanhVien: hoMoi.thanhVien });
+                                ketQuaLuu.soHoCapNhat++; ketQuaLuu.soHoTaoMoi--;
+                                if (hoMoi.hsct) hoTheoHsct[hoMoi.hsct] = hoTrung;
+                                (hoMoi.thanhVien || []).forEach(tv => { if (tv.cccd) hoTheoCccd[tv.cccd] = hoTrung; });
+                            } else {
+                                danhSachHoGiaDinh.push(hoMoi);
+                                if (hoMoi.hsct) hoTheoHsct[hoMoi.hsct] = hoMoi;
+                                (hoMoi.thanhVien || []).forEach(tv => { if (tv.cccd) hoTheoCccd[tv.cccd] = hoMoi; });
+                            }
+                        });
                         localStorage.setItem("danhSachHoGiaDinhCacheGIS_V5", JSON.stringify(danhSachHoGiaDinh));
                         phanTichDuLieuPhanCap();
                         capNhatGiaoDienSauKhiTai();
@@ -3407,7 +3588,7 @@
                     let ghiChuCCCD = (mapCol.cccd !== -1 && mapCol.cccd !== undefined)
                         ? `\n⚠️ LƯU Ý BẢO MẬT: File này có chứa cột số CCCD/định danh. Để hạn chế rủi ro số CCCD của nhiều công dân bị phát tán qua file Excel (email, USB, máy dùng chung), khuyến nghị: xóa cột CCCD khỏi file gốc cho các lần nhập sau, và bổ sung CCCD trực tiếp cho từng người ngay trong phần mềm (mục "Chi tiết" của từng hộ).`
                         : `\nℹ️ File không có cột CCCD — đúng khuyến nghị bảo mật. Anh/chị có thể bổ sung CCCD sau cho từng người trực tiếp trong phần mềm khi cần.`;
-                    alert(`✅ Đã nhập thành công ${danhSachMoi.length} hộ dân Phường Tân An, TP. Cần Thơ!${ghiChuKV}${ghiChuCCCD}`);
+                    alert(`✅ Đã xử lý ${danhSachMoi.length} hộ trong file — ${ketQuaLuu.soHoTaoMoi} hộ MỚI, ${ketQuaLuu.soHoCapNhat} hộ ĐÃ CÓ SẴN được cập nhật lại đúng diện cư trú/thông tin mới nhất (không tạo trùng lặp).${ghiChuKV}${ghiChuCCCD}`);
                 } catch (err) {
                     if (err.code === 'permission-denied' || /permission/i.test(err.message || '')) {
                         alert("⛔ KHÔNG THỂ NHẬP: Tài khoản này chưa được Admin cấp quyền cho " + khuVucHienTai + ".\n\nĐây KHÔNG phải lỗi hỏng file — đây là tính năng bảo mật đang hoạt động đúng: hệ thống chặn ghi dữ liệu khi tài khoản chưa được phân quyền. Vui lòng liên hệ Admin để được cấp quyền trước khi nhập.");
@@ -3769,6 +3950,7 @@
             document.getElementById('editDienNV').value = ho.dienNghiepVu || 'Thường trú';
             document.getElementById('editLoaiHinhNoiO').value = ho.loaiHinhNoiO || 'Hộ gia đình';
             document.getElementById('editNgayHetHan').value = ho.ngayHetHan || '';
+            document.getElementById('editDiaChiThuongTruGoc').value = ho.diaChiThuongTruGoc || '';
             document.getElementById('hienThiNgayKiemTra').innerText = ho.ngayKiemTraGanNhat ? (new Date(ho.ngayKiemTraGanNhat).toLocaleDateString('vi-VN') + (ho.loaiKiemTraGanNhat ? ' (' + ho.loaiKiemTraGanNhat + ')' : '')) : 'Chưa từng';
             doiDienNVTrongForm();
 
@@ -3912,6 +4094,7 @@
         function doiDienNVTrongForm() {
             const dien = document.getElementById('editDienNV').value;
             document.getElementById('khungNgayHetHan').classList.toggle('hidden', dien !== 'Tạm trú' && dien !== 'Lưu trú');
+            document.getElementById('khungDiaChiThuongTruGoc').classList.toggle('hidden', dien !== 'Tạm trú' && dien !== 'Lưu trú');
         }
 
         // Định vị chính xác toạ độ hộ theo địa chỉ đã ghi (thay cho toạ độ ước lượng/chưa xác định trước đó)
@@ -4064,6 +4247,7 @@
             ho.dienNghiepVu = document.getElementById('editDienNV').value;
             ho.loaiHinhNoiO = document.getElementById('editLoaiHinhNoiO').value;
             ho.ngayHetHan = (ho.dienNghiepVu === 'Tạm trú' || ho.dienNghiepVu === 'Lưu trú') ? document.getElementById('editNgayHetHan').value : '';
+            ho.diaChiThuongTruGoc = (ho.dienNghiepVu === 'Tạm trú' || ho.dienNghiepVu === 'Lưu trú') ? document.getElementById('editDiaChiThuongTruGoc').value.trim() : '';
             const anhMoiChon = document.getElementById('base64AnhNha').value;
             if (anhMoiChon && anhMoiChon.length > 900000) {
                 // SỬA LỖI NGHIÊM TRỌNG: trước đây nếu ảnh còn hơi lớn, code HUỶ TOÀN BỘ việc lưu (kể cả toạ độ
@@ -4289,7 +4473,20 @@
                     ["5. Diện này dành cho khách LƯU TRÚ NGẮN NGÀY (khác Tạm trú dài hạn) — cột 'Chủ Hộ' ghi tên chủ nhà/người quản lý nơi đến lưu trú, không phải người lưu trú."],
                     ["6. 'Ngày Hết Hạn Lưu Trú' để hệ thống tự nhắc qua nút '🏠 Nhắc Hạn Tạm Trú' (dùng chung cơ chế nhắc hạn với Tạm trú)."]
                 ],
-                "Mau_Luu_Tru_NOHN.xlsx");
+                "Mau_Luu_Tru.xlsx");
+        }
+
+        function taiMauExcelNOHN() {
+            dungFileMauExcel("NOHN",
+                ["Địa Chỉ Thường Trú/Tạm Trú Đã Đăng Ký (nếu có)", "Lý Do Chưa Đăng Ký Cư Trú Tại Đây"],
+                [
+                    ["HS-0004", "Trần Văn F", "05/06/1988", "Chủ hộ", "Nam", "Khu Vực 7, nhà trọ số 3 hẻm 15", "Phường Tân An", "Trần Văn F", "NOHN", "Chưa đăng ký cư trú ở đâu", "Mới chuyển đến, chưa kịp làm thủ tục đăng ký", "Kinh", "Không", "Sóc Trăng", "Thợ hồ", "0978123456", "Việt Nam"]
+                ],
+                [
+                    ["5. NOHN = 'Nơi ở hiện nay' — dùng cho người ĐANG THỰC TẾ SINH SỐNG tại địa bàn nhưng CHƯA đăng ký thường trú/tạm trú ở đây (theo Điều 6 khoản 3, TT116/2026/TT-BCA: cơ quan đăng ký cư trú có trách nhiệm rà soát, cập nhật nơi ở hiện tại của công dân để bảo đảm chính xác)."],
+                    ["6. Đây là diện CẦN THEO DÕI SÁT — nên vận động, hướng dẫn công dân hoàn tất thủ tục đăng ký cư trú đúng quy định sớm nhất có thể, tránh tồn đọng lâu dài."]
+                ],
+                "Mau_NOHN.xlsx");
         }
 
         // ================== XÓA DỮ LIỆU — CÓ LỰA CHỌN THEO KHU VỰC, TRÁNH LẠM QUYỀN ==================
@@ -4406,10 +4603,21 @@
                 selKV.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
                 return alert("❌ Lỗi tải dữ liệu phường " + tenPhuong + ": " + err.message);
             }
-            const cacKhuVuc = [...new Set(danhSachXoaDLHienTai.map(h => layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1'))].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
+            let cacKhuVuc = [...new Set(danhSachXoaDLHienTai.map(h => layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1'))].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
+            // CSKV: CHỈ hiện đúng khu vực họ được giao — không thấy, không chọn được khu vực khác hay "toàn
+            // bộ phường". Giới hạn kép: ở đây (giao diện) VÀ ở Security Rules (máy chủ) — dù có sửa code phía
+            // trình duyệt cũng không xóa vượt phạm vi được, vì máy chủ sẽ chặn lại.
+            const laCSKV = currentUser.role === 'can_bo';
+            if (laCSKV) {
+                const kvDuocGiao = (currentUser.khuVucPhuTrach || []).map(k => k.toLowerCase());
+                cacKhuVuc = cacKhuVuc.filter(k => kvDuocGiao.includes(k.toLowerCase()));
+            }
             selKV.innerHTML = '<option value="">-- Chọn khu vực cụ thể để xóa --</option>' +
                 cacKhuVuc.map(k => `<option value="${escHtml(k)}">${escHtml(k)} (${danhSachXoaDLHienTai.filter(h => (layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1') === k).length} hộ)</option>`).join('') +
-                `<option value="__TOAN_PHUONG__">⚠️ TOÀN BỘ ${escHtml(tenPhuong)} (${danhSachXoaDLHienTai.length} hộ)</option>`;
+                (laCSKV ? '' : `<option value="__TOAN_PHUONG__">⚠️ TOÀN BỘ ${escHtml(tenPhuong)} (${danhSachXoaDLHienTai.length} hộ)</option>`);
+            if (laCSKV && cacKhuVuc.length === 0) {
+                selKV.innerHTML = '<option value="">Không có hộ nào trong khu vực bạn phụ trách</option>';
+            }
             document.getElementById('khungXacNhanXoaToanPhuong').classList.add('hidden');
             document.getElementById('xacNhanTenPhuongXoa').value = '';
         }
