@@ -206,38 +206,16 @@
                     </div>
                 </div>
 
-                <!-- Thống kê chi tiết số lượng -->
-                <div class="glass-card p-3 rounded-xl shadow space-y-1.5 text-[11px]">
-                    <div class="flex justify-between text-gray-300">
-                        <span>🟢 Thường trú:</span>
-                        <span id="cntThuongTru" class="font-bold text-emerald-400">0</span>
-                    </div>
-                    <div class="flex justify-between text-gray-300">
-                        <span>🟡 Tạm trú / Lưu trú:</span>
-                        <span id="cntTamTru" class="font-bold text-amber-400">0</span>
-                    </div>
-                    <div class="flex justify-between text-gray-300">
-                        <span>🔴 NOHN / Khác:</span>
-                        <span id="cntTrongDiem" class="font-bold text-rose-400">0</span>
-                    </div>
-                    <div class="border-t border-gray-700 my-1"></div>
-                    <div class="flex justify-between text-gray-300">
-                        <span>♂️ Nam / ♀️ Nữ:</span>
-                        <span><span id="cntNam" class="font-bold text-sky-400">0</span> / <span id="cntNu" class="font-bold text-pink-400">0</span></span>
-                    </div>
-                    <div class="flex justify-between text-gray-300">
-                        <span>🧒 Dưới 16 tuổi:</span>
-                        <span id="cntTreEm" class="font-bold text-cyan-400">0</span>
-                    </div>
-                    <div class="flex justify-between text-gray-300">
-                        <span>👤 Từ 16 - 60 tuổi:</span>
-                        <span id="cntLaoDong" class="font-bold text-blue-300">0</span>
-                    </div>
-                    <div class="flex justify-between text-gray-300">
-                        <span>👴 Trên 60 tuổi:</span>
-                        <span id="cntCaoTuoi" class="font-bold text-violet-400">0</span>
+                <!-- Thống kê chi tiết theo diện cư trú — tách riêng Thường trú / Tạm-Lưu trú / NOHN, không gộp chung -->
+                <div class="glass-card p-3 rounded-xl shadow space-y-2 text-[11px]">
+                    <p class="font-semibold text-xs text-gray-200">📊 Chi Tiết Theo Diện Cư Trú</p>
+                    <div id="chiTietTheoDienBox" class="space-y-2"></div>
+                    <div class="border-t border-gray-700 pt-1.5 flex justify-between text-gray-400 font-semibold">
+                        <span>Σ Tổng cộng:</span>
+                        <span><span id="cntHoTongCong" class="text-white">0</span> hộ · <span id="cntNkTongCong" class="text-white">0</span> người</span>
                     </div>
                 </div>
+
                 
                 <div class="glass-card p-3 rounded-xl shadow space-y-2">
                     <p class="text-gray-400 text-xs font-semibold">🔍 Bộ Lọc Nâng Cao</p>
@@ -3801,6 +3779,13 @@
             let cntTT = 0, cntTamT = 0, cntKhac = 0;
             let cntNam = 0, cntNu = 0, cntTreEm = 0, cntLaoDong = 0, cntCaoTuoi = 0;
             let theoKhuVuc = {};
+            // Tách riêng số liệu (hộ, nhân khẩu, nam/nữ, độ tuổi) theo TỪNG DIỆN cư trú — không gộp
+            // chung nữa, để CSKV báo cáo nhanh được ngay số liệu riêng của Thường trú / Tạm-Lưu trú / NOHN.
+            const chiTietTheoDien = {
+                'Thường trú': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 },
+                'Tạm/Lưu trú': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 },
+                'NOHN/Khác': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 }
+            };
 
             const namHienTai = new Date().getFullYear();
 
@@ -3818,28 +3803,32 @@
             });
 
             dsPhuongNay.forEach(h => {
-                tongNhanKhau += h.thanhVien ? h.thanhVien.length : 0;
+                const soNguoiHo = h.thanhVien ? h.thanhVien.length : 0;
+                tongNhanKhau += soNguoiHo;
                 let dien = h.dienNghiepVu || 'Thường trú';
-                if (dien === 'Thường trú') cntTT++;
-                else if (dien === 'Tạm trú' || dien === 'Lưu trú') cntTamT++;
-                else cntKhac++;
+                let nhomDien;
+                if (dien === 'Thường trú') { cntTT++; nhomDien = 'Thường trú'; }
+                else if (dien === 'Tạm trú' || dien === 'Lưu trú') { cntTamT++; nhomDien = 'Tạm/Lưu trú'; }
+                else { cntKhac++; nhomDien = 'NOHN/Khác'; }
+                chiTietTheoDien[nhomDien].ho++;
+                chiTietTheoDien[nhomDien].nk += soNguoiHo;
 
                 let kvKey = layNhanKhuVucTuDiaChi(h.diaChi) || "Khu Vực 1";
                 theoKhuVuc[kvKey] = (theoKhuVuc[kvKey] || 0) + 1;
 
                 (h.thanhVien || []).forEach(tv => {
                     let gt = (tv.gioiTinh || "").toLowerCase();
-                    if (gt === 'nam') cntNam++;
-                    else if (gt === 'nữ' || gt === 'nu') cntNu++;
+                    if (gt === 'nam') { cntNam++; chiTietTheoDien[nhomDien].nam++; }
+                    else if (gt === 'nữ' || gt === 'nu') { cntNu++; chiTietTheoDien[nhomDien].nu++; }
 
                     if (tv.ngaySinh) {
                         let mNam = String(tv.ngaySinh).match(/(\d{4})(?!.*\d{4})/);
                         if (mNam) {
                             let tuoi = namHienTai - parseInt(mNam[1]);
                             if (!isNaN(tuoi) && tuoi >= 0 && tuoi < 130) {
-                                if (tuoi < 16) cntTreEm++;
-                                else if (tuoi <= 60) cntLaoDong++;
-                                else cntCaoTuoi++;
+                                if (tuoi < 16) { cntTreEm++; chiTietTheoDien[nhomDien].treEm++; }
+                                else if (tuoi <= 60) { cntLaoDong++; chiTietTheoDien[nhomDien].laoDong++; }
+                                else { cntCaoTuoi++; chiTietTheoDien[nhomDien].caoTuoi++; }
                             }
                         }
                     }
@@ -3865,20 +3854,54 @@
                 }
                 elNgu.innerText = '📍 ' + khuVucHienTai + ' — ' + phamViThat;
             }
-            document.getElementById('cntThuongTru').innerText = cntTT;
-            document.getElementById('cntTamTru').innerText = cntTamT;
-            document.getElementById('cntTrongDiem').innerText = cntKhac;
-            document.getElementById('cntNam').innerText = cntNam;
-            document.getElementById('cntNu').innerText = cntNu;
-            document.getElementById('cntTreEm').innerText = cntTreEm;
-            document.getElementById('cntLaoDong').innerText = cntLaoDong;
-            document.getElementById('cntCaoTuoi').innerText = cntCaoTuoi;
+            renderChiTietTheoDien(chiTietTheoDien, dsPhuongNay.length, tongNhanKhau);
 
             capNhatBieuDoStat(cntTT, cntTamT, cntKhac);
             capNhatBieuDoGioiTinh(cntNam, cntNu);
             capNhatBieuDoDoTuoi(cntTreEm, cntLaoDong, cntCaoTuoi);
             capNhatBieuDoKhuVuc(theoKhuVuc);
             thucHienLocVaTimKiem();
+        }
+
+        // Render bảng "Chi Tiết Theo Diện Cư Trú" ở sidebar — mỗi diện 1 khối riêng, đầy đủ hộ/nhân khẩu/
+        // nam-nữ/độ tuổi, để xem và báo cáo nhanh mà không phải cộng trừ thủ công.
+        function renderChiTietTheoDien(chiTiet, tongHo, tongNk) {
+            const el = document.getElementById('chiTietTheoDienBox');
+            if (!el) return;
+            const mau = { 'Thường trú': ['🟢', 'text-emerald-400', 'border-emerald-800'], 'Tạm/Lưu trú': ['🟡', 'text-amber-400', 'border-amber-800'], 'NOHN/Khác': ['🔴', 'text-rose-400', 'border-rose-800'] };
+            el.innerHTML = Object.keys(chiTiet).map(nhom => {
+                const d = chiTiet[nhom]; const [icon, mauChu, mauVien] = mau[nhom];
+                return `<div class="bg-gray-900/70 border ${mauVien} rounded-lg p-2 space-y-0.5">
+                    <div class="flex justify-between items-center">
+                        <span class="font-semibold ${mauChu}">${icon} ${nhom}</span>
+                        <span class="text-white font-bold">${d.ho} hộ · ${d.nk} người</span>
+                    </div>
+                    <div class="flex justify-between text-gray-400 text-[10px]">
+                        <span>♂️ Nam: <b class="text-sky-400">${d.nam}</b> &nbsp; ♀️ Nữ: <b class="text-pink-400">${d.nu}</b></span>
+                        <span>🧒&lt;16: <b class="text-cyan-400">${d.treEm}</b> &nbsp; 👤16-60: <b class="text-blue-300">${d.laoDong}</b> &nbsp; 👴&gt;60: <b class="text-violet-400">${d.caoTuoi}</b></span>
+                    </div>
+                </div>`;
+            }).join('');
+            const elHo = document.getElementById('cntHoTongCong'); if (elHo) elHo.innerText = tongHo;
+            const elNk = document.getElementById('cntNkTongCong'); if (elNk) elNk.innerText = tongNk;
+        }
+
+        // Xuất Excel bảng "Chi Tiết Theo Diện Cư Trú" (tách riêng Thường trú / Tạm-Lưu trú / NOHN) — dùng
+        // chung cho cả sidebar và Dashboard, phục vụ báo cáo nhanh không phải cộng trừ thủ công.
+        function xuatChiTietTheoDienExcel(chiTiet, tenPhuong) {
+            const rows = [["Diện cư trú", "Số hộ", "Nhân khẩu", "Nam", "Nữ", "Dưới 16 tuổi", "16 - 60 tuổi", "Trên 60 tuổi"]];
+            let tHo = 0, tNk = 0, tNam = 0, tNu = 0, tTre = 0, tLd = 0, tCt = 0;
+            Object.keys(chiTiet).forEach(nhom => {
+                const d = chiTiet[nhom];
+                rows.push([nhom, d.ho, d.nk, d.nam, d.nu, d.treEm, d.laoDong, d.caoTuoi]);
+                tHo += d.ho; tNk += d.nk; tNam += d.nam; tNu += d.nu; tTre += d.treEm; tLd += d.laoDong; tCt += d.caoTuoi;
+            });
+            rows.push(["Σ Tổng cộng", tHo, tNk, tNam, tNu, tTre, tLd, tCt]);
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            ws['!cols'] = [{ wch: 16 }, { wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 8 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Chi_Tiet_Theo_Dien");
+            XLSX.writeFile(wb, "Chi_Tiet_Theo_Dien_Cu_Tru_" + String(tenPhuong).replace(/\s/g, '_') + ".xlsx");
         }
 
         function capNhatBieuDoKhuVuc(theoKhuVuc) {
@@ -5248,16 +5271,37 @@
             const soTamTru = dsPhuongNay.filter(h => h.dienNghiepVu === 'Tạm trú' || h.dienNghiepVu === 'Lưu trú').length;
             const soKhac = dsPhuongNay.length - soThuongTru - soTamTru;
             let soNam = 0, soNu = 0, soTreEm = 0, soLaoDong = 0, soCaoTuoi = 0, soBienDong = 0;
+            // Tách riêng chi tiết nam/nữ/độ tuổi theo TỪNG DIỆN cư trú (không gộp chung) — dùng cho bảng
+            // "Chi Tiết Theo Diện Cư Trú" bên dưới, phục vụ báo cáo nhanh theo từng diện riêng biệt.
+            const dbChiTietTheoDien = {
+                'Thường trú': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 },
+                'Tạm/Lưu trú': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 },
+                'NOHN/Khác': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 }
+            };
             const namNay = new Date().getFullYear();
-            dsPhuongNay.forEach(h => (h.thanhVien || []).forEach(tv => {
-                const gt = (tv.gioiTinh || '').toLowerCase();
-                if (gt === 'nam') soNam++; else if (gt === 'nữ' || gt === 'nu') soNu++;
-                if (tv.trangThaiBienDong && tv.trangThaiBienDong !== 'Đang cư trú') soBienDong++;
-                if (tv.ngaySinh) {
-                    const m = String(tv.ngaySinh).match(/(\d{4})(?!.*\d{4})/);
-                    if (m) { const t = namNay - parseInt(m[1]); if (t >= 0 && t < 130) { if (t < 16) soTreEm++; else if (t <= 60) soLaoDong++; else soCaoTuoi++; } }
-                }
-            }));
+            dsPhuongNay.forEach(h => {
+                const dien = h.dienNghiepVu || 'Thường trú';
+                const nhomDien = dien === 'Thường trú' ? 'Thường trú' : (dien === 'Tạm trú' || dien === 'Lưu trú') ? 'Tạm/Lưu trú' : 'NOHN/Khác';
+                const d = dbChiTietTheoDien[nhomDien];
+                d.ho++;
+                (h.thanhVien || []).forEach(tv => {
+                    d.nk++;
+                    const gt = (tv.gioiTinh || '').toLowerCase();
+                    if (gt === 'nam') { soNam++; d.nam++; } else if (gt === 'nữ' || gt === 'nu') { soNu++; d.nu++; }
+                    if (tv.trangThaiBienDong && tv.trangThaiBienDong !== 'Đang cư trú') soBienDong++;
+                    if (tv.ngaySinh) {
+                        const m = String(tv.ngaySinh).match(/(\d{4})(?!.*\d{4})/);
+                        if (m) {
+                            const t = namNay - parseInt(m[1]);
+                            if (t >= 0 && t < 130) {
+                                if (t < 16) { soTreEm++; d.treEm++; }
+                                else if (t <= 60) { soLaoDong++; d.laoDong++; }
+                                else { soCaoTuoi++; d.caoTuoi++; }
+                            }
+                        }
+                    }
+                });
+            });
             let soSuVuDangXuLy = 0;
             try {
                 const svSnap = await dbFirestore.collection('nhat_ky_dia_ban').where('phuong', '==', khuVucHienTai).where('trangThai', '==', 'Đang xử lý').get();
@@ -5308,6 +5352,47 @@
                             <p class="text-gray-300 font-semibold mb-1 text-[11px]">${phamViKVDashboard ? 'Chi tiết khu vực phụ trách' : 'Số hộ theo khu vực'}</p>
                             <div style="height:170px;"><canvas id="dbChartKhuVuc"></canvas></div>
                         </div>
+                    </div>
+
+                    <!-- Bảng tách riêng từng diện — không gộp chung, xem/báo cáo nhanh theo Thường trú / Tạm-Lưu trú / NOHN -->
+                    <div class="mt-3 bg-gray-900/70 border border-gray-800 rounded-lg p-2.5 overflow-x-auto">
+                        <p class="text-gray-300 font-semibold mb-2 text-[11px]">📊 Chi Tiết Theo Diện Cư Trú (tách riêng từng diện)</p>
+                        <table class="w-full text-left border-collapse text-[11px]">
+                            <thead><tr class="text-gray-400 border-b border-gray-700">
+                                <th class="p-1.5">Diện</th><th class="p-1.5 text-right">Số hộ</th><th class="p-1.5 text-right">Nhân khẩu</th>
+                                <th class="p-1.5 text-right">Nam</th><th class="p-1.5 text-right">Nữ</th>
+                                <th class="p-1.5 text-right">Dưới 16</th><th class="p-1.5 text-right">16-60</th><th class="p-1.5 text-right">Trên 60</th>
+                            </tr></thead>
+                            <tbody>
+                                ${(() => {
+                                    const mauNhom = { 'Thường trú': '🟢 text-emerald-400', 'Tạm/Lưu trú': '🟡 text-amber-400', 'NOHN/Khác': '🔴 text-rose-400' };
+                                    return Object.keys(dbChiTietTheoDien).map(nhom => {
+                                        const d = dbChiTietTheoDien[nhom]; const [icon, cls] = mauNhom[nhom].split(' ');
+                                        return `<tr class="border-b border-gray-800">
+                                            <td class="p-1.5 font-semibold ${cls}">${icon} ${nhom}</td>
+                                            <td class="p-1.5 text-right text-white">${d.ho}</td>
+                                            <td class="p-1.5 text-right text-white">${d.nk}</td>
+                                            <td class="p-1.5 text-right text-sky-400">${d.nam}</td>
+                                            <td class="p-1.5 text-right text-pink-400">${d.nu}</td>
+                                            <td class="p-1.5 text-right text-cyan-400">${d.treEm}</td>
+                                            <td class="p-1.5 text-right text-blue-300">${d.laoDong}</td>
+                                            <td class="p-1.5 text-right text-violet-400">${d.caoTuoi}</td>
+                                        </tr>`;
+                                    }).join('');
+                                })()}
+                                <tr class="font-bold text-gray-200">
+                                    <td class="p-1.5">Σ Tổng cộng</td>
+                                    <td class="p-1.5 text-right">${dsPhuongNay.length}</td>
+                                    <td class="p-1.5 text-right">${soKhau}</td>
+                                    <td class="p-1.5 text-right">${soNam}</td>
+                                    <td class="p-1.5 text-right">${soNu}</td>
+                                    <td class="p-1.5 text-right">${soTreEm}</td>
+                                    <td class="p-1.5 text-right">${soLaoDong}</td>
+                                    <td class="p-1.5 text-right">${soCaoTuoi}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button onclick='xuatChiTietTheoDienExcel(${JSON.stringify(dbChiTietTheoDien)}, ${JSON.stringify(khuVucHienTai)})' class="mt-2 bg-emerald-700 hover:bg-emerald-600 px-2.5 py-1 rounded text-[10px] font-medium">📥 Xuất Excel Bảng Này</button>
                     </div>
                 </div>
                 <div id="dashboardThanhPho"></div>
