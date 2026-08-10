@@ -154,6 +154,7 @@
                 <button onclick="moModalNhacHanTamTru()" class="bg-yellow-700 hover:bg-yellow-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🏠 Nhắc Hạn Tạm Trú</button>
                 <button onclick="moModalLichKiemTraDinhKy()" class="bg-lime-700 hover:bg-lime-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🗓️ Lịch Kiểm Tra Định Kỳ</button>
                 <button onclick="moModalNhatKyDiaBan()" class="bg-indigo-700 hover:bg-indigo-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📋 Nhật Ký Địa Bàn</button>
+                <button onclick="moModalDoiTuong()" class="bg-rose-700 hover:bg-rose-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🗂️ Quản Lý Đối Tượng (KV3)</button>
                 <button onclick="moDashboard()" class="bg-fuchsia-700 hover:bg-fuchsia-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📊 Dashboard</button>
                 <button id="btnDongBoDuLieuCu" onclick="dongBoDuLieuCuLenMayChu()" class="hidden bg-amber-600 hover:bg-amber-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">⬆️ Đồng Bộ Dữ Liệu Cũ Lên Máy Chủ</button>
                 <button onclick="moModalNhatKy()" class="bg-slate-600 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📜 Nhật Ký</button>
@@ -701,6 +702,135 @@
 
             <input type="text" id="timKiemNhatKy" oninput="renderNhatKyDiaBan()" placeholder="🔍 Tìm theo tiêu đề, địa chỉ, mô tả..." class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
             <div id="noiDungNhatKyDiaBan" class="overflow-x-auto max-h-64 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <!-- ============ QUẢN LÝ ĐỐI TƯỢNG (KV3) — modal danh sách / mục lục ============ -->
+    <div id="doiTuongModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+        <div class="glass-card w-full max-w-4xl rounded-xl shadow-2xl p-4 space-y-3 border border-rose-800 text-xs max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-rose-400">🗂️ Quản Lý Đối Tượng (KV3) — <span id="dtTenPhuongHienTai"></span></h3>
+                <button onclick="document.getElementById('doiTuongModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <p class="text-gray-400">Sổ theo dõi đối tượng quản lý, giáo dục tại địa bàn (án treo, quản chế, cải tạo không giam giữ, cai nghiện, tha tù trước hạn, sau cai nghiện...) — mẫu KV3 ban hành kèm Thông tư 116/2026/TT-BCA. Có sẵn "Cán bộ quản lý" theo dõi bàn giao đối tượng như mẫu giấy.</p>
+
+            <div class="flex flex-wrap gap-1.5 items-center">
+                <input type="text" id="timKiemDoiTuong" oninput="renderDanhSachDoiTuong()" placeholder="🔍 Tìm theo họ tên, diện đối tượng, số hồ sơ..." class="flex-1 min-w-[200px] bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                <select id="locDienDoiTuong" onchange="renderDanhSachDoiTuong()" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <option value="">-- Tất cả diện --</option>
+                </select>
+                <button onclick="moFormDoiTuong(null)" class="bg-rose-600 hover:bg-rose-700 px-3 py-1.5 rounded font-bold">➕ Thêm Đối Tượng</button>
+                <button onclick="xuatMucLucDoiTuongExcel()" class="bg-emerald-700 hover:bg-emerald-600 px-3 py-1.5 rounded font-medium">📊 Xuất Mục Lục Excel (KV3)</button>
+            </div>
+
+            <div id="noiDungDanhSachDoiTuong" class="overflow-x-auto max-h-[60vh] overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <!-- ============ QUẢN LÝ ĐỐI TƯỢNG (KV3) — modal chi tiết 1 đối tượng (đúng 19 trường mẫu giấy) ============ -->
+    <div id="doiTuongFormModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50">
+        <div class="glass-card w-full max-w-3xl rounded-xl shadow-2xl p-4 space-y-3 border border-rose-800 text-xs max-h-[92vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-rose-400" id="dtFormTieuDe">➕ Thêm Đối Tượng Quản Lý (KV3)</h3>
+                <button onclick="document.getElementById('doiTuongFormModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <input type="hidden" id="dtId">
+
+            <div class="grid grid-cols-2 gap-2">
+                <div class="col-span-2">
+                    <label class="text-gray-400 block mb-0.5">Diện đối tượng <span class="text-rose-500">*</span></label>
+                    <select id="dt_dienDoiTuong" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                        <option value="">-- Chọn diện đối tượng --</option>
+                        <optgroup label="Quản lý theo quy định pháp luật">
+                            <option>Cấm đi khỏi nơi cư trú / Tạm hoãn xuất cảnh / Bảo lĩnh / Đặt tiền bảo đảm</option>
+                            <option>Kết án phạt tù đang tại ngoại</option>
+                            <option>Hoãn/tạm đình chỉ chấp hành án phạt tù</option>
+                            <option>Án treo (trong thời gian thử thách)</option>
+                            <option>Cải tạo không giam giữ / Cấm cư trú / Quản chế</option>
+                            <option>Cấm đảm nhiệm chức vụ / cấm hành nghề / tước quyền công dân</option>
+                            <option>Tha tù trước thời hạn có điều kiện (thời gian thử thách)</option>
+                            <option>Giáo dục tại xã, phường, đặc khu</option>
+                            <option>Đang làm thủ tục đưa vào trường giáo dưỡng/cơ sở giáo dục/cơ sở cai nghiện bắt buộc</option>
+                            <option>Sử dụng trái phép chất ma túy / quản lý sau cai nghiện tại nơi cư trú</option>
+                            <option>Cai nghiện ma túy tự nguyện tại gia đình, cộng đồng</option>
+                            <option>Chấp hành biện pháp xử lý chuyển hướng tại cộng đồng</option>
+                            <option>Chưa thành niên - biện pháp thay thế xử lý VPHC tại gia đình/cộng đồng</option>
+                        </optgroup>
+                        <optgroup label="Quản lý theo yêu cầu nghiệp vụ">
+                            <option>Chấp hành xong án phạt tù / đặc xá trở về địa phương</option>
+                            <option>Chấp hành xong biện pháp giáo dưỡng/giáo dục bắt buộc trở về địa phương</option>
+                            <option>Đối tượng tệ nạn xã hội</option>
+                            <option>Khác (ghi rõ ở Ghi chú)</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div><label class="text-gray-400 block mb-0.5">Số hồ sơ (nếu có)</label><input id="dt_soHoSo" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div></div>
+            </div>
+
+            <div class="border-t border-gray-800 pt-2 grid grid-cols-2 gap-2">
+                <div><label class="text-gray-400 block mb-0.5">1. Họ tên khai sinh <span class="text-rose-500">*</span></label><input id="dt_hoTen" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="text-gray-400 block mb-0.5">Nam/Nữ</label>
+                        <select id="dt_gioiTinh" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"><option>Nam</option><option>Nữ</option></select></div>
+                    <div><label class="text-gray-400 block mb-0.5">2. Tên gọi khác</label><input id="dt_tenGoiKhac" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                </div>
+                <div><label class="text-gray-400 block mb-0.5">3. Sinh ngày</label><input type="date" id="dt_sinhNgay" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">4. Quê quán</label><input id="dt_queQuan" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">5. Quốc tịch</label><input id="dt_quocTich" value="Việt Nam" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="text-gray-400 block mb-0.5">6. Dân tộc</label><input id="dt_danToc" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                    <div><label class="text-gray-400 block mb-0.5">Tôn giáo</label><input id="dt_tonGiao" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                </div>
+                <div><label class="text-gray-400 block mb-0.5">7. Số định danh cá nhân/Số giấy tờ khác</label><input id="dt_soDinhDanh" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="text-gray-400 block mb-0.5">Ngày cấp</label><input type="date" id="dt_ngayCap" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                    <div><label class="text-gray-400 block mb-0.5">Nơi cấp</label><input id="dt_noiCap" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                </div>
+                <div class="col-span-2"><label class="text-gray-400 block mb-0.5">8. Nơi thường trú</label><input id="dt_noiThuongTru" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">9. Nơi ở hiện tại</label><input id="dt_noiOHienTai" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Số ĐT</label><input id="dt_soDienThoai" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">10. Trình độ học vấn</label><input id="dt_trinhDoHocVan" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">11. Nghề nghiệp, nơi làm việc</label><input id="dt_ngheNghiep" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+            </div>
+
+            <div class="border-t border-gray-800 pt-2 grid grid-cols-2 gap-2">
+                <div><label class="text-gray-400 block mb-0.5">12. Họ và tên cha</label><input id="dt_hoTenCha" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Số ĐD cá nhân/giấy tờ khác của cha / Số ĐT</label><input id="dt_giayToCha" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">13. Họ và tên mẹ</label><input id="dt_hoTenMe" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Số ĐD cá nhân/giấy tờ khác của mẹ / Số ĐT</label><input id="dt_giayToMe" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">14. Người giám hộ/đại diện hợp pháp (nếu có)</label><input id="dt_nguoiGiamHo" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Số ĐD cá nhân/giấy tờ khác / Số ĐT</label><input id="dt_giayToGiamHo" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">15. Họ và tên vợ/chồng (nếu có)</label><input id="dt_vợChong" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Số ĐD cá nhân/giấy tờ khác / Số ĐT</label><input id="dt_giayToVoChong" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div class="col-span-2"><label class="text-gray-400 block mb-0.5">16. Tiền án, tiền sự (tóm tắt)</label><textarea id="dt_tienAnTienSu" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></textarea></div>
+            </div>
+
+            <div class="border-t border-gray-800 pt-2 grid grid-cols-2 gap-2">
+                <div><label class="text-gray-400 block mb-0.5">17. Biểu hiện hoạt động</label><textarea id="dt_bieuHienHoatDong" rows="3" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></textarea></div>
+                <div><label class="text-gray-400 block mb-0.5">18. Đặc điểm, mối quan hệ cần chú ý</label><textarea id="dt_dacDiemMoiQuanHe" rows="3" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></textarea></div>
+                <div class="col-span-2"><label class="text-gray-400 block mb-0.5">19. Các thay đổi khác</label><textarea id="dt_thayDoiKhac" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></textarea></div>
+            </div>
+
+            <!-- CÁN BỘ QUẢN LÝ — bàn giao đối tượng, đúng mẫu giấy trang bìa -->
+            <div class="border-t border-gray-800 pt-2 space-y-1.5">
+                <p class="text-rose-300 font-semibold">👮 Cán Bộ Quản Lý (theo dõi bàn giao đối tượng)</p>
+                <div id="dtDanhSachCanBoQuanLy" class="space-y-1"></div>
+                <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2 grid grid-cols-2 gap-1.5">
+                    <input id="dtcb_hoTen" placeholder="Họ và tên cán bộ quản lý" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <input type="date" id="dtcb_ngayNhan" placeholder="Ngày nhận quản lý" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <input id="dtcb_nguoiGiao" placeholder="Người giao" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <input id="dtcb_nguoiNhan" placeholder="Người nhận" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <input id="dtcb_truongCA" placeholder="Trưởng Công an cấp xã (xác nhận)" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <input id="dtcb_ghiChu" placeholder="Ghi chú" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <button onclick="themCanBoQuanLyDoiTuong()" class="col-span-2 bg-rose-700 hover:bg-rose-600 rounded px-2 py-1.5 font-medium">➕ Thêm Dòng Bàn Giao</button>
+                </div>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button onclick="luuDoiTuong()" class="flex-1 bg-rose-600 hover:bg-rose-700 rounded px-3 py-2 font-bold">💾 Lưu Hồ Sơ Đối Tượng</button>
+                <button id="dtBtnXoa" onclick="xoaDoiTuong()" class="hidden bg-red-800 hover:bg-red-700 rounded px-3 py-2 font-bold">🗑️ Xóa</button>
+            </div>
         </div>
     </div>
 
@@ -4846,6 +4976,167 @@
                         </div>
                     </div>
                 </div>`).join('');
+        }
+
+        // ================== QUẢN LÝ ĐỐI TƯỢNG (KV3) ==================
+        let danhSachDoiTuong = [];
+        let huyLangNgheDoiTuong = null;
+        let dtCanBoQuanLyTam = []; // danh sách bàn giao đang soạn trong form (chưa lưu)
+
+        function moModalDoiTuong() {
+            if (!CHE_DO_FIREBASE) return alert("Quản lý đối tượng chỉ khả dụng khi đã kết nối máy chủ.");
+            document.getElementById('dtTenPhuongHienTai').innerText = khuVucHienTai;
+            document.getElementById('doiTuongModal').classList.remove('hidden');
+            if (huyLangNgheDoiTuong) huyLangNgheDoiTuong();
+            huyLangNgheDoiTuong = dbFirestore.collection('doi_tuong_quan_ly')
+                .where('phuong', '==', khuVucHienTai)
+                .onSnapshot(snap => {
+                    danhSachDoiTuong = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+                    danhSachDoiTuong.sort((a, b) => (a.hoTen || '').localeCompare(b.hoTen || ''));
+                    capNhatBoLocDienDoiTuong();
+                    renderDanhSachDoiTuong();
+                }, err => {
+                    document.getElementById('noiDungDanhSachDoiTuong').innerHTML = '<p class="text-rose-400 p-3">❌ Lỗi tải danh sách đối tượng: ' + escHtml(err.message) + '</p>';
+                });
+        }
+
+        function capNhatBoLocDienDoiTuong() {
+            const sel = document.getElementById('locDienDoiTuong');
+            const giaTriDangChon = sel.value;
+            const dsDien = [...new Set(danhSachDoiTuong.map(d => d.dienDoiTuong).filter(Boolean))].sort();
+            sel.innerHTML = '<option value="">-- Tất cả diện --</option>' + dsDien.map(d => `<option ${d === giaTriDangChon ? 'selected' : ''}>${escHtml(d)}</option>`).join('');
+        }
+
+        function renderDanhSachDoiTuong() {
+            const el = document.getElementById('noiDungDanhSachDoiTuong');
+            const tuKhoa = boDauTiengViet(document.getElementById('timKiemDoiTuong').value.trim());
+            const dienLoc = document.getElementById('locDienDoiTuong').value;
+            let ds = danhSachDoiTuong;
+            if (dienLoc) ds = ds.filter(d => d.dienDoiTuong === dienLoc);
+            if (tuKhoa) ds = ds.filter(d => [d.hoTen, d.dienDoiTuong, d.soHoSo, d.noiOHienTai].some(t => t && boDauTiengViet(t).includes(tuKhoa)));
+            if (ds.length === 0) { el.innerHTML = '<p class="text-gray-500 p-3">Chưa có đối tượng nào trong danh sách.</p>'; return; }
+            el.innerHTML = `<table class="w-full text-left border-collapse">
+                <thead><tr class="text-gray-400 border-b border-gray-700">
+                    <th class="p-1.5">TT</th><th class="p-1.5">Họ và tên đối tượng</th><th class="p-1.5">Diện đối tượng</th>
+                    <th class="p-1.5">Nơi ở hiện tại</th><th class="p-1.5">Cán bộ quản lý hiện tại</th><th class="p-1.5"></th>
+                </tr></thead>
+                <tbody>${ds.map((d, i) => {
+                    const cbHienTai = (d.canBoQuanLy && d.canBoQuanLy.length) ? d.canBoQuanLy[d.canBoQuanLy.length - 1].hoTen : '—';
+                    return `<tr class="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer" onclick="moFormDoiTuong('${d.id}')">
+                        <td class="p-1.5">${i + 1}</td>
+                        <td class="p-1.5 text-white font-medium">${escHtml(d.hoTen || '')}</td>
+                        <td class="p-1.5 text-rose-300">${escHtml(d.dienDoiTuong || '')}</td>
+                        <td class="p-1.5">${escHtml(d.noiOHienTai || '')}</td>
+                        <td class="p-1.5">${escHtml(cbHienTai)}</td>
+                        <td class="p-1.5 text-right"><button onclick="event.stopPropagation(); moFormDoiTuong('${d.id}')" class="text-rose-400 hover:text-rose-300">Chi tiết ▸</button></td>
+                    </tr>`;
+                }).join('')}</tbody></table>`;
+        }
+
+        function moFormDoiTuong(id) {
+            document.getElementById('doiTuongModal').classList.add('hidden');
+            const form = document.getElementById('doiTuongFormModal');
+            const d = id ? danhSachDoiTuong.find(x => x.id === id) : null;
+            document.getElementById('dtFormTieuDe').innerText = d ? '📋 Hồ Sơ Đối Tượng: ' + d.hoTen : '➕ Thêm Đối Tượng Quản Lý (KV3)';
+            document.getElementById('dtId').value = d ? d.id : '';
+            const truong = ['dienDoiTuong', 'soHoSo', 'hoTen', 'gioiTinh', 'tenGoiKhac', 'sinhNgay', 'queQuan', 'quocTich',
+                'danToc', 'tonGiao', 'soDinhDanh', 'ngayCap', 'noiCap', 'noiThuongTru', 'noiOHienTai', 'soDienThoai',
+                'trinhDoHocVan', 'ngheNghiep', 'hoTenCha', 'giayToCha', 'hoTenMe', 'giayToMe', 'nguoiGiamHo', 'giayToGiamHo',
+                'vợChong', 'giayToVoChong', 'tienAnTienSu', 'bieuHienHoatDong', 'dacDiemMoiQuanHe', 'thayDoiKhac'];
+            truong.forEach(t => {
+                const elInput = document.getElementById('dt_' + t);
+                if (elInput) elInput.value = d ? (d[t] || (t === 'quocTich' && !d.id ? 'Việt Nam' : '')) : (t === 'quocTich' ? 'Việt Nam' : '');
+            });
+            document.getElementById('dt_gioiTinh').value = d ? (d.gioiTinh || 'Nam') : 'Nam';
+            dtCanBoQuanLyTam = d && d.canBoQuanLy ? JSON.parse(JSON.stringify(d.canBoQuanLy)) : [];
+            renderCanBoQuanLyTam();
+            document.getElementById('dtBtnXoa').classList.toggle('hidden', !d);
+            form.classList.remove('hidden');
+        }
+
+        function renderCanBoQuanLyTam() {
+            const el = document.getElementById('dtDanhSachCanBoQuanLy');
+            if (dtCanBoQuanLyTam.length === 0) { el.innerHTML = '<p class="text-gray-500">Chưa có lượt bàn giao nào.</p>'; return; }
+            el.innerHTML = dtCanBoQuanLyTam.map((c, i) => `
+                <div class="flex justify-between items-center bg-gray-900/70 border border-gray-800 rounded px-2 py-1">
+                    <span class="text-white">${escHtml(c.hoTen)} <span class="text-gray-500">— nhận ${c.ngayNhan ? new Date(c.ngayNhan).toLocaleDateString('vi-VN') : '?'}${c.truongCA ? ' — TCA xác nhận: ' + escHtml(c.truongCA) : ''}</span></span>
+                    <button onclick="dtCanBoQuanLyTam.splice(${i},1); renderCanBoQuanLyTam();" class="text-rose-400 hover:text-rose-300">Xóa</button>
+                </div>`).join('');
+        }
+
+        function themCanBoQuanLyDoiTuong() {
+            const hoTen = document.getElementById('dtcb_hoTen').value.trim();
+            if (!hoTen) return alert("Vui lòng nhập họ tên cán bộ quản lý.");
+            dtCanBoQuanLyTam.push({
+                hoTen, ngayNhan: document.getElementById('dtcb_ngayNhan').value,
+                nguoiGiao: document.getElementById('dtcb_nguoiGiao').value.trim(),
+                nguoiNhan: document.getElementById('dtcb_nguoiNhan').value.trim(),
+                truongCA: document.getElementById('dtcb_truongCA').value.trim(),
+                ghiChu: document.getElementById('dtcb_ghiChu').value.trim()
+            });
+            ['dtcb_hoTen', 'dtcb_ngayNhan', 'dtcb_nguoiGiao', 'dtcb_nguoiNhan', 'dtcb_truongCA', 'dtcb_ghiChu'].forEach(id => document.getElementById(id).value = '');
+            renderCanBoQuanLyTam();
+        }
+
+        async function luuDoiTuong() {
+            const hoTen = document.getElementById('dt_hoTen').value.trim();
+            const dienDoiTuong = document.getElementById('dt_dienDoiTuong').value;
+            if (!hoTen) return alert("Vui lòng nhập Họ tên khai sinh.");
+            if (!dienDoiTuong) return alert("Vui lòng chọn Diện đối tượng.");
+            const truong = ['dienDoiTuong', 'soHoSo', 'hoTen', 'gioiTinh', 'tenGoiKhac', 'sinhNgay', 'queQuan', 'quocTich',
+                'danToc', 'tonGiao', 'soDinhDanh', 'ngayCap', 'noiCap', 'noiThuongTru', 'noiOHienTai', 'soDienThoai',
+                'trinhDoHocVan', 'ngheNghiep', 'hoTenCha', 'giayToCha', 'hoTenMe', 'giayToMe', 'nguoiGiamHo', 'giayToGiamHo',
+                'vợChong', 'giayToVoChong', 'tienAnTienSu', 'bieuHienHoatDong', 'dacDiemMoiQuanHe', 'thayDoiKhac'];
+            const duLieu = { phuong: khuVucHienTai, canBoQuanLy: dtCanBoQuanLyTam, capNhatLuc: firebase.firestore.FieldValue.serverTimestamp(), capNhatBoi: currentUser.email.toLowerCase() };
+            truong.forEach(t => { const elInput = document.getElementById('dt_' + t); if (elInput) duLieu[t] = elInput.value.trim ? elInput.value.trim() : elInput.value; });
+            try {
+                const id = document.getElementById('dtId').value;
+                if (id) { await dbFirestore.collection('doi_tuong_quan_ly').doc(id).set(duLieu, { merge: true }); }
+                else { duLieu.nguoiTao = currentUser.email.toLowerCase(); await dbFirestore.collection('doi_tuong_quan_ly').add(duLieu); }
+                ghiNhatKy('Lưu hồ sơ đối tượng quản lý (KV3)', hoTen);
+                document.getElementById('doiTuongFormModal').classList.add('hidden');
+                document.getElementById('doiTuongModal').classList.remove('hidden');
+            } catch (err) { alert("❌ Lỗi lưu hồ sơ: " + (err.message || err.code)); }
+        }
+
+        async function xoaDoiTuong() {
+            const id = document.getElementById('dtId').value;
+            if (!id) return;
+            if (!confirm("Xóa hồ sơ đối tượng này? Không thể hoàn tác.")) return;
+            try {
+                await dbFirestore.collection('doi_tuong_quan_ly').doc(id).delete();
+                document.getElementById('doiTuongFormModal').classList.add('hidden');
+                document.getElementById('doiTuongModal').classList.remove('hidden');
+            } catch (err) { alert("❌ Lỗi xóa: " + err.message); }
+        }
+
+        // Xuất "Mục Lục" đúng mẫu ảnh 2 (TT, Họ và tên đối tượng, Diện đối tượng, Trang)
+        function xuatMucLucDoiTuongExcel() {
+            if (danhSachDoiTuong.length === 0) return alert("Chưa có đối tượng nào để xuất.");
+            const ds = [...danhSachDoiTuong].sort((a, b) => (a.hoTen || '').localeCompare(b.hoTen || ''));
+            const rows = [["TT", "Họ và tên đối tượng", "Diện đối tượng", "Trang/Mã hồ sơ"]];
+            ds.forEach((d, i) => rows.push([i + 1, d.hoTen || '', d.dienDoiTuong || '', d.soHoSo || d.id || '']));
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            ws['!cols'] = [{ wch: 5 }, { wch: 28 }, { wch: 45 }, { wch: 18 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Muc_Luc_KV3");
+
+            // Thêm sheet chi tiết đầy đủ 19 trường cho từng đối tượng — tiện in/lưu hồ sơ giấy song song
+            const rows2 = [["Diện đối tượng", "Số hồ sơ", "Họ tên khai sinh", "Nam/Nữ", "Tên gọi khác", "Sinh ngày", "Quê quán", "Quốc tịch",
+                "Dân tộc", "Tôn giáo", "Số định danh cá nhân", "Ngày cấp", "Nơi cấp", "Nơi thường trú", "Nơi ở hiện tại", "Số ĐT",
+                "Trình độ học vấn", "Nghề nghiệp/nơi làm việc", "Họ tên cha", "Giấy tờ/ĐT cha", "Họ tên mẹ", "Giấy tờ/ĐT mẹ",
+                "Người giám hộ", "Giấy tờ/ĐT giám hộ", "Vợ/chồng", "Giấy tờ/ĐT vợ chồng", "Tiền án tiền sự",
+                "Biểu hiện hoạt động", "Đặc điểm/mối quan hệ cần chú ý", "Các thay đổi khác", "Cán bộ quản lý hiện tại"]];
+            ds.forEach(d => {
+                const cbHienTai = (d.canBoQuanLy && d.canBoQuanLy.length) ? d.canBoQuanLy[d.canBoQuanLy.length - 1].hoTen : '';
+                rows2.push([d.dienDoiTuong, d.soHoSo, d.hoTen, d.gioiTinh, d.tenGoiKhac, d.sinhNgay, d.queQuan, d.quocTich,
+                    d.danToc, d.tonGiao, d.soDinhDanh, d.ngayCap, d.noiCap, d.noiThuongTru, d.noiOHienTai, d.soDienThoai,
+                    d.trinhDoHocVan, d.ngheNghiep, d.hoTenCha, d.giayToCha, d.hoTenMe, d.giayToMe, d.nguoiGiamHo, d.giayToGiamHo,
+                    d.vợChong, d.giayToVoChong, d.tienAnTienSu, d.bieuHienHoatDong, d.dacDiemMoiQuanHe, d.thayDoiKhac, cbHienTai].map(v => v || ''));
+            });
+            const ws2 = XLSX.utils.aoa_to_sheet(rows2);
+            XLSX.utils.book_append_sheet(wb, ws2, "Chi_Tiet_KV3");
+            XLSX.writeFile(wb, "KV3_Doi_Tuong_Quan_Ly_" + khuVucHienTai.replace(/\s/g, '_') + ".xlsx");
         }
 
         // ================== DASHBOARD TỔNG QUAN (Nhóm A) ==================
