@@ -859,6 +859,24 @@
             <p class="text-gray-400">Quét dữ liệu ĐÃ CÓ SẴN của phường đang chọn để phát hiện lỗi do các lần nhập TRƯỚC ĐÂY (trước khi phần mềm được sửa lỗi) — sửa code chỉ áp dụng cho lần nhập/lưu MỚI, không tự sửa dữ liệu cũ đã lưu trên máy chủ.</p>
             <button onclick="raSoatLoiDuLieu()" class="w-full bg-amber-700 hover:bg-amber-600 rounded px-3 py-2 font-bold">🔍 Quét Dữ Liệu Ngay</button>
             <div id="noiDungRaSoat"></div>
+
+            <div id="khungChuyenPhuong" class="hidden border-t border-gray-700 pt-3 space-y-2">
+                <p class="text-purple-300 font-semibold">🔀 Chuyển Hộ Sang Phường Khác (dữ liệu bị gắn nhầm phường)</p>
+                <p class="text-gray-500">⚠️ Phần mềm KHÔNG THỂ tự động phát hiện hộ nào bị gắn nhầm phường — vì địa chỉ hiển thị và trường "phường" lưu trong hệ thống ĐANG KHỚP NHAU (cùng ghi "Phường Tân An"), dù trên thực tế có thể sai. Anh/chị cần tự xác định đúng những hộ nào thực chất thuộc phường khác (VD dựa vào biết trước khu vực đó thuộc CSKV nào phụ trách), sau đó dùng công cụ này để chuyển đúng.</p>
+                <p class="text-gray-400">⚠️ Việc "Nhập lại file Excel" KHÔNG khắc phục được vấn đề này — vì hệ thống chỉ so khớp trùng lặp với dữ liệu ĐANG HIỂN THỊ của phường đang chọn, sẽ tạo thêm bản ghi MỚI trùng lặp thay vì sửa đúng bản ghi cũ đang nằm sai bên phường khác.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-gray-400 block mb-1">Bước 1 — Chọn khu vực cần chuyển (trong "<span id="chuyenPhuongTenNguon"></span>"):</label>
+                        <select id="chuyenPhuongKhuVucNguon" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></select>
+                    </div>
+                    <div>
+                        <label class="text-gray-400 block mb-1">Bước 2 — Chuyển đến đúng phường:</label>
+                        <select id="chuyenPhuongDich" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></select>
+                    </div>
+                </div>
+                <p id="chuyenPhuongSoLuong" class="text-gray-400"></p>
+                <button onclick="thucHienChuyenPhuong()" class="w-full bg-purple-700 hover:bg-purple-600 rounded px-3 py-2 font-bold">🔀 Chuyển Toàn Bộ Hộ Trong Khu Vực Này</button>
+            </div>
         </div>
     </div>
 
@@ -3760,7 +3778,12 @@
                             if (phuongXaGoc && !phuongTuFile) soHoPhuongKhongTraDuoc++;
                             else if (phuongTuFile && phuongTuFile !== khuVucHienTai) soHoPhuongKhacHienTai++;
                             mapHoMoi[key] = { 
-                                hsct: hsct || ('HS-' + bamOnDinh(khuVucHienTai + '|' + chuHoFinal + '|' + diaChiGoc)), 
+                                hsct: (dienNV === 'Thường trú') ? (hsct || ('HS-' + bamOnDinh(khuVucHienTai + '|' + chuHoFinal + '|' + diaChiGoc))) : hsct,
+                                // SỬA THEO ĐÚNG NGHIỆP VỤ: chỉ diện THƯỜNG TRÚ mới có "Số HSCT" (Hồ sơ cư trú)
+                                // theo quy định — Tạm trú/Lưu trú/NOHN đăng ký theo cơ chế khác, KHÔNG có số
+                                // HSCT. Trước đây phần mềm tự sinh mã "HS-xxxxxxxx" cho MỌI diện khi thiếu HSCT,
+                                // khiến tạm trú/NOHN hiện 1 mã HSCT "giả" gây hiểu nhầm là có hồ sơ thường trú.
+                                // Giờ nếu không phải Thường trú, ĐỂ TRỐNG (hiển thị "— (không áp dụng)" ở bảng).
                                 diaChi: chuanHoaDiaChiVaKhuVuc(diaChiGoc, phuongXaGoc, khuVucTuTenFile), 
                                 phuong: phuongTuFile || khuVucHienTai, // Ưu tiên phường ĐỌC ĐƯỢC TỪ FILE, không còn ép cứng theo màn hình
                                 chuHo: chuHoFinal, 
@@ -4299,7 +4322,7 @@
                 row.className = "hover:bg-gray-800/50 border-b border-gray-800 transition";
                 row.innerHTML = `
                     <td class="p-2">${originalIndex + 1}</td>
-                    <td class="p-2 text-blue-300 font-mono">${escHtml(ho.hsct)}</td>
+                    <td class="p-2 text-blue-300 font-mono">${ho.hsct ? escHtml(ho.hsct) : '<span class="text-gray-500 italic">— (không áp dụng)</span>'}</td>
                     <td class="p-2 text-cyan-300 font-mono">${escHtml(cccdChuHo)}</td>
                     <td class="p-2 font-semibold text-white">${escHtml(ho.chuHo)}</td>
                     <td class="p-2 text-gray-300">${escHtml(ho.diaChi)}</td>
@@ -6321,6 +6344,58 @@
             document.getElementById('raSoatTenPhuong').innerText = khuVucHienTai;
             document.getElementById('noiDungRaSoat').innerHTML = '';
             document.getElementById('raSoatLoiModal').classList.remove('hidden');
+
+            // Khối "Chuyển Hộ Sang Phường Khác" — CHỈ Admin (thao tác di chuyển dữ liệu xuyên phường, rủi ro
+            // cao nếu chọn nhầm khu vực/phường đích, không nên giao cho CSKV/Chỉ huy tự làm).
+            const khungCP = document.getElementById('khungChuyenPhuong');
+            if (currentUser.role !== 'admin') { khungCP.classList.add('hidden'); return; }
+            khungCP.classList.remove('hidden');
+            document.getElementById('chuyenPhuongTenNguon').innerText = khuVucHienTai;
+            const dsHienTai = layDuLieuThuocPhuongHienTai();
+            const theoKV = {};
+            dsHienTai.forEach(h => { const kv = layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1'; (theoKV[kv] = theoKV[kv] || []).push(h); });
+            const selNguon = document.getElementById('chuyenPhuongKhuVucNguon');
+            const dsKV = Object.keys(theoKV).sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
+            selNguon.innerHTML = dsKV.length > 0
+                ? dsKV.map(k => `<option value="${escHtml(k)}">${escHtml(k)} (${theoKV[k].length} hộ)</option>`).join('')
+                : '<option value="">-- Chưa có dữ liệu --</option>';
+            const selDich = document.getElementById('chuyenPhuongDich');
+            selDich.innerHTML = Object.keys(DANH_MUC_HANH_CHINH).sort((a, b) => a.localeCompare(b, 'vi'))
+                .filter(p => p !== khuVucHienTai)
+                .map(p => `<option value="${escHtml(p)}">${escHtml(p)}</option>`).join('');
+            capNhatSoLuongChuyenPhuong();
+            selNguon.onchange = capNhatSoLuongChuyenPhuong;
+        }
+
+        function capNhatSoLuongChuyenPhuong() {
+            const kv = document.getElementById('chuyenPhuongKhuVucNguon').value;
+            const soHo = layDuLieuThuocPhuongHienTai().filter(h => (layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1') === kv).length;
+            document.getElementById('chuyenPhuongSoLuong').innerText = kv ? `→ Sẽ chuyển ${soHo} hộ trong "${kv}" sang phường đích.` : '';
+        }
+
+        async function thucHienChuyenPhuong() {
+            if (!CHE_DO_FIREBASE) return alert("Chức năng này chỉ khả dụng khi đã kết nối máy chủ.");
+            const kvNguon = document.getElementById('chuyenPhuongKhuVucNguon').value;
+            const phuongDich = document.getElementById('chuyenPhuongDich').value;
+            if (!kvNguon || !phuongDich) return alert("Vui lòng chọn đầy đủ khu vực nguồn và phường đích.");
+            const dsChuyen = layDuLieuThuocPhuongHienTai().filter(h => (layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1') === kvNguon);
+            if (dsChuyen.length === 0) return alert("Không có hộ nào trong khu vực này.");
+            if (!confirm(`⚠️ XÁC NHẬN CHUYỂN DỮ LIỆU\n\nChuyển ${dsChuyen.length} hộ từ "${kvNguon}" (thuộc ${khuVucHienTai}) sang "${phuongDich}"?\n\nSau khi chuyển, các hộ này sẽ KHÔNG còn hiện trong "${khuVucHienTai}" nữa mà chuyển hẳn sang "${phuongDich}". Hãy chắc chắn đã xác định ĐÚNG trước khi bấm OK — thao tác này ảnh hưởng nhiều hộ cùng lúc.`)) return;
+            if (prompt(`Để xác nhận lần cuối, gõ đúng tên phường đích "${phuongDich}" vào ô bên dưới:`) !== phuongDich) return alert("Đã hủy — tên gõ vào không khớp.");
+
+            let daChuyen = 0;
+            const CO_LO = 400;
+            for (let i = 0; i < dsChuyen.length; i += CO_LO) {
+                const lo = dbFirestore.batch();
+                dsChuyen.slice(i, i + CO_LO).forEach(h => {
+                    lo.update(dbFirestore.collection('households').doc(h.id), { phuong: phuongDich });
+                    daChuyen++;
+                });
+                await lo.commit();
+            }
+            ghiNhatKy('Chuyển hộ sang phường khác', `${daChuyen} hộ: "${kvNguon}" (${khuVucHienTai}) → "${phuongDich}"`);
+            alert(`✅ Đã chuyển xong ${daChuyen} hộ sang "${phuongDich}". Lưu ý: số khu vực (KV) của các hộ này vẫn giữ nguyên như cũ — nếu phường đích cũng có khu vực trùng số, hãy vào phường đích kiểm tra lại và bổ sung bảng đổi tên khu vực (BANG_DOI_TEN_KHU_VUC) nếu cần.`);
+            document.getElementById('raSoatLoiModal').classList.add('hidden');
         }
 
         function raSoatLoiDuLieu() {
@@ -6331,13 +6406,17 @@
             // Lỗi 1: HSCT bị nhầm thành cả câu địa chỉ (dấu hiệu: quá dài + có từ khoá địa chỉ)
             const loiHsct = ds.filter(ho => ho.hsct && ho.hsct.length > 25 && /(đường|khu vực|khu pho|\bkv\s*\d|\btổ\s*\d|phường|xã\b)/i.test(boDauTiengViet(ho.hsct)));
 
+            // Lỗi 1b: diện KHÔNG PHẢI Thường trú nhưng vẫn có Số HSCT (theo đúng nghiệp vụ, chỉ Thường trú
+            // mới có HSCT) — thường là dữ liệu nhập TRƯỚC KHI phần mềm được sửa theo đúng quy định này.
+            const loiHsctSaiDien = ds.filter(ho => ho.hsct && ho.dienNghiepVu !== 'Thường trú' && !loiHsct.includes(ho));
+
             // Lỗi 2: Chủ hộ bị lưu thành 1 từ chỉ QUAN HỆ (VD "Con", "Cháu"...) thay vì tên người thật
             const loiChuHo = ds.filter(ho => laTuChiQuanHe(ho.chuHo));
 
             // Lỗi 3: Hộ có thành viên hoàn toàn không có CCCD nào (cần bổ sung dần)
             const loiThieuCCCDToanBo = ds.filter(ho => ho.thanhVien && ho.thanhVien.length > 0 && ho.thanhVien.every(tv => !tv.cccd));
 
-            if (loiHsct.length === 0 && loiChuHo.length === 0 && loiThieuCCCDToanBo.length === 0) {
+            if (loiHsct.length === 0 && loiHsctSaiDien.length === 0 && loiChuHo.length === 0 && loiThieuCCCDToanBo.length === 0) {
                 el.innerHTML = '<p class="text-emerald-400 p-3">✅ Không phát hiện lỗi nào trong phạm vi dữ liệu của "' + escHtml(khuVucHienTai) + '" (' + ds.length + ' hộ đã quét).</p>';
                 return;
             }
@@ -6351,6 +6430,15 @@
                         ${loiHsct.map(ho => `<div class="text-gray-300">• <span class="text-rose-400 font-mono">${escHtml(ho.hsct.slice(0, 60))}${ho.hsct.length > 60 ? '…' : ''}</span> — Chủ hộ: ${escHtml(ho.chuHo || '?')}</div>`).join('')}
                     </div>
                     <button onclick='suaLoiHsctHangLoat(${JSON.stringify(loiHsct.map(h => h.id))})' class="bg-rose-700 hover:bg-rose-600 px-2.5 py-1.5 rounded font-medium">🔧 Tự Sửa Ngay (tạo lại mã HSCT chuẩn cho ${loiHsct.length} hộ này)</button>
+                </div>`;
+            }
+            if (loiHsctSaiDien.length > 0) {
+                html += `<div class="bg-orange-950/30 border border-orange-700/50 rounded-lg p-2.5 mb-2">
+                    <p class="text-orange-300 font-semibold mb-1">🟠 ${loiHsctSaiDien.length} hộ diện Tạm trú/Lưu trú/NOHN nhưng vẫn đang có Số HSCT (theo quy định chỉ Thường trú mới có HSCT)</p>
+                    <div class="max-h-40 overflow-y-auto text-[11px] space-y-1 mb-2">
+                        ${loiHsctSaiDien.map(ho => `<div class="text-gray-300">• <span class="text-orange-400 font-mono">${escHtml(ho.hsct)}</span> — ${escHtml(ho.dienNghiepVu)} — Chủ hộ: ${escHtml(ho.chuHo || '?')}</div>`).join('')}
+                    </div>
+                    <button onclick='suaLoiHsctHangLoat(${JSON.stringify(loiHsctSaiDien.map(h => h.id))})' class="bg-orange-700 hover:bg-orange-600 px-2.5 py-1.5 rounded font-medium">🔧 Xóa Số HSCT Sai (đưa về đúng "không áp dụng") cho ${loiHsctSaiDien.length} hộ này</button>
                 </div>`;
             }
             if (loiChuHo.length > 0) {
@@ -6372,20 +6460,24 @@
         }
 
         async function suaLoiHsctHangLoat(danhSachId) {
-            if (!confirm(`Tạo lại mã HSCT chuẩn (dạng HS-xxxxxxxx) cho ${danhSachId.length} hộ đã chọn?\n\nLưu ý: mã HSCT MỚI sẽ không giống mã HSCT gốc trong sổ giấy (vì mã gốc đã bị đọc sai/mất) — anh/chị nên đối chiếu lại sổ giấy để cập nhật đúng Số HSCT thật cho từng hộ sau khi sửa, qua mục "Chi tiết" → sửa trực tiếp ô Số HSCT.`)) return;
+            if (!confirm(`Sửa Số HSCT cho ${danhSachId.length} hộ đã chọn?\n\n- Hộ diện THƯỜNG TRÚ: tạo lại mã HSCT chuẩn (dạng HS-xxxxxxxx) — anh/chị nên đối chiếu sổ giấy để cập nhật đúng Số HSCT thật cho từng hộ sau khi sửa.\n- Hộ diện Tạm trú/Lưu trú/NOHN: sẽ XÓA giá trị sai và để TRỐNG (theo đúng quy định, các diện này không có Số HSCT).`)) return;
             let daSua = 0;
             for (const id of danhSachId) {
                 const ho = danhSachHoGiaDinh.find(h => h.id === id);
                 if (!ho) continue;
-                const hsctMoi = 'HS-' + bamOnDinh((ho.phuong || khuVucHienTai) + '|' + (ho.chuHo || '') + '|' + (ho.diaChi || '') + '|' + Date.now());
+                // SỬA THEO ĐÚNG NGHIỆP VỤ: chỉ Thường trú mới sinh mã HSCT thay thế; các diện khác để trống,
+                // đồng bộ với logic tại khâu nhập Excel.
+                const hsctMoi = (ho.dienNghiepVu === 'Thường trú')
+                    ? 'HS-' + bamOnDinh((ho.phuong || khuVucHienTai) + '|' + (ho.chuHo || '') + '|' + (ho.diaChi || '') + '|' + Date.now())
+                    : '';
                 try {
                     if (CHE_DO_FIREBASE) await dbFirestore.collection('households').doc(id).update({ hsct: hsctMoi });
                     else { ho.hsct = hsctMoi; localStorage.setItem("danhSachHoGiaDinhCacheGIS_V5", JSON.stringify(danhSachHoGiaDinh)); }
                     daSua++;
                 } catch (err) { console.warn('Lỗi sửa HSCT cho hộ ' + id + ':', err.message); }
             }
-            ghiNhatKy('Rà soát & sửa lỗi dữ liệu', `Tạo lại HSCT cho ${daSua} hộ`);
-            alert(`✅ Đã sửa xong ${daSua}/${danhSachId.length} hộ. Nhớ đối chiếu sổ giấy để cập nhật lại đúng Số HSCT thật cho từng hộ khi có điều kiện.`);
+            ghiNhatKy('Rà soát & sửa lỗi dữ liệu', `Sửa Số HSCT cho ${daSua} hộ`);
+            alert(`✅ Đã sửa xong ${daSua}/${danhSachId.length} hộ.`);
             raSoatLoiDuLieu();
             if (!CHE_DO_FIREBASE) capNhatGiaoDienSauKhiTai();
         }
