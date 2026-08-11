@@ -1227,6 +1227,57 @@
         let khuVucHienTai = "Phường Tân An";
         const DEFAULT_CENTER = DANH_MUC_HANH_CHINH[khuVucHienTai].center; 
 
+        // ================== DANH MỤC ĐỔI TÊN KHU VỰC DO TRÙNG TÊN SAU SÁP NHẬP ==================
+        // Khi 2+ phường/xã CŨ sáp nhập thành 1 phường/xã MỚI, số thứ tự khu vực của các phường cũ thường bị
+        // TRÙNG NHAU (VD cả An Khánh cũ và Hưng Lợi cũ đều có "Khu vực 1", "Khu vực 4"...) — đây chính là
+        // nguyên nhân gây "trùng lắp" dữ liệu khi phần mềm chỉ tách số khu vực thuần tuý từ địa chỉ mà không
+        // biết số đó thuộc phường cũ nào. Bảng dưới đây ghi lại đúng quyết định đổi tên CHÍNH THỨC của từng
+        // phường (theo Thông báo/Nghị quyết HĐND phường đã ban hành) để tự động quy đổi số khu vực CŨ (nếu địa
+        // chỉ còn ghi theo tên phường cũ) sang đúng số khu vực MỚI, THỐNG NHẤT, không còn trùng trong toàn phường.
+        //
+        // Nguồn: Thông báo số 378/TB-UBND ngày 10/12/2025 của UBND phường Tân An, thực hiện Nghị quyết số
+        // 18/NQ-HĐND ngày 25/11/2025 của HĐND phường Tân An về việc đổi tên khu vực do trùng tên. Khu vực 1-6
+        // hiện hành của Phường Tân An giữ nguyên số cũ (thuộc Hưng Lợi cũ, không đổi); khu vực của An Khánh cũ
+        // được đổi tên như bảng bên dưới.
+        //
+        // MỞ RỘNG CHO PHƯỜNG/XÃ KHÁC: khi triển khai cho phường/xã khác cũng có tình trạng trùng tên khu vực,
+        // bổ sung thêm 1 mục mới vào object này theo đúng cấu trúc, dựa trên Thông báo/Nghị quyết đổi tên
+        // chính thức của HĐND phường/xã đó (KHÔNG tự suy đoán khi chưa có văn bản chính thức).
+        const BANG_DOI_TEN_KHU_VUC = {
+            "Phường Tân An": [
+                { phuongCu: "An Khánh", kvCu: 6, kvMoi: 7 },
+                { phuongCu: "An Khánh", kvCu: 3, kvMoi: 8 },
+                { phuongCu: "An Khánh", kvCu: 2, kvMoi: 9 },
+                { phuongCu: "An Khánh", kvCu: 1, kvMoi: 10 },
+                { phuongCu: "An Khánh", kvCu: 4, kvMoi: 11 },
+                { phuongCu: "An Khánh", kvCu: 5, kvMoi: 12 }
+            ]
+        };
+
+        // ================== GIẢI QUYẾT TÊN PHƯỜNG CŨ → PHƯỜNG MỚI (SAU SÁP NHẬP) ==================
+        // LỖI GỐC ĐÃ SỬA: trước đây MỌI nơi so khớp tên phường (cấp quyền cho cán bộ, gán "phường" khi nhập
+        // Excel...) đều yêu cầu KHỚP TUYỆT ĐỐI với đúng 1 trong 103 tên phường/xã MỚI trong DANH_MUC_HANH_CHINH.
+        // Nếu Admin cấp quyền hoặc cột "Phường/Xã" trong file Excel ghi theo TÊN PHƯỜNG CŨ (trước sáp nhập —
+        // VD "Phường An Khánh", "Phường Hưng Lợi" — nay đã sáp nhập thành "Phường Tân An" theo Nghị quyết
+        // 202/2025/QH15), phép so khớp tuyệt đối sẽ THẤT BẠI ÂM THẦM (không báo lỗi) và hệ thống rơi về giá
+        // trị khuVucHienTai đang có sẵn (mặc định "Phường Tân An" lúc khởi tạo trang) — ĐÂY LÀ NGUYÊN NHÂN
+        // GỐC khiến dữ liệu của cán bộ được phân quyền ở phường/khu vực khác vẫn bị gắn nhầm vào "Phường Tân
+        // An", gây trùng lặp dữ liệu giữa các khu vực. Hàm này tra cứu cả tên MỚI lẫn tên CŨ (dựa vào trường
+        // "gopTu"/"sapNhapTu" đã có sẵn trong danh mục 103 phường/xã) để LUÔN trả về đúng tên phường MỚI.
+        function resolvePhuongChuan(tenNhap) {
+            if (!tenNhap) return null;
+            const chuan = (s) => boDauTiengViet(String(s || '')).toLowerCase().replace(/^(phuong|xa|p\.|x\.)\s*/,'').trim();
+            const nhapChuan = chuan(tenNhap);
+            if (!nhapChuan) return null;
+            // 1) Khớp đúng luôn với 1 trong 103 phường/xã hiện hành
+            const tenChinhThuc = Object.keys(DANH_MUC_HANH_CHINH).find(k => chuan(k) === nhapChuan);
+            if (tenChinhThuc) return tenChinhThuc;
+            // 2) Khớp theo TÊN CŨ (trước sáp nhập) — dò trong trường "gopTu" của từng phường/xã mới
+            const ungVien = DANH_SACH_103_XA_PHUONG.find(px => px.gopTu && chuan(px.gopTu).includes(nhapChuan));
+            if (ungVien) return ungVien.ten;
+            return null; // Không tra được — để nơi gọi tự quyết định fallback, KHÔNG tự ý đoán mò
+        }
+
         let danhSachHoGiaDinh = [];
 
         // Kiểm tra xem tài khoản hiện tại có được phép xem dữ liệu của 1 phường cụ thể hay không.
@@ -1555,9 +1606,13 @@
             huyLangNgheQuyenCuaToi = dbFirestore.collection('permissions').doc(email.toLowerCase()).onSnapshot(doc => {
                 const rec = doc.exists ? doc.data() : null;
                 let vaiTroMoi, khuVucMoi = null, phuongMoi = null;
+                // SỬA LỖI GỐC: quy đổi rec.phuong (tên thô Admin gõ) về đúng tên phường chính thức NGAY TẠI
+                // ĐÂY — cùng 1 lỗi và cùng cách sửa như xacDinhQuyenTuFirestore ở trên, áp dụng cho trường hợp
+                // quyền được CẬP NHẬT REAL-TIME (không cần đăng nhập lại) chứ không chỉ lúc đăng nhập lần đầu.
+                const phuongChuanRT = rec && rec.phuong ? (resolvePhuongChuan(rec.phuong) || rec.phuong) : null;
                 if (rec && rec.vaiTro === 'chi_huy_tp') vaiTroMoi = 'chi_huy_tp';
-                else if (rec && rec.vaiTro === 'chi_huy') { vaiTroMoi = 'chi_huy'; phuongMoi = rec.phuong ? [rec.phuong] : null; }
-                else if (rec && rec.vaiTro === 'can_bo') { vaiTroMoi = 'can_bo'; khuVucMoi = rec.khuVuc || null; phuongMoi = rec.phuong ? [rec.phuong] : null; }
+                else if (rec && rec.vaiTro === 'chi_huy') { vaiTroMoi = 'chi_huy'; phuongMoi = phuongChuanRT ? [phuongChuanRT] : null; }
+                else if (rec && rec.vaiTro === 'can_bo') { vaiTroMoi = 'can_bo'; khuVucMoi = rec.khuVuc || null; phuongMoi = phuongChuanRT ? [phuongChuanRT] : null; }
                 else vaiTroMoi = 'chua_cap_quyen';
 
                 const doiKhac = currentUser.role !== vaiTroMoi || JSON.stringify(currentUser.phuongPhuTrach) !== JSON.stringify(phuongMoi);
@@ -1565,7 +1620,14 @@
                 currentUser.khuVucPhuTrach = khuVucMoi;
                 currentUser.phuongPhuTrach = phuongMoi;
                 if (doiKhac) {
-                    if (phuongMoi && phuongMoi.length > 0 && DANH_MUC_HANH_CHINH[phuongMoi[0]]) khuVucHienTai = phuongMoi[0];
+                    // SỬA LỖI GỐC: trước đây so khớp TUYỆT ĐỐI phuongMoi[0] với khóa trong DANH_MUC_HANH_CHINH —
+                    // nếu Admin cấp quyền gõ theo TÊN PHƯỜNG CŨ (trước sáp nhập, VD "Phường An Khánh") thì khớp
+                    // thất bại ÂM THẦM, khuVucHienTai KHÔNG được cập nhật và tiếp tục dùng giá trị cũ/mặc định
+                    // "Phường Tân An" — khiến cán bộ tưởng đã được phân quyền đúng phường/khu vực nhưng dữ liệu
+                    // họ xem/nhập vẫn bị gắn nhầm. Giờ dùng resolvePhuongChuan để tự quy đổi cả tên cũ lẫn tên mới.
+                    const phuongDaTraDuoc = phuongMoi && phuongMoi.length > 0 ? resolvePhuongChuan(phuongMoi[0]) : null;
+                    if (phuongDaTraDuoc) khuVucHienTai = phuongDaTraDuoc;
+                    else if (phuongMoi && phuongMoi.length > 0) console.warn('⚠️ Không tra được phường "' + phuongMoi[0] + '" trong danh mục 103 phường/xã — kiểm tra lại chính tả khi cấp quyền cho ' + email);
                     document.getElementById('userBadgeRole').innerText = vaiTroMoi === 'admin' ? 'Quyền: Admin' : (vaiTroMoi === 'chi_huy_tp' ? 'Chỉ Huy TP' : (vaiTroMoi === 'chi_huy' ? 'Chỉ Huy' : (vaiTroMoi === 'can_bo' ? 'CSKV' : '⚠️ Chưa cấp quyền')));
                     capNhatDanhSachPhuongTrongDropdown();
                     apDungGioiHanKhuVucTheoQuyen();
@@ -1579,8 +1641,13 @@
 
         function kichHoatSauDangNhapFirebase(user, quyen) {
             currentUser = { email: user.email, uid: user.uid, role: quyen.role, khuVucPhuTrach: quyen.khuVucPhuTrach, phuongPhuTrach: quyen.phuongPhuTrach };
-            if (currentUser.phuongPhuTrach && currentUser.phuongPhuTrach.length > 0 && DANH_MUC_HANH_CHINH[currentUser.phuongPhuTrach[0]]) {
-                khuVucHienTai = currentUser.phuongPhuTrach[0];
+            // SỬA LỖI GỐC (giống dangKyLangNgheQuyenCuaToi ở trên): dùng resolvePhuongChuan thay vì so khớp
+            // tuyệt đối, để không bị "rơi" về mặc định Phường Tân An khi hồ sơ quyền ghi theo tên phường cũ.
+            const phuongDangNhapTraDuoc = currentUser.phuongPhuTrach && currentUser.phuongPhuTrach.length > 0 ? resolvePhuongChuan(currentUser.phuongPhuTrach[0]) : null;
+            if (phuongDangNhapTraDuoc) {
+                khuVucHienTai = phuongDangNhapTraDuoc;
+            } else if (currentUser.phuongPhuTrach && currentUser.phuongPhuTrach.length > 0) {
+                console.warn('⚠️ Không tra được phường "' + currentUser.phuongPhuTrach[0] + '" trong danh mục 103 phường/xã lúc đăng nhập — kiểm tra lại chính tả trong hồ sơ phân quyền.');
             }
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('otpScreen').classList.add('hidden');
@@ -1793,13 +1860,20 @@
                 // Có thể chỉ mới TỰ KHAI BÁO (hoTen/donVi...) mà CHƯA được Admin gán vaiTro — vẫn phải coi
                 // là "chưa cấp quyền", không được tự động rơi vào "can_bo" chỉ vì tài liệu đã tồn tại.
                 if (!rec.vaiTro) return Object.assign({ role: 'chua_cap_quyen', khuVucPhuTrach: null, phuongPhuTrach: null }, thongTin2FA);
+                // SỬA LỖI GỐC: rec.phuong là TÊN THÔ do Admin tự gõ lúc cấp quyền — nếu gõ theo tên phường CŨ
+                // (trước sáp nhập) hoặc lệch dấu/khoảng trắng so với tên chính thức trong DANH_MUC_HANH_CHINH,
+                // các hàm kiểm tra quyền (coQuyenXemPhuong, layDuLieuThuocPhuongHienTai...) so khớp TUYỆT ĐỐI
+                // sẽ luôn trả về SAI dù Admin đã cấp quyền đúng — cán bộ nhìn thấy "được cấp quyền" nhưng dữ
+                // liệu vẫn không khớp/rơi về phường mặc định. Quy đổi về ĐÚNG tên phường chính thức NGAY TẠI
+                // ĐÂY (nguồn duy nhất), để mọi nơi dùng currentUser.phuongPhuTrach về sau đều đã chuẩn hoá.
+                const phuongChuan = rec.phuong ? (resolvePhuongChuan(rec.phuong) || rec.phuong) : null;
                 if (rec.vaiTro === 'chi_huy_tp') return Object.assign({ role: 'chi_huy_tp', khuVucPhuTrach: null, phuongPhuTrach: null }, thongTin2FA);
-                if (rec.vaiTro === 'chi_huy') return Object.assign({ role: 'chi_huy', khuVucPhuTrach: null, phuongPhuTrach: rec.phuong ? [rec.phuong] : null }, thongTin2FA);
+                if (rec.vaiTro === 'chi_huy') return Object.assign({ role: 'chi_huy', khuVucPhuTrach: null, phuongPhuTrach: phuongChuan ? [phuongChuan] : null }, thongTin2FA);
                 // "Cán bộ dữ liệu": dưới Chỉ huy phường 1 bậc, trên CSKV 1 bậc — xem/sửa dữ liệu TOÀN PHƯỜNG
                 // (mọi khu vực, giống phạm vi dữ liệu của Chỉ huy) nhưng KHÔNG có các quyền mang tính "chỉ huy"
                 // (xóa dữ liệu hàng loạt, quản lý phân quyền người khác, đặt lại 2FA người khác, xem toàn TP).
-                if (rec.vaiTro === 'can_bo_du_lieu') return Object.assign({ role: 'can_bo_du_lieu', khuVucPhuTrach: null, phuongPhuTrach: rec.phuong ? [rec.phuong] : null }, thongTin2FA);
-                return Object.assign({ role: 'can_bo', khuVucPhuTrach: rec.khuVuc || null, phuongPhuTrach: rec.phuong ? [rec.phuong] : null }, thongTin2FA);
+                if (rec.vaiTro === 'can_bo_du_lieu') return Object.assign({ role: 'can_bo_du_lieu', khuVucPhuTrach: null, phuongPhuTrach: phuongChuan ? [phuongChuan] : null }, thongTin2FA);
+                return Object.assign({ role: 'can_bo', khuVucPhuTrach: rec.khuVuc || null, phuongPhuTrach: phuongChuan ? [phuongChuan] : null }, thongTin2FA);
             } catch (err) {
                 console.error("Lỗi tra cứu quyền Firestore:", err);
                 return { role: 'chua_cap_quyen', khuVucPhuTrach: null, phuongPhuTrach: null };
@@ -1830,7 +1904,7 @@
                         const canVa = danhSachHoGiaDinh.filter(h => !h.khuVuc && h.id);
                         if (canVa.length > 0 && canVa.length < 500) {
                             const lo = dbFirestore.batch();
-                            canVa.forEach(h => { const kv = layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1'; h.khuVuc = kv; lo.update(dbFirestore.collection('households').doc(h.id), { khuVuc: kv }); });
+                            canVa.forEach(h => { const kv = layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1'; h.khuVuc = kv; lo.update(dbFirestore.collection('households').doc(h.id), { khuVuc: kv }); });
                             lo.commit().catch(e => console.warn("Không vá được trường khuVuc cho dữ liệu cũ:", e.message));
                         }
                     }
@@ -1850,7 +1924,7 @@
         async function luuHoLenFirestore(ho) {
             // Luôn tính và lưu tường minh trường "khuVuc" (không chỉ suy luận từ địa chỉ ở phía client) — để
             // Security Rules trên máy chủ có thể kiểm tra được, phục vụ phân quyền XÓA đúng khu vực cho CSKV.
-            ho.khuVuc = layNhanKhuVucTuDiaChi(ho.diaChi) || 'Khu Vực 1';
+            ho.khuVuc = layNhanKhuVucTuDiaChi(ho.diaChi, ho.phuong) || 'Khu Vực 1';
             const { id, ...duLieu } = ho;
             if (id) {
                 await dbFirestore.collection('households').doc(id).set(duLieu);
@@ -1881,7 +1955,7 @@
             for (let i = 0; i < danhSachMoi.length; i += CO_LO) {
                 const lo = dbFirestore.batch();
                 danhSachMoi.slice(i, i + CO_LO).forEach(hoMoi => {
-                    hoMoi.khuVuc = layNhanKhuVucTuDiaChi(hoMoi.diaChi) || 'Khu Vực 1';
+                    hoMoi.khuVuc = layNhanKhuVucTuDiaChi(hoMoi.diaChi, hoMoi.phuong) || 'Khu Vực 1';
                     let hoTrung = (hoMoi.hsct && hoTheoHsct[hoMoi.hsct]) || null;
                     if (!hoTrung) {
                         for (const tv of (hoMoi.thanhVien || [])) {
@@ -1925,7 +1999,7 @@
             const snap = await dbFirestore.collection('households').where('phuong', '==', tenPhuong || khuVucHienTai).get();
             const CO_LO = 400;
             const docs = khuVucCanXoa
-                ? snap.docs.filter(d => (layNhanKhuVucTuDiaChi(d.data().diaChi) || 'Khu Vực 1') === khuVucCanXoa)
+                ? snap.docs.filter(d => (layNhanKhuVucTuDiaChi(d.data().diaChi, d.data().phuong) || 'Khu Vực 1') === khuVucCanXoa)
                 : snap.docs;
             for (let i = 0; i < docs.length; i += CO_LO) {
                 const lo = dbFirestore.batch();
@@ -2122,9 +2196,16 @@
                 return { role: 'admin', khuVucPhuTrach: null, phuongPhuTrach: null };
             }
             const rec = layPhanQuyenTheoEmail(email);
+            // SỬA LỖI GỐC (giống xacDinhQuyenTuFirestore): quy đổi rec.phuong về đúng tên phường chính thức,
+            // tránh rơi về mặc định khi Admin gõ theo tên phường cũ trước sáp nhập.
+            const phuongChuanLocal = rec && rec.phuong ? (resolvePhuongChuan(rec.phuong) || rec.phuong) : null;
             if (rec && rec.vaiTro === 'chi_huy_tp') return { role: 'chi_huy_tp', khuVucPhuTrach: null, phuongPhuTrach: null };
-            if (rec && rec.vaiTro === 'chi_huy') return { role: 'chi_huy', khuVucPhuTrach: null, phuongPhuTrach: rec.phuong ? [rec.phuong] : null };
-            if (rec && rec.vaiTro === 'can_bo') return { role: 'can_bo', khuVucPhuTrach: rec.khuVuc || null, phuongPhuTrach: rec.phuong ? [rec.phuong] : null };
+            if (rec && rec.vaiTro === 'chi_huy') return { role: 'chi_huy', khuVucPhuTrach: null, phuongPhuTrach: phuongChuanLocal ? [phuongChuanLocal] : null };
+            // SỬA LỖI ĐÃ GHI NHẬN TRƯỚC ĐÓ: thiếu hẳn nhánh "can_bo_du_lieu" trong chuỗi điều kiện — mọi tài
+            // khoản được cấp vai trò này ở CHẾ ĐỘ LOCAL (không Firebase) bị rơi thẳng xuống "chưa cấp quyền",
+            // dù đã được Admin cấp đúng vai trò.
+            if (rec && rec.vaiTro === 'can_bo_du_lieu') return { role: 'can_bo_du_lieu', khuVucPhuTrach: null, phuongPhuTrach: phuongChuanLocal ? [phuongChuanLocal] : null };
+            if (rec && rec.vaiTro === 'can_bo') return { role: 'can_bo', khuVucPhuTrach: rec.khuVuc || null, phuongPhuTrach: phuongChuanLocal ? [phuongChuanLocal] : null };
             // KHÔNG có trong danh sách phân quyền -> "khách lạ" -> deny-by-default, KHÔNG được xem dữ liệu nào cả
             return { role: 'chua_cap_quyen', khuVucPhuTrach: null, phuongPhuTrach: null };
         }
@@ -3382,12 +3463,39 @@
         function boDauTiengViet(s) {
             return (s || "").normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase();
         }
-        function layNhanKhuVucTuDiaChi(diaChi) {
+        // SỬA LỖI TRỌNG YẾU (nguyên nhân gốc gây trùng lặp #2): trước đây khi file Excel KHÔNG có cột HSCT,
+        // hệ thống tự sinh mã hồ sơ NGẪU NHIÊN (Math.random) cho mỗi lần nhập — nghĩa là nhập cùng 1 hộ ở 2
+        // lần khác nhau (VD nhập lại do tưởng bị lỗi, hoặc 2 file khác nhau cùng chứa hộ đó) sẽ luôn tạo ra 2
+        // mã khác nhau, khiến cơ chế chống trùng (chỉ so theo HSCT/CCCD) hoàn toàn KHÔNG bắt được — đặc biệt
+        // nghiêm trọng với các file đã bỏ cột CCCD theo đúng khuyến nghị bảo mật. Giờ dùng HÀM BĂM ỔN ĐỊNH từ
+        // (chủ hộ + địa chỉ) — CÙNG 1 hộ ở CÙNG 1 địa chỉ sẽ LUÔN cho ra CÙNG 1 mã hồ sơ dù nhập bao nhiêu
+        // lần, giúp việc chống trùng hoạt động đúng ngay cả khi file không có HSCT/CCCD.
+        function bamOnDinh(chuoi) {
+            let h = 0;
+            const s = boDauTiengViet(chuoi).replace(/\s+/g, ' ').trim();
+            for (let i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; }
+            return h.toString(36).toUpperCase();
+        }
+        function layNhanKhuVucTuDiaChi(diaChi, tenPhuongGoiY) {
             // Thay dấu gạch dưới/gạch ngang/chấm bằng khoảng trắng trước khi so khớp, vì \b coi "_" là ký tự chữ
             // nên "Thuong_tru_KV_7.xlsx" trước đây KHÔNG khớp được mẫu "kv" (gây lỗi tự đổi thành Khu Vực 1).
             const s = boDauTiengViet(diaChi).replace(/[_\-.]+/g, ' ');
             const m = s.match(/khu\s*vuc\s*0*(\d+)/) || s.match(/(?:^|\s)kv\s*0*(\d+)/) || s.match(/khu\s*pho\s*0*(\d+)/);
-            return m ? "Khu Vực " + m[1] : null;
+            if (!m) return null;
+            let soKV = parseInt(m[1], 10);
+
+            // ĐỔI TÊN KHU VỰC DO TRÙNG TÊN SAU SÁP NHẬP: nếu địa chỉ còn nhắc tên phường/xã CŨ (VD "An Khánh")
+            // kèm số khu vực CŨ, tự động quy đổi sang đúng số khu vực MỚI theo bảng BANG_DOI_TEN_KHU_VUC —
+            // tránh vẫn hiểu nhầm là CÙNG 1 khu vực với khu vực có số TRÙNG của phường/xã cũ khác đã sáp nhập
+            // chung. Chỉ áp dụng khi địa chỉ THỰC SỰ có nhắc tên phường cũ đó (tránh quy đổi nhầm những địa
+            // chỉ ĐÃ ghi đúng số khu vực mới rồi).
+            const phuongDich = tenPhuongGoiY || khuVucHienTai;
+            const bangDoiTen = BANG_DOI_TEN_KHU_VUC[phuongDich];
+            if (bangDoiTen) {
+                const doiTen = bangDoiTen.find(d => soKV === d.kvCu && s.includes(boDauTiengViet(d.phuongCu).toLowerCase()));
+                if (doiTen) soKV = doiTen.kvMoi;
+            }
+            return "Khu Vực " + soKV;
         }
 
         // Danh sách các từ chỉ QUAN HỆ (không phải TÊN NGƯỜI) — dùng để phát hiện và tự sửa trường hợp cột
@@ -3485,7 +3593,30 @@
                 event.target.value = "";
                 return;
             }
-            
+
+            // ================== NHẮC PHƯỜNG/KHU VỰC SẼ NHẬP — chống nhập nhầm phường gây trùng lặp ==================
+            // SỬA LỖI TRỌNG YẾU: trước đây phần mềm ÂM THẦM gắn TOÀN BỘ hộ trong file vào đúng phường đang
+            // CHỌN TRÊN MÀN HÌNH lúc bấm nhập (khuVucHienTai) — không hề đọc/đối chiếu cột "Phường/Xã" trong
+            // Excel hay khu vực được phân quyền cho tài khoản. Nếu màn hình lỡ để sai phường (VD cán bộ được
+            // giao NHIỀU phường mà quên đổi, hoặc trình duyệt dùng chung còn lưu phường của người trước), dữ
+            // liệu bị gắn NHẦM phường — và vì chống trùng lặp cũng chỉ so khớp trong đúng phường đang chọn,
+            // dữ liệu nhầm phường sẽ KHÔNG BAO GIỜ khớp trùng với lần nhập đúng sau này -> sinh trùng lặp khi
+            // nhập lại đúng phường. Giờ LUÔN hiển thị rõ ràng phường/khu vực sẽ ghi vào TRƯỚC khi xử lý file,
+            // và CẢNH BÁO MẠNH nếu phường đang chọn không khớp với phạm vi được Admin phân quyền.
+            const dsPhuongDuocGiao = (currentUser.phuongPhuTrach && currentUser.phuongPhuTrach.length > 0) ? currentUser.phuongPhuTrach : null;
+            const dsKhuVucDuocGiao = (currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length > 0) ? currentUser.khuVucPhuTrach : null;
+            const khongKhopPhuong = dsPhuongDuocGiao && !dsPhuongDuocGiao.includes(khuVucHienTai);
+
+            let noiDungNhac = `📥 SẮP NHẬP FILE: "${file.name}"\n\n➡️ Toàn bộ hộ/nhân khẩu trong file này sẽ được ghi vào:\n   📍 PHƯỜNG: ${khuVucHienTai}`;
+            if (dsKhuVucDuocGiao) noiDungNhac += `\n   🏘️ Khu vực phân công của tài khoản: ${dsKhuVucDuocGiao.join(', ')} (địa chỉ trong file không thuộc khu vực này vẫn được nhập nhưng nên kiểm tra lại)`;
+            if (dsPhuongDuocGiao) noiDungNhac += `\n\n👤 Tài khoản của anh/chị được Admin phân công phụ trách: ${dsPhuongDuocGiao.join(', ')}.`;
+            if (khongKhopPhuong) {
+                noiDungNhac += `\n\n⚠️⚠️⚠️ CẢNH BÁO: Phường ĐANG CHỌN ("${khuVucHienTai}") KHÔNG nằm trong danh sách phường được phân công cho tài khoản này!\nRất có thể anh/chị đang chọn NHẦM phường trên bản đồ trước khi nhập. Nếu tiếp tục, dữ liệu sẽ bị gắn SAI phường và dễ sinh trùng lặp về sau.\n\n👉 Khuyến nghị: Bấm HỦY, đổi đúng phường ở góc trên bên trái rồi nhập lại.`;
+            } else {
+                noiDungNhac += `\n\nNếu ĐÚNG phường trên là nơi cần nhập, bấm OK để tiếp tục. Nếu KHÔNG đúng, bấm Hủy và đổi phường trước khi nhập lại.`;
+            }
+            if (!confirm(noiDungNhac)) { event.target.value = ""; return; }
+
             const khuVucTuTenFile = layKhuVucTuTenFile(file.name);
             // Mã định danh RIÊNG cho LẦN NHẬP này — dùng để sau này CSKV có thể tự "Hoàn tác" ĐÚNG lần nhập
             // của CHÍNH MÌNH nếu lỡ nhập sai file, mà không đụng đến dữ liệu do người khác nhập, kể cả cùng
@@ -3538,6 +3669,8 @@
 
                     let mapHoMoi = {};
                     let soThanhVienThieuCCCD = 0;
+                    let soHoPhuongKhongTraDuoc = 0; // Số hộ có ghi Phường/Xã trong file nhưng KHÔNG tra được về 1 trong 103 phường/xã hiện hành -> phải dùng dự phòng khuVucHienTai
+                    let soHoPhuongKhacHienTai = 0;  // Số hộ tra được phường TỪ FILE nhưng KHÁC với phường đang chọn trên màn hình -> cán bộ cần biết để kiểm tra lại
                     for (let i = 0; i < rows.length; i++) {
                         let r = rows[i];
                         if (!r || !r[mapCol.hoTen]) continue;
@@ -3577,10 +3710,22 @@
 
                         let key = hsct !== '' ? hsct : chuHoFinal.replace(/\s+/g, ''); 
                         if (!mapHoMoi[key]) {
+                            // SỬA LỖI GỐC: trước đây LUÔN gán "phuong: khuVucHienTai" (phường đang chọn trên
+                            // màn hình lúc bấm nhập) — HOÀN TOÀN BỎ QUA cột "Phường/Xã" thật đọc được từ file
+                            // Excel (biến phuongXaGoc), kể cả khi file có ghi rõ đúng phường/xã của từng hộ.
+                            // Đây là nguyên nhân khiến dữ liệu bị gắn nhầm hàng loạt vào "Phường Tân An" khi
+                            // khuVucHienTai của phiên đăng nhập bị sai (VD do lỗi khớp tên phường cũ/mới ở
+                            // khâu phân quyền). Giờ ƯU TIÊN dùng đúng phường đọc được từ file (tự động quy đổi
+                            // tên phường CŨ trước sáp nhập về tên phường MỚI qua resolvePhuongChuan), CHỈ dùng
+                            // khuVucHienTai làm phương án dự phòng khi file không ghi phường/xã hoặc không tra
+                            // được — đồng thời NHỚ LẠI trường hợp phải dùng dự phòng để cảnh báo rõ sau khi nhập.
+                            const phuongTuFile = resolvePhuongChuan(phuongXaGoc);
+                            if (phuongXaGoc && !phuongTuFile) soHoPhuongKhongTraDuoc++;
+                            else if (phuongTuFile && phuongTuFile !== khuVucHienTai) soHoPhuongKhacHienTai++;
                             mapHoMoi[key] = { 
-                                hsct: hsct || 'HS-' + Math.floor(Math.random()*10000), 
+                                hsct: hsct || ('HS-' + bamOnDinh(khuVucHienTai + '|' + chuHoFinal + '|' + diaChiGoc)), 
                                 diaChi: chuanHoaDiaChiVaKhuVuc(diaChiGoc, phuongXaGoc, khuVucTuTenFile), 
-                                phuong: khuVucHienTai, // Gắn theo phường đang chọn trên bản đồ lúc nhập -> tách biệt dữ liệu khi dùng chung phần mềm cho nhiều phường
+                                phuong: phuongTuFile || khuVucHienTai, // Ưu tiên phường ĐỌC ĐƯỢC TỪ FILE, không còn ép cứng theo màn hình
                                 chuHo: chuHoFinal, 
                                 dienNghiepVu: dienNV,
                                 diaChiThuongTruGoc: (mapCol.noiThuongTruGoc !== -1 && r[mapCol.noiThuongTruGoc]) ? String(r[mapCol.noiThuongTruGoc]).trim() : '', // Nơi đăng ký thường trú GỐC (thường ở nơi khác) — quan trọng với hồ sơ Tạm trú/Lưu trú
@@ -3671,6 +3816,22 @@
                     let danhSachMoi = Object.values(mapHoMoi);
                     if (danhSachMoi.length === 0) return alert("Không tìm thấy dữ liệu hợp lệ trong file Excel!");
 
+                    // NHẮC LẦN 2: sau khi đã đọc xong file, đối chiếu KHU VỰC suy ra từ ĐỊA CHỈ THẬT trong Excel
+                    // (chính xác hơn nhắc lần 1 vì lúc đó chưa đọc được nội dung file) với khu vực được phân
+                    // công cho tài khoản (nếu có giới hạn). Nếu phát hiện địa chỉ thuộc khu vực KHÁC, cảnh báo
+                    // rõ để cán bộ tự kiểm tra trước khi ghi — đây chính là nguồn phổ biến nhất gây trùng lặp
+                    // khi 2 khu vực cùng nhập chồng lên nhau do đọc nhầm địa chỉ.
+                    if (dsKhuVucDuocGiao) {
+                        const khuVucLaTrongFile = [...new Set(danhSachMoi.map(h => layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1'))];
+                        const khuVucLa = khuVucLaTrongFile.filter(k => !dsKhuVucDuocGiao.includes(k));
+                        if (khuVucLa.length > 0) {
+                            const tiepTuc = confirm(
+                                `⚠️ CẢNH BÁO KHU VỰC KHÔNG KHỚP\n\nFile "${file.name}" chứa địa chỉ thuộc khu vực: ${khuVucLa.join(', ')}\n— trong khi tài khoản này chỉ được phân công: ${dsKhuVucDuocGiao.join(', ')}.\n\nRất có thể đây là dữ liệu của khu vực KHÁC (đã/sẽ được cán bộ phụ trách khu vực đó tự nhập), nhập chồng lên sẽ gây TRÙNG LẶP.\n\nBấm OK nếu chắc chắn muốn nhập (VD: được nhờ nhập hộ). Bấm Hủy để dừng lại và kiểm tra.`
+                            );
+                            if (!tiepTuc) { event.target.value = ""; return; }
+                        }
+                    }
+
                     let ketQuaLuu = { soHoCapNhat: 0, soHoTaoMoi: danhSachMoi.length };
                     if (CHE_DO_FIREBASE) {
                         ketQuaLuu = await luuDanhSachMoiLenFirestore(danhSachMoi); // onSnapshot sẽ tự cập nhật giao diện
@@ -3708,10 +3869,24 @@
                     let ghiChuKV = khuVucTuTenFile
                         ? `\n📍 Đã tự nhận diện "${khuVucTuTenFile}" từ tên file, áp dụng cho các hộ chưa ghi rõ khu vực trong địa chỉ.`
                         : `\nℹ️ Không nhận diện được khu vực từ tên file (VD nên đặt tên: "Thuong_tru_khu_vuc_7_Tan_An.xlsx") — các hộ chưa ghi khu vực sẽ mặc định "Khu Vực 1", anh/chị nên kiểm tra lại.`;
+                    let ghiChuPhuong = '';
+                    if (soHoPhuongKhacHienTai > 0) ghiChuPhuong += `\n📍 Có ${soHoPhuongKhacHienTai} hộ được tự động gắn ĐÚNG theo phường ghi trong file (khác với "${khuVucHienTai}" đang chọn trên màn hình) — hãy chuyển bản đồ sang đúng phường đó để kiểm tra lại nếu cần.`;
+                    if (soHoPhuongKhongTraDuoc > 0) ghiChuPhuong += `\n⚠️ Có ${soHoPhuongKhongTraDuoc} hộ ghi Phường/Xã trong file nhưng KHÔNG khớp được với danh mục 103 phường/xã hiện hành — các hộ này đã tạm gắn vào "${khuVucHienTai}" (đang chọn trên màn hình). Anh/chị nên kiểm tra lại đúng tên phường/xã trong file (có thể do gõ tắt/sai chính tả).`;
                     let ghiChuCCCD = (mapCol.cccd !== -1 && mapCol.cccd !== undefined)
                         ? `\n⚠️ LƯU Ý BẢO MẬT: File này có chứa cột số CCCD/định danh. Để hạn chế rủi ro số CCCD của nhiều công dân bị phát tán qua file Excel (email, USB, máy dùng chung), khuyến nghị: xóa cột CCCD khỏi file gốc cho các lần nhập sau, và bổ sung CCCD trực tiếp cho từng người ngay trong phần mềm (mục "Chi tiết" của từng hộ).`
                         : `\nℹ️ File không có cột CCCD — đúng khuyến nghị bảo mật. Anh/chị có thể bổ sung CCCD sau cho từng người trực tiếp trong phần mềm khi cần.`;
-                    alert(`✅ Đã xử lý ${danhSachMoi.length} hộ trong file — ${ketQuaLuu.soHoTaoMoi} hộ MỚI, ${ketQuaLuu.soHoCapNhat} hộ ĐÃ CÓ SẴN được cập nhật lại đúng diện cư trú/thông tin mới nhất (không tạo trùng lặp).${ghiChuKV}${ghiChuCCCD}`);
+                    // CHẨN ĐOÁN DÒ CỘT: liệt kê rõ những cột QUAN TRỌNG không dò được tiêu đề trong file — để
+                    // anh/chị phát hiện ngay lập tức nếu phần mềm đọc nhầm/đọc thiếu cột (nguyên nhân phổ biến
+                    // gây trống CCCD, sai Chủ hộ/Quan hệ hàng loạt), thay vì phải tự dò từng dòng dữ liệu.
+                    const canhBaoCotThieu = [];
+                    if (mapCol.cccd === -1) canhBaoCotThieu.push('Số Định Danh/CCCD');
+                    if (mapCol.chuHo === -1) canhBaoCotThieu.push('Chủ hộ (sẽ tự suy ra từ cột Quan hệ)');
+                    if (mapCol.quanHe === -1) canhBaoCotThieu.push('Quan hệ với chủ hộ (mặc định "Thành viên" cho mọi người)');
+                    if (mapCol.phuongXa === -1) canhBaoCotThieu.push('Phường/Xã (sẽ dùng "' + khuVucHienTai + '" đang chọn trên màn hình)');
+                    const ghiChuChanDoan = canhBaoCotThieu.length > 0
+                        ? `\n\n🔎 CHẨN ĐOÁN CỘT: Không dò được tiêu đề của các cột sau trong file — ${canhBaoCotThieu.join('; ')}. Nếu file CÓ các cột này nhưng phần mềm không nhận ra, hãy kiểm tra lại đúng chính tả tiêu đề dòng đầu tiên của file.`
+                        : `\n\n🔎 CHẨN ĐOÁN CỘT: Đã dò được đầy đủ các cột quan trọng (HSCT, Chủ hộ, Quan hệ, CCCD, Phường/Xã).`;
+                    alert(`✅ Đã xử lý ${danhSachMoi.length} hộ trong file — ${ketQuaLuu.soHoTaoMoi} hộ MỚI, ${ketQuaLuu.soHoCapNhat} hộ ĐÃ CÓ SẴN được cập nhật lại đúng diện cư trú/thông tin mới nhất (không tạo trùng lặp).${ghiChuKV}${ghiChuPhuong}${ghiChuCCCD}${ghiChuChanDoan}`);
                 } catch (err) {
                     if (err.code === 'permission-denied' || /permission/i.test(err.message || '')) {
                         alert("⛔ KHÔNG THỂ NHẬP: Tài khoản này chưa được Admin cấp quyền cho " + khuVucHienTai + ".\n\nĐây KHÔNG phải lỗi hỏng file — đây là tính năng bảo mật đang hoạt động đúng: hệ thống chặn ghi dữ liệu khi tài khoản chưa được phân quyền. Vui lòng liên hệ Admin để được cấp quyền trước khi nhập.");
@@ -3727,7 +3902,7 @@
         function phanTichDuLieuPhanCap() {
             let setKhuVuc = new Set();
             layDuLieuThuocPhuongHienTai().forEach(ho => {
-                let nhan = layNhanKhuVucTuDiaChi(ho.diaChi);
+                let nhan = layNhanKhuVucTuDiaChi(ho.diaChi, ho.phuong);
                 setKhuVuc.add(nhan || "Khu Vực 1");
             });
             // KHÔNG tự thêm "Khu Vực 1" giả khi chưa có dữ liệu nào — trước đây làm vậy khiến CSKV
@@ -3759,7 +3934,7 @@
                 ? currentUser.khuVucPhuTrach.map(k => k.toLowerCase()) : null;
 
             const filtered = layDuLieuThuocPhuongHienTai().filter(ho => {
-                let nhanKV = (layNhanKhuVucTuDiaChi(ho.diaChi) || "Khu Vực 1").toLowerCase();
+                let nhanKV = (layNhanKhuVucTuDiaChi(ho.diaChi, ho.phuong) || "Khu Vực 1").toLowerCase();
                 let matchPhamVi = !phamViKV || phamViKV.includes(nhanKV);
                 let matchKv = !kv || nhanKV === kv;
                 let dien = ho.dienNghiepVu || "Thường trú";
@@ -3813,7 +3988,7 @@
                 ? currentUser.khuVucPhuTrach.map(k => k.toLowerCase()) : null;
             const dsPhuongNay = layDuLieuThuocPhuongHienTai().filter(h => {
                 if (!phamViKV) return true;
-                const nhanKV = (layNhanKhuVucTuDiaChi(h.diaChi) || "Khu Vực 1").toLowerCase();
+                const nhanKV = (layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || "Khu Vực 1").toLowerCase();
                 return phamViKV.includes(nhanKV);
             });
 
@@ -3828,7 +4003,7 @@
                 chiTietTheoDien[nhomDien].ho++;
                 chiTietTheoDien[nhomDien].nk += soNguoiHo;
 
-                let kvKey = layNhanKhuVucTuDiaChi(h.diaChi) || "Khu Vực 1";
+                let kvKey = layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || "Khu Vực 1";
                 theoKhuVuc[kvKey] = (theoKhuVuc[kvKey] || 0) + 1;
 
                 (h.thanhVien || []).forEach(tv => {
@@ -4033,7 +4208,10 @@
 
                 let cccdChuHo = "";
                 if (ho.thanhVien && ho.thanhVien.length > 0) {
-                    let tvChuHo = ho.thanhVien.find(tv => tv.quanHe.toLowerCase().includes("chủ hộ")) || ho.thanhVien[0];
+                    // SỬA LỖI: thiếu bảo vệ khi tv.quanHe bị undefined (dữ liệu cũ/nhập tay thiếu trường này)
+                    // -> .toLowerCase() ném lỗi, dừng NGANG toàn bộ vòng lặp render -> các hộ phía SAU hộ lỗi
+                    // KHÔNG hiển thị được nữa (bảng bị "cụt", trông giống như dữ liệu bị thiếu/mất).
+                    let tvChuHo = ho.thanhVien.find(tv => (tv.quanHe || '').toLowerCase().includes("chủ hộ")) || ho.thanhVien[0];
                     cccdChuHo = tvChuHo.cccd || "";
                 }
 
@@ -4771,7 +4949,7 @@
                 selKV.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
                 return alert("❌ Lỗi tải dữ liệu phường " + tenPhuong + ": " + err.message);
             }
-            let cacKhuVuc = [...new Set(danhSachXoaDLHienTai.map(h => layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1'))].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
+            let cacKhuVuc = [...new Set(danhSachXoaDLHienTai.map(h => layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1'))].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
             // CSKV: CHỈ hiện đúng khu vực họ được giao — không thấy, không chọn được khu vực khác hay "toàn
             // bộ phường". Giới hạn kép: ở đây (giao diện) VÀ ở Security Rules (máy chủ) — dù có sửa code phía
             // trình duyệt cũng không xóa vượt phạm vi được, vì máy chủ sẽ chặn lại.
@@ -4781,7 +4959,7 @@
                 cacKhuVuc = cacKhuVuc.filter(k => kvDuocGiao.includes(k.toLowerCase()));
             }
             selKV.innerHTML = '<option value="">-- Chọn khu vực cụ thể để xóa --</option>' +
-                cacKhuVuc.map(k => `<option value="${escHtml(k)}">${escHtml(k)} (${danhSachXoaDLHienTai.filter(h => (layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1') === k).length} hộ)</option>`).join('') +
+                cacKhuVuc.map(k => `<option value="${escHtml(k)}">${escHtml(k)} (${danhSachXoaDLHienTai.filter(h => (layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1') === k).length} hộ)</option>`).join('') +
                 (laCSKV ? '' : `<option value="__TOAN_PHUONG__">⚠️ TOÀN BỘ ${escHtml(tenPhuong)} (${danhSachXoaDLHienTai.length} hộ)</option>`);
             if (laCSKV && cacKhuVuc.length === 0) {
                 selKV.innerHTML = '<option value="">Không có hộ nào trong khu vực bạn phụ trách</option>';
@@ -4805,7 +4983,7 @@
                 if (goTen !== phuongDangXoaDL) return alert("Tên phường gõ xác nhận không khớp. Vui lòng gõ chính xác: " + phuongDangXoaDL);
                 if (!confirm("XÁC NHẬN LẦN CUỐI: Xóa TOÀN BỘ " + danhSachXoaDLHienTai.length + " hộ của " + phuongDangXoaDL + "? KHÔNG THỂ hoàn tác.")) return;
             } else {
-                const soHoBiXoa = danhSachXoaDLHienTai.filter(h => (layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1') === phamVi).length;
+                const soHoBiXoa = danhSachXoaDLHienTai.filter(h => (layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1') === phamVi).length;
                 if (!confirm("Xác nhận xóa " + soHoBiXoa + " hộ thuộc " + phamVi + " (" + phuongDangXoaDL + ")? KHÔNG THỂ hoàn tác.")) return;
             }
 
@@ -4817,7 +4995,7 @@
                         const dungPhuong = (ho.phuong || "Phường Tân An") === phuongDangXoaDL;
                         if (!dungPhuong) return true; // Giữ nguyên hộ của phường khác
                         if (laToanPhuong) return false; // Xóa hết hộ của phường này
-                        return (layNhanKhuVucTuDiaChi(ho.diaChi) || 'Khu Vực 1') !== phamVi; // Chỉ xóa đúng khu vực chọn
+                        return (layNhanKhuVucTuDiaChi(ho.diaChi, ho.phuong) || 'Khu Vực 1') !== phamVi; // Chỉ xóa đúng khu vực chọn
                     });
                     localStorage.setItem("danhSachHoGiaDinhCacheGIS_V5", JSON.stringify(danhSachHoGiaDinh));
                     capNhatGiaoDienSauKhiTai();
@@ -5202,7 +5380,7 @@
             let soThuongTru = 0, soTamTru = 0, soKhau = 0, soNam = 0, soNu = 0, soTreEm = 0, soLaoDong = 0, soCaoTuoi = 0;
             const namNay = new Date().getFullYear();
             dsHo.forEach(ho => {
-                const k = layNhanKhuVucTuDiaChi(ho.diaChi) || 'Khu Vực 1';
+                const k = layNhanKhuVucTuDiaChi(ho.diaChi, ho.phuong) || 'Khu Vực 1';
                 theoKhuVuc[k] = (theoKhuVuc[k] || 0) + 1;
                 if ((ho.dienNghiepVu || 'Thường trú') === 'Thường trú') soThuongTru++;
                 else if (ho.dienNghiepVu === 'Tạm trú' || ho.dienNghiepVu === 'Lưu trú') soTamTru++;
@@ -5280,7 +5458,7 @@
                 ? currentUser.khuVucPhuTrach.map(k => k.toLowerCase()) : null;
             const dsPhuongNay = layDuLieuThuocPhuongHienTai().filter(h => {
                 if (!phamViKVDashboard) return true;
-                const nhanKV = (layNhanKhuVucTuDiaChi(h.diaChi) || "Khu Vực 1").toLowerCase();
+                const nhanKV = (layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || "Khu Vực 1").toLowerCase();
                 return phamViKVDashboard.includes(nhanKV);
             });
             const nhanPhamVi = phamViKVDashboard ? (' — ' + currentUser.khuVucPhuTrach.join(', ')) : ' (tất cả khu vực)';
@@ -5327,7 +5505,7 @@
             } catch (e) { /* bỏ qua nếu chưa có quyền/collection trống */ }
 
             let theoKhuVuc = {};
-            dsPhuongNay.forEach(h => { const k = layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1'; theoKhuVuc[k] = (theoKhuVuc[k] || 0) + 1; });
+            dsPhuongNay.forEach(h => { const k = layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1'; theoKhuVuc[k] = (theoKhuVuc[k] || 0) + 1; });
 
             // MINH BẠCH ĐỘ PHỦ DỮ LIỆU: trước đây Dashboard ghi "(tất cả khu vực)" dễ gây hiểu nhầm là đã có
             // dữ liệu đầy đủ toàn phường, trong khi thực tế có thể MỚI CHỈ 1/12 khu vực đã nhập liệu. Đây là
@@ -5704,7 +5882,7 @@
             // Sheet 1: Theo Khu vực / Tổ
             let theoKV = {};
             dsBaoCao.forEach(h => {
-                let kvKey = layNhanKhuVucTuDiaChi(h.diaChi) || "Khu Vực 1";
+                let kvKey = layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || "Khu Vực 1";
                 if (!theoKV[kvKey]) theoKV[kvKey] = { ho: 0, khau: 0, thuongTru: 0, tamTru: 0, khac: 0 };
                 theoKV[kvKey].ho++;
                 theoKV[kvKey].khau += (h.thanhVien ? h.thanhVien.length : 0);
@@ -5803,7 +5981,7 @@
                 ? currentUser.khuVucPhuTrach.map(k => k.toLowerCase()) : null;
             return layDuLieuThuocPhuongHienTai().filter(h => {
                 if (!phamViKV) return true;
-                const nhanKV = (layNhanKhuVucTuDiaChi(h.diaChi) || "Khu Vực 1").toLowerCase();
+                const nhanKV = (layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || "Khu Vực 1").toLowerCase();
                 return phamViKV.includes(nhanKV);
             });
         }
@@ -5866,7 +6044,7 @@
             const dsPhamViToi = layDuLieuXuatBaoCaoDayDu();
             const theoKV = {};
             dsPhamViToi.forEach(h => {
-                const kv = layNhanKhuVucTuDiaChi(h.diaChi) || 'Khu Vực 1';
+                const kv = layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1';
                 if (!theoKV[kv]) theoKV[kv] = [];
                 theoKV[kv].push(h);
             });
