@@ -166,6 +166,7 @@
                 </label>
                 <button id="btnBatThongBao" onclick="xinPhepThongBao()" class="bg-pink-700 hover:bg-pink-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔔 Bật Thông Báo</button>
                 <button id="btnXoaDL" onclick="moModalXoaDuLieu()" class="hidden bg-rose-600 hover:bg-rose-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🗑️ Xóa DL</button>
+                <button id="btnRaSoatLoi" onclick="moModalRaSoatLoi()" class="hidden bg-amber-700 hover:bg-amber-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔧 Rà Soát Lỗi DL</button>
                 <button id="btnBanGiao" onclick="moModalBanGiao()" class="hidden bg-teal-700 hover:bg-teal-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔄 Bàn Giao Địa Bàn</button>
                 <button onclick="moModalDoiMatKhau()" class="bg-slate-700 hover:bg-slate-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔑 Đổi Mật Khẩu</button>
                 <button onclick="dangXuat()" class="bg-red-600/80 hover:bg-red-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔒 Thoát</button>
@@ -332,7 +333,16 @@
         <div class="glass-card p-3 rounded-xl shadow flex flex-col">
             <div class="flex flex-col md:flex-row justify-between items-center mb-3 gap-2">
                 <h2 class="text-xs font-semibold text-gray-200">Danh Sách Hộ Gia Đình & Nhân Khẩu Cư Trú (Phường Tân An, TP. Cần Thơ)</h2>
-                <input type="text" id="searchInput" placeholder="Tìm tên chủ hộ, nhân khẩu, số nhà, hồ sơ, CCCD..." onkeyup="thucHienLocVaTimKiem()" class="bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-white w-full md:w-80 focus:outline-none focus:border-blue-500">
+                <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                    <select id="quickFilterKhuVuc" onchange="dongBoQuickFilterKhuVuc(this.value)" class="bg-gray-900 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-white w-full sm:w-44">
+                        <option value="">-- Tất cả Khu Vực --</option>
+                    </select>
+                    <input type="text" id="searchInput" placeholder="Tìm tên chủ hộ, nhân khẩu, số nhà, hồ sơ, CCCD..." onkeyup="thucHienLocVaTimKiem()" class="bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-white w-full md:w-80 focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+            <div id="nhanBoLocDangApDung" class="hidden mb-2 text-[11px] text-amber-300 bg-amber-950/30 border border-amber-700/40 rounded px-2 py-1 flex justify-between items-center gap-2">
+                <span id="nhanBoLocText"></span>
+                <button onclick="xoaTatCaBoLoc()" class="flex-shrink-0 bg-amber-700 hover:bg-amber-600 text-white px-2 py-0.5 rounded text-[10px] font-medium">✖ Xóa Lọc</button>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs">
@@ -836,6 +846,19 @@
                 <textarea id="banGiaoGhiChu" rows="2" placeholder="VD: Đồng chí A nghỉ hưu từ 01/09/2026, bàn giao lại cho đồng chí B" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></textarea>
             </div>
             <button onclick="thucHienBanGiao()" class="w-full bg-teal-700 hover:bg-teal-600 rounded px-3 py-2 font-bold">🔄 Xác Nhận Bàn Giao</button>
+        </div>
+    </div>
+
+    <!-- ============ RÀ SOÁT & SỬA DỮ LIỆU LỖI (HSCT bị nhầm địa chỉ, thiếu khu vực...) ============ -->
+    <div id="raSoatLoiModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50">
+        <div class="glass-card w-full max-w-3xl rounded-xl shadow-2xl p-4 space-y-3 border border-amber-800 text-xs max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-amber-400">🔧 Rà Soát & Sửa Dữ Liệu Lỗi — <span id="raSoatTenPhuong"></span></h3>
+                <button onclick="document.getElementById('raSoatLoiModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <p class="text-gray-400">Quét dữ liệu ĐÃ CÓ SẴN của phường đang chọn để phát hiện lỗi do các lần nhập TRƯỚC ĐÂY (trước khi phần mềm được sửa lỗi) — sửa code chỉ áp dụng cho lần nhập/lưu MỚI, không tự sửa dữ liệu cũ đã lưu trên máy chủ.</p>
+            <button onclick="raSoatLoiDuLieu()" class="w-full bg-amber-700 hover:bg-amber-600 rounded px-3 py-2 font-bold">🔍 Quét Dữ Liệu Ngay</button>
+            <div id="noiDungRaSoat"></div>
         </div>
     </div>
 
@@ -2344,6 +2367,11 @@
             // Theo yêu cầu: Admin xóa được mọi nơi; CSKV được tự xóa ĐÚNG khu vực mình phụ trách (giới hạn
             // chặt ở modal + Security Rules bên dưới); Chỉ huy/Cán bộ dữ liệu KHÔNG có quyền xóa.
             if (btnXoaDL) btnXoaDL.classList.toggle('hidden', !(currentUser.role === 'admin' || currentUser.role === 'can_bo'));
+            // "Rà Soát Lỗi DL" chỉ SỬA (không XÓA) — rủi ro thấp hơn hẳn nút Xóa DL, nên cho phép mọi vai trò
+            // có quyền xem/sửa dữ liệu (Admin/Chỉ huy phường/Cán bộ dữ liệu/CSKV) đều tự dùng được, tự khắc
+            // phục dữ liệu lỗi của đúng khu vực mình phụ trách mà không cần chờ Admin.
+            const btnRaSoatLoi = document.getElementById('btnRaSoatLoi');
+            if (btnRaSoatLoi) btnRaSoatLoi.classList.toggle('hidden', !['admin', 'chi_huy', 'chi_huy_tp', 'can_bo_du_lieu', 'can_bo'].includes(currentUser.role));
             // Bàn giao địa bàn = thao tác thay đổi PHÂN QUYỀN của người khác — chỉ Admin mới có quyền quản lý
             // phân quyền (giống hệt panel RBAC hiện tại cũng chỉ Admin mới sửa được), giữ nhất quán kiến trúc.
             const btnBanGiao = document.getElementById('btnBanGiao');
@@ -3679,6 +3707,15 @@
                         if (hoTenVal.toLowerCase() === 'họ và tên' || hoTenVal.toLowerCase() === 'tên' || hoTenVal === '') continue;
 
                         let hsct = (mapCol.hsct !== -1 && mapCol.hsct !== undefined) ? String(r[mapCol.hsct] || '').trim() : '';
+                        // SỬA LỖI: cột HSCT đôi khi bị đọc NHẦM thành cả câu địa chỉ (do file nguồn thiếu ô/lệch
+                        // cột ở 1 vài dòng riêng lẻ, dù các dòng khác vẫn đúng) — hậu quả là bảng danh sách hiện
+                        // hẳn địa chỉ dài vào ô "Số HSCT", trông rất phản cảm và dễ nhầm với dữ liệu thật. Phát
+                        // hiện bằng dấu hiệu: chuỗi quá dài (>25 ký tự) VÀ có từ khoá đặc trưng của địa chỉ
+                        // (đường/khu vực/kv/tổ/số nhà/phường) — nếu khớp, coi như giá trị KHÔNG HỢP LỆ, chuyển
+                        // sang dùng mã HSCT tự sinh (HS-xxxxxxxx) thay vì hiển thị nguyên câu địa chỉ sai chỗ.
+                        if (hsct.length > 25 && /(đường|khu vực|khu pho|\bkv\s*\d|\btổ\s*\d|phường|xã\b)/i.test(boDauTiengViet(hsct))) {
+                            hsct = '';
+                        }
                         let quanHe = (mapCol.quanHe !== -1 && mapCol.quanHe !== undefined) ? String(r[mapCol.quanHe] || '').trim() : 'Thành viên';
                         let diaChiGoc = (mapCol.diaChi !== -1 && mapCol.diaChi !== undefined) ? String(r[mapCol.diaChi] || '').trim() : '';
                         let phuongXaGoc = (mapCol.phuongXa !== -1 && mapCol.phuongXa !== undefined) ? String(r[mapCol.phuongXa] || '').trim() : '';
@@ -3899,6 +3936,41 @@
             event.target.value = null;
         }
 
+        // Đồng bộ bộ lọc khu vực NHANH (đặt ngay trên bảng danh sách hộ, dễ thấy hơn ô lọc trong sidebar
+        // "🔍 Bộ Lọc Nâng Cao") với ô lọc khu vực gốc trong sidebar — 2 ô luôn cùng giá trị, đổi ô nào cũng
+        // áp dụng lọc ngay lập tức. Thêm hàng chữ nhắc rõ đang lọc gì, để không ai nhầm "toàn bộ" với "đang lọc".
+        function dongBoQuickFilterKhuVuc(gia) {
+            const sel = document.getElementById('filterKhuVuc');
+            if (sel) sel.value = gia;
+            thucHienLocVaTimKiem();
+        }
+
+        function capNhatNhanBoLocDangApDung() {
+            const el = document.getElementById('nhanBoLocDangApDung');
+            const elText = document.getElementById('nhanBoLocText');
+            if (!el || !elText) return;
+            const kv = document.getElementById('filterKhuVuc') ? document.getElementById('filterKhuVuc').value : '';
+            const nv = document.getElementById('filterDienNV') ? document.getElementById('filterDienNV').value : '';
+            const kw = document.getElementById('searchInput') ? document.getElementById('searchInput').value.trim() : '';
+            const phanLoc = [];
+            if (kv) phanLoc.push('Khu vực: ' + kv);
+            if (nv) phanLoc.push('Diện: ' + nv);
+            if (kw) phanLoc.push('Từ khóa: "' + kw + '"');
+            if (phanLoc.length > 0) {
+                el.classList.remove('hidden');
+                elText.innerText = '🔎 Đang lọc theo: ' + phanLoc.join(' | ');
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        function xoaTatCaBoLoc() {
+            ['filterKhuVuc', 'quickFilterKhuVuc', 'filterDienNV', 'filterGioiTinh', 'filterNhomTuoi'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            ['chkThieuCCCD', 'chkCoBienDong', 'chkNguoiNuocNgoai', 'chkGpsChuaXacNhan'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
+            const search = document.getElementById('searchInput'); if (search) search.value = '';
+            thucHienLocVaTimKiem();
+        }
+
         function phanTichDuLieuPhanCap() {
             let setKhuVuc = new Set();
             layDuLieuThuocPhuongHienTai().forEach(ho => {
@@ -3908,16 +3980,24 @@
             // KHÔNG tự thêm "Khu Vực 1" giả khi chưa có dữ liệu nào — trước đây làm vậy khiến CSKV
             // tưởng nhầm là đã có dữ liệu ở "Khu Vực 1" dù thực tế trống trơn, gây khó hiểu.
             const selKv = document.getElementById('filterKhuVuc');
+            const selKvNhanh = document.getElementById('quickFilterKhuVuc');
             if (setKhuVuc.size === 0) {
                 selKv.innerHTML = '<option value="">-- Chưa có dữ liệu nào (hãy Nhập Excel trước) --</option>';
+                if (selKvNhanh) selKvNhanh.innerHTML = selKv.innerHTML;
                 return;
             }
-            selKv.innerHTML = '<option value="">-- Tất cả Khu Vực --</option>';
-            Array.from(setKhuVuc).sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }))
-                .forEach(kv => selKv.innerHTML += `<option value="${kv}">${kv}</option>`);
+            const dsOption = '<option value="">-- Tất cả Khu Vực --</option>' + Array.from(setKhuVuc).sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }))
+                .map(kv => `<option value="${kv}">${kv}</option>`).join('');
+            selKv.innerHTML = dsOption;
+            if (selKvNhanh) { const giaDangChon = selKvNhanh.value; selKvNhanh.innerHTML = dsOption; selKvNhanh.value = giaDangChon; }
         }
 
         function thucHienLocVaTimKiem() {
+            capNhatNhanBoLocDangApDung();
+            // Đồng bộ ngược: nếu người dùng đổi ô lọc trong SIDEBAR (không phải ô lọc nhanh trên bảng), vẫn
+            // cập nhật ô lọc nhanh để 2 nơi luôn khớp nhau, tránh gây hiểu lầm đang lọc khác nhau ở 2 chỗ.
+            const selKv = document.getElementById('filterKhuVuc'), selKvNhanh = document.getElementById('quickFilterKhuVuc');
+            if (selKv && selKvNhanh && selKvNhanh.value !== selKv.value) selKvNhanh.value = selKv.value;
             let kv = document.getElementById('filterKhuVuc').value.toLowerCase();
             let nv = document.getElementById('filterDienNV').value;
             let kw = document.getElementById('searchInput').value.toLowerCase();
@@ -6234,6 +6314,89 @@
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Phan_Tich");
             XLSX.writeFile(wb, "Phan_Tich_Du_Lieu_" + String(ten).replace(/\s/g, '_') + ".xlsx");
+        }
+
+        // ================== RÀ SOÁT & SỬA DỮ LIỆU LỖI (dữ liệu CŨ, lưu từ trước khi phần mềm được vá lỗi) ==================
+        function moModalRaSoatLoi() {
+            document.getElementById('raSoatTenPhuong').innerText = khuVucHienTai;
+            document.getElementById('noiDungRaSoat').innerHTML = '';
+            document.getElementById('raSoatLoiModal').classList.remove('hidden');
+        }
+
+        function raSoatLoiDuLieu() {
+            const el = document.getElementById('noiDungRaSoat');
+            el.innerHTML = '<p class="text-gray-500 p-3">⏳ Đang quét...</p>';
+            const ds = layDuLieuXuatBaoCaoDayDu(); // đúng phạm vi được phép xem/sửa (khu vực phụ trách nếu là CSKV)
+
+            // Lỗi 1: HSCT bị nhầm thành cả câu địa chỉ (dấu hiệu: quá dài + có từ khoá địa chỉ)
+            const loiHsct = ds.filter(ho => ho.hsct && ho.hsct.length > 25 && /(đường|khu vực|khu pho|\bkv\s*\d|\btổ\s*\d|phường|xã\b)/i.test(boDauTiengViet(ho.hsct)));
+
+            // Lỗi 2: Chủ hộ bị lưu thành 1 từ chỉ QUAN HỆ (VD "Con", "Cháu"...) thay vì tên người thật
+            const loiChuHo = ds.filter(ho => laTuChiQuanHe(ho.chuHo));
+
+            // Lỗi 3: Hộ có thành viên hoàn toàn không có CCCD nào (cần bổ sung dần)
+            const loiThieuCCCDToanBo = ds.filter(ho => ho.thanhVien && ho.thanhVien.length > 0 && ho.thanhVien.every(tv => !tv.cccd));
+
+            if (loiHsct.length === 0 && loiChuHo.length === 0 && loiThieuCCCDToanBo.length === 0) {
+                el.innerHTML = '<p class="text-emerald-400 p-3">✅ Không phát hiện lỗi nào trong phạm vi dữ liệu của "' + escHtml(khuVucHienTai) + '" (' + ds.length + ' hộ đã quét).</p>';
+                return;
+            }
+
+            let html = `<p class="text-gray-400 mb-2">Đã quét ${ds.length} hộ trong phạm vi được phép sửa. Phát hiện:</p>`;
+
+            if (loiHsct.length > 0) {
+                html += `<div class="bg-rose-950/30 border border-rose-800/50 rounded-lg p-2.5 mb-2">
+                    <p class="text-rose-300 font-semibold mb-1">🔴 ${loiHsct.length} hộ có Số HSCT bị lưu nhầm thành địa chỉ</p>
+                    <div class="max-h-40 overflow-y-auto text-[11px] space-y-1 mb-2">
+                        ${loiHsct.map(ho => `<div class="text-gray-300">• <span class="text-rose-400 font-mono">${escHtml(ho.hsct.slice(0, 60))}${ho.hsct.length > 60 ? '…' : ''}</span> — Chủ hộ: ${escHtml(ho.chuHo || '?')}</div>`).join('')}
+                    </div>
+                    <button onclick='suaLoiHsctHangLoat(${JSON.stringify(loiHsct.map(h => h.id))})' class="bg-rose-700 hover:bg-rose-600 px-2.5 py-1.5 rounded font-medium">🔧 Tự Sửa Ngay (tạo lại mã HSCT chuẩn cho ${loiHsct.length} hộ này)</button>
+                </div>`;
+            }
+            if (loiChuHo.length > 0) {
+                html += `<div class="bg-amber-950/30 border border-amber-700/50 rounded-lg p-2.5 mb-2">
+                    <p class="text-amber-300 font-semibold mb-1">🟡 ${loiChuHo.length} hộ có tên Chủ hộ đang là từ chỉ quan hệ (VD "Con", "Cháu"...), không phải tên người thật</p>
+                    <div class="max-h-40 overflow-y-auto text-[11px] space-y-1">
+                        ${loiChuHo.map(ho => `<div class="text-gray-300">• HSCT ${escHtml(ho.hsct)} — hiện ghi "Chủ hộ: <span class="text-amber-400">${escHtml(ho.chuHo)}</span>" — <button onclick="moModalChiTietHoTheoId('${ho.id}')" class="text-blue-400 hover:text-blue-300 underline">Sửa tay ▸</button></div>`).join('')}
+                    </div>
+                    <p class="text-gray-500 mt-1">Cần chọn tay đúng người vì phần mềm không tự đoán được ai là chủ hộ thật trong trường hợp này — bấm "Sửa tay" để mở đúng hồ sơ.</p>
+                </div>`;
+            }
+            if (loiThieuCCCDToanBo.length > 0) {
+                html += `<div class="bg-cyan-950/30 border border-cyan-700/50 rounded-lg p-2.5">
+                    <p class="text-cyan-300 font-semibold">🔵 ${loiThieuCCCDToanBo.length} hộ có TẤT CẢ thành viên đều chưa có số CCCD/định danh</p>
+                    <p class="text-gray-500">Không phải lỗi phần mềm — chỉ là thiếu dữ liệu (thường do file gốc không có cột CCCD). Cần bổ sung dần khi có điều kiện, không thể tự sửa hàng loạt.</p>
+                </div>`;
+            }
+            el.innerHTML = html;
+        }
+
+        async function suaLoiHsctHangLoat(danhSachId) {
+            if (!confirm(`Tạo lại mã HSCT chuẩn (dạng HS-xxxxxxxx) cho ${danhSachId.length} hộ đã chọn?\n\nLưu ý: mã HSCT MỚI sẽ không giống mã HSCT gốc trong sổ giấy (vì mã gốc đã bị đọc sai/mất) — anh/chị nên đối chiếu lại sổ giấy để cập nhật đúng Số HSCT thật cho từng hộ sau khi sửa, qua mục "Chi tiết" → sửa trực tiếp ô Số HSCT.`)) return;
+            let daSua = 0;
+            for (const id of danhSachId) {
+                const ho = danhSachHoGiaDinh.find(h => h.id === id);
+                if (!ho) continue;
+                const hsctMoi = 'HS-' + bamOnDinh((ho.phuong || khuVucHienTai) + '|' + (ho.chuHo || '') + '|' + (ho.diaChi || '') + '|' + Date.now());
+                try {
+                    if (CHE_DO_FIREBASE) await dbFirestore.collection('households').doc(id).update({ hsct: hsctMoi });
+                    else { ho.hsct = hsctMoi; localStorage.setItem("danhSachHoGiaDinhCacheGIS_V5", JSON.stringify(danhSachHoGiaDinh)); }
+                    daSua++;
+                } catch (err) { console.warn('Lỗi sửa HSCT cho hộ ' + id + ':', err.message); }
+            }
+            ghiNhatKy('Rà soát & sửa lỗi dữ liệu', `Tạo lại HSCT cho ${daSua} hộ`);
+            alert(`✅ Đã sửa xong ${daSua}/${danhSachId.length} hộ. Nhớ đối chiếu sổ giấy để cập nhật lại đúng Số HSCT thật cho từng hộ khi có điều kiện.`);
+            raSoatLoiDuLieu();
+            if (!CHE_DO_FIREBASE) capNhatGiaoDienSauKhiTai();
+        }
+
+        // Mở đúng modal "Chi tiết hộ" theo ID (thay vì theo index như hàm xemChiTiet cũ) — tiện dùng từ các
+        // danh sách được lọc/quét riêng (VD kết quả Rà Soát Lỗi) mà không cần biết vị trí trong mảng gốc.
+        function moModalChiTietHoTheoId(id) {
+            const idx = danhSachHoGiaDinh.findIndex(h => h.id === id);
+            if (idx === -1) return alert("Không tìm thấy hộ này (có thể đã bị xóa hoặc chuyển khu vực).");
+            document.getElementById('raSoatLoiModal').classList.add('hidden');
+            xemChiTiet(idx);
         }
 
         function xuatBaoCaoExcelKV1() {
