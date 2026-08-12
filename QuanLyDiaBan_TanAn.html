@@ -192,9 +192,10 @@
         <!-- Bản đồ GIS & Thống kê -->
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-3">
             <div class="space-y-3 flex flex-col justify-between">
-                <div class="flex justify-between items-center -mb-1">
-                    <p id="nguCanhTongQuan" class="text-[11px] text-fuchsia-300 font-semibold"></p>
-                    <button id="btnXemToanTP" onclick="xemTongToanThanhPho()" class="hidden text-[10px] bg-fuchsia-800 hover:bg-fuchsia-700 px-2 py-0.5 rounded font-medium">🏙️ Xem Toàn TP</button>
+                <div class="flex justify-between items-center -mb-1 gap-1.5">
+                    <p id="nguCanhTongQuan" class="text-[11px] text-fuchsia-300 font-semibold flex-shrink-0"></p>
+                    <select id="sidebarKhuVucFilter" onchange="capNhatGiaoDienSauKhiTai()" class="hidden bg-gray-900 border border-gray-700 rounded px-1.5 py-0.5 text-[10px] text-white flex-1 min-w-0"></select>
+                    <button id="btnXemToanTP" onclick="xemTongToanThanhPho()" class="hidden text-[10px] bg-fuchsia-800 hover:bg-fuchsia-700 px-2 py-0.5 rounded font-medium flex-shrink-0">🏙️ Xem Toàn TP</button>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div class="glass-card p-3 rounded-xl shadow relative border-l-4 border-blue-500">
@@ -2847,7 +2848,13 @@
             mainMiniMapInstance.addLayer(drawnItems);
             let drawControl = new L.Control.Draw({
                 edit: { featureGroup: drawnItems },
-                draw: { polygon: { allowIntersection: false, shapeOptions: { color: '#3b82f6' } }, marker: false, circle: false, rectangle: false, polyline: false, circlemarker: false }
+                // SỬA LỖI "Thêm Ranh Giới Phụ không được": trước đây allowIntersection:false khiến Leaflet.Draw
+                // TỪ CHỐI hoàn thành bất kỳ đa giác nào có cạnh giao/chồng lấn với đa giác KHÁC đã có sẵn trên
+                // bản đồ (ranh giới CHÍNH của phường) — trong khi ranh giới PHỤ (KDC, tổ dân phố...) GẦN NHƯ
+                // LUÔN nằm chồng lên/bên trong ranh giới chính, nên việc vẽ xong luôn bị chặn ngầm, không bao
+                // giờ bắn được sự kiện CREATED để hỏi tên và lưu. Cho phép giao/chồng lấn — chỉ ảnh hưởng đến
+                // việc tự cắt 1 đa giác hình số 8, không liên quan đến việc chồng lấn với các ranh giới khác.
+                draw: { polygon: { allowIntersection: true, shapeOptions: { color: '#3b82f6' } }, marker: false, circle: false, rectangle: false, polyline: false, circlemarker: false }
             });
             mainMiniMapInstance.addControl(drawControl);
 
@@ -3062,7 +3069,7 @@
                 danhBaCongAnDaTai = snap.docs
                     .map(d => Object.assign({ id: d.id }, d.data()))
                     .filter(d => d.toaDoCA); // Chỉ liệt kê phường ĐÃ có toạ độ xác nhận, tránh danh bạ có mục trống vô nghĩa
-                danhBaCongAnDaTai.sort((a, b) => a.phuong.localeCompare(b.phuong, 'vi'));
+                danhBaCongAnDaTai.sort((a, b) => (a.phuong || '').localeCompare(b.phuong || '', 'vi'));
 
                 // Đổ vào ô chọn "xuất phát từ" để hỗ trợ chỉ đường GIỮA 2 phường bất kỳ (VD: từ CA Tân An đến CA Cái Răng)
                 const selXP = document.getElementById('diemXuatPhatDanhBa');
@@ -4103,7 +4110,7 @@
                 let matchKv = !kv || nhanKV === kv;
                 let dien = ho.dienNghiepVu || "Thường trú";
                 let matchNv = !nv || dien.includes(nv);
-                let matchKw = !kw || ho.chuHo.toLowerCase().includes(kw) || ho.hsct.toLowerCase().includes(kw) || (ho.diaChi && ho.diaChi.toLowerCase().includes(kw)) || (ho.thanhVien && ho.thanhVien.some(tv => (tv.cccd && tv.cccd.toLowerCase().includes(kw)) || (tv.hoTen && tv.hoTen.toLowerCase().includes(kw))));
+                let matchKw = !kw || (ho.chuHo && ho.chuHo.toLowerCase().includes(kw)) || (ho.hsct && ho.hsct.toLowerCase().includes(kw)) || (ho.diaChi && ho.diaChi.toLowerCase().includes(kw)) || (ho.thanhVien && ho.thanhVien.some(tv => (tv.cccd && tv.cccd.toLowerCase().includes(kw)) || (tv.hoTen && tv.hoTen.toLowerCase().includes(kw))));
                 let matchThieuCCCD = !chiThieuCCCD || (ho.thanhVien && ho.thanhVien.some(tv => !tv.cccd || !tv.cccd.trim()));
                 let matchBienDong = !chiCoBienDong || (ho.thanhVien && ho.thanhVien.some(tv => tv.trangThaiBienDong && tv.trangThaiBienDong !== 'Đang cư trú'));
                 let matchNuocNgoai = !chiNguoiNuocNgoai || (ho.thanhVien && ho.thanhVien.some(tv => tv.quocTich && !boDauTiengViet(tv.quocTich).includes('viet nam')));
@@ -4175,11 +4182,38 @@
             // logic đã dùng ở bảng danh sách hộ) NGAY TỪ ĐẦU, để MỌI con số/biểu đồ bên dưới đều tự động đúng.
             const phamViKV = (currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length > 0)
                 ? currentUser.khuVucPhuTrach.map(k => k.toLowerCase()) : null;
-            const dsPhuongNay = layDuLieuThuocPhuongHienTai().filter(h => {
+            const dsPhamViDuocGiao = layDuLieuThuocPhuongHienTai().filter(h => {
                 if (!phamViKV) return true;
                 const nhanKV = (layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || "Khu Vực 1").toLowerCase();
                 return phamViKV.includes(nhanKV);
             });
+
+            // Ô lọc nhanh khu vực RIÊNG cho khối tổng quan/biểu đồ (KHÁC với ô lọc của bảng danh sách hộ bên
+            // dưới) — để Chỉ huy/Cán bộ dữ liệu/Admin (đang xem nhiều khu vực cùng lúc) có thể chọn nhanh
+            // "nhìn toàn diện" 1 khu vực cụ thể ngay tại khối tổng quan mà không cần mở Dashboard/Phân Tích.
+            // CSKV (chỉ có đúng 1 khu vực được giao) KHÔNG cần ô này — luôn ẩn vì không có gì để chọn thêm.
+            const selKvTQ = document.getElementById('sidebarKhuVucFilter');
+            if (selKvTQ) {
+                if (currentUser.role === 'can_bo') {
+                    selKvTQ.classList.add('hidden');
+                } else {
+                    const dsKVCoSan = [...new Set(dsPhamViDuocGiao.map(h => layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1'))].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
+                    if (dsKVCoSan.length > 1) {
+                        const giaTriDangChon = selKvTQ.value;
+                        selKvTQ.innerHTML = '<option value="">— Toàn bộ phạm vi được giao —</option>' + dsKVCoSan.map(k => `<option value="${escHtml(k)}" ${k === giaTriDangChon ? 'selected' : ''}>${escHtml(k)}</option>`).join('');
+                        selKvTQ.classList.remove('hidden');
+                    } else {
+                        selKvTQ.classList.add('hidden');
+                    }
+                }
+            }
+            const kvDangXemTQ = (selKvTQ && !selKvTQ.classList.contains('hidden')) ? selKvTQ.value : '';
+            // dsPhuongNay = phạm vi DÙNG ĐỂ TÍNH TOÁN các thẻ số/biểu đồ bên dưới — nếu đang chọn lọc riêng 1
+            // khu vực ở ô trên thì narrow xuống đúng khu vực đó, còn KHÔNG ảnh hưởng gì đến bảng danh sách hộ
+            // (bảng đó dùng ô lọc filterKhuVuc/quickFilterKhuVuc RIÊNG, độc lập hoàn toàn với ô lọc này).
+            const dsPhuongNay = kvDangXemTQ
+                ? dsPhamViDuocGiao.filter(h => (layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1') === kvDangXemTQ)
+                : dsPhamViDuocGiao;
 
             dsPhuongNay.forEach(h => {
                 const soNguoiHo = h.thanhVien ? h.thanhVien.length : 0;
@@ -4225,16 +4259,21 @@
                 let phamViThat;
                 if (currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length > 0) {
                     phamViThat = currentUser.khuVucPhuTrach.join(', ') + ' (khu vực được giao)';
-                } else if (currentUser.role === 'chi_huy' || currentUser.role === 'chi_huy_tp' || currentUser.role === 'admin' || currentUser.role === 'can_bo_du_lieu') {
-                    const kvDangLoc = document.getElementById('filterKhuVuc') ? document.getElementById('filterKhuVuc').value : '';
-                    phamViThat = kvDangLoc ? kvDangLoc : 'toàn bộ khu vực trong phường';
+                } else if (['chi_huy', 'chi_huy_tp', 'admin', 'can_bo_du_lieu', 'can_bo_du_lieu_tp'].includes(currentUser.role)) {
+                    // SỬA LỖI: trước đây đọc nhầm giá trị ô lọc filterKhuVuc CỦA BẢNG DANH SÁCH HỘ để mô tả
+                    // phạm vi khối tổng quan — 2 ô lọc khác nhau, dễ gây hiểu sai đang xem đúng khu vực nào.
+                    // Giờ dùng đúng ô lọc RIÊNG của khối tổng quan (kvDangXemTQ) vừa thêm ở trên.
+                    phamViThat = kvDangXemTQ ? kvDangXemTQ : 'toàn bộ khu vực trong phường';
                 } else {
                     phamViThat = 'chưa được cấp quyền';
                 }
                 elNgu.innerText = '📍 ' + khuVucHienTai + ' — ' + phamViThat;
             }
             renderChiTietTheoDien(chiTietTheoDien, dsPhuongNay.length, tongNhanKhau);
-            capNhatCanhBaoLoiDuLieuTuDong(dsPhuongNay);
+            // Luôn quét lỗi dữ liệu trên TOÀN BỘ phạm vi được giao (dsPhamViDuocGiao) — KHÔNG dùng dsPhuongNay
+            // (có thể đã bị thu hẹp theo ô lọc xem nhanh phía trên), để không bỏ sót lỗi ở các khu vực khác
+            // chỉ vì đang lọc xem riêng 1 khu vực.
+            capNhatCanhBaoLoiDuLieuTuDong(dsPhamViDuocGiao);
 
             capNhatBieuDoStat(cntTT, cntTamT, cntKhac);
             capNhatBieuDoGioiTinh(cntNam, cntNu);
