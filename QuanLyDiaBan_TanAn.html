@@ -2906,8 +2906,22 @@
                 try {
                     const doc = await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).get();
                     if (doc.exists) {
-                        if (doc.data().ranhGioiChinh) ranhGioiChinh = doc.data().ranhGioiChinh;
-                        if (doc.data().ranhGioiPhu) ranhGioiPhuMap = doc.data().ranhGioiPhu;
+                        // SỬA LỖI GỐC: Firestore KHÔNG hỗ trợ "mảng lồng mảng" (nested arrays) — mà toạ độ
+                        // GeoJSON của đa giác luôn có dạng [[[lng,lat],...]] (mảng trong mảng trong mảng), nên
+                        // MỌI lần lưu ranh giới trước đây đều báo lỗi "Nested arrays are not supported" và
+                        // KHÔNG LƯU ĐƯỢC — ai vẽ ranh giới cũng gặp, không phải lỗi riêng máy nào. Nay lưu dưới
+                        // dạng CHUỖI JSON (string field, Firestore luôn chấp nhận), nên khi đọc lại phải JSON.parse().
+                        // Vẫn hỗ trợ đọc dữ liệu CŨ dạng object thô (nếu có, từ trước khi phát hiện lỗi) để không
+                        // mất dữ liệu ai đó đã "may mắn" lưu được qua chế độ Local trước đó.
+                        const rawChinh = doc.data().ranhGioiChinh;
+                        if (rawChinh) ranhGioiChinh = (typeof rawChinh === 'string') ? JSON.parse(rawChinh) : rawChinh;
+                        const rawPhu = doc.data().ranhGioiPhu;
+                        if (rawPhu) {
+                            ranhGioiPhuMap = {};
+                            Object.keys(rawPhu).forEach(ten => {
+                                ranhGioiPhuMap[ten] = (typeof rawPhu[ten] === 'string') ? JSON.parse(rawPhu[ten]) : rawPhu[ten];
+                            });
+                        }
                     }
                 } catch (err) { console.warn("Không tải được ranh giới từ máy chủ:", err.message); }
 
@@ -2918,7 +2932,8 @@
                     if (kieuCu) {
                         try {
                             ranhGioiChinh = JSON.parse(kieuCu);
-                            await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).set({ phuong: khuVucHienTai, ranhGioiChinh }, { merge: true });
+                            // Lưu dưới dạng CHUỖI (JSON.stringify) — xem giải thích lỗi "Nested arrays" ở trên.
+                            await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).set({ phuong: khuVucHienTai, ranhGioiChinh: JSON.stringify(ranhGioiChinh) }, { merge: true });
                         } catch (e) { console.warn("Không đồng bộ được ranh giới cũ:", e.message); }
                     }
                 }
@@ -2970,7 +2985,9 @@
             const geo = drawnItems.toGeoJSON();
             try {
                 if (CHE_DO_FIREBASE) {
-                    await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).set({ phuong: khuVucHienTai, ranhGioiChinh: geo }, { merge: true });
+                    // SỬA LỖI GỐC "Nested arrays are not supported": Firestore không cho lưu trực tiếp cấu
+                    // trúc toạ độ đa giác GeoJSON (mảng lồng mảng nhiều cấp) — phải lưu dưới dạng CHUỖI JSON.
+                    await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).set({ phuong: khuVucHienTai, ranhGioiChinh: JSON.stringify(geo) }, { merge: true });
                     ghiNhatKy('Cập nhật ranh giới GIS chính', khuVucHienTai);
                 } else {
                     localStorage.setItem(khoaLuuRanhGioi(khuVucHienTai), JSON.stringify(geo));
@@ -2990,9 +3007,11 @@
 
         async function luuRanhGioiPhu(ten, geojson) {
             try {
+                // Cùng lý do như luuHinhVeThanhRanhGioiChinhThuc ở trên — lưu chuỗi JSON, không lưu object
+                // GeoJSON thô, để tránh lỗi "Nested arrays are not supported" của Firestore.
                 await dbFirestore.collection('dia_diem_dac_biet').doc(khuVucHienTai).set({
                     phuong: khuVucHienTai,
-                    ranhGioiPhu: { [ten]: geojson }
+                    ranhGioiPhu: { [ten]: JSON.stringify(geojson) }
                 }, { merge: true });
                 ghiNhatKy('Thêm ranh giới phụ', khuVucHienTai + ' — ' + ten);
                 alert("✅ Đã lưu ranh giới phụ \"" + ten + "\" — dùng chung mọi thiết bị.");
