@@ -183,6 +183,8 @@
                 <button id="btnBatThongBao" onclick="xinPhepThongBao()" class="bg-pink-700 hover:bg-pink-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔔 Bật Thông Báo</button>
                 <button id="btnXoaDL" onclick="moModalXoaDuLieu()" class="hidden bg-rose-600 hover:bg-rose-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🗑️ Xóa DL</button>
                 <button id="btnRaSoatLoi" onclick="moModalRaSoatLoi()" class="hidden bg-amber-700 hover:bg-amber-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔧 Rà Soát Lỗi DL</button>
+                <button id="btnThemHoMoi" onclick="moModalThemHoMoi()" class="hidden bg-emerald-700 hover:bg-emerald-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">➕ Thêm Hộ Mới</button>
+                <button id="btnRaSoatQuaHan" onclick="moModalRaSoatQuaHan()" class="hidden bg-amber-800 hover:bg-amber-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">⏰ Tạm Trú Quá Hạn</button>
                 <button id="btnBanGiao" onclick="moModalBanGiao()" class="hidden bg-teal-700 hover:bg-teal-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔄 Bàn Giao Địa Bàn</button>
                 <button onclick="moModalDoiMatKhau()" class="bg-slate-700 hover:bg-slate-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔑 Đổi Mật Khẩu</button>
                 <button onclick="dangXuat()" class="bg-red-600/80 hover:bg-red-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔒 Thoát</button>
@@ -506,6 +508,7 @@
                                     <th class="p-1.5 w-20">Dân Tộc</th>
                                     <th class="p-1.5 w-20">Tôn Giáo</th>
                                     <th class="p-1.5 w-28">Trạng Thái</th>
+                                    <th class="p-1.5 w-16">Thao Tác</th>
                                 </tr>
                             </thead>
                             <tbody id="modalNhanKhauList" class="divide-y divide-gray-800 text-[11px]"></tbody>
@@ -514,15 +517,84 @@
                 </div>
             </div>
 
-            <div class="p-3 bg-gray-800 flex justify-end gap-2 border-t border-gray-700 no-print">
-                <button onclick="dongModal()" class="bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded transition">Đóng</button>
-                <button onclick="window.print()" class="bg-gray-600 hover:bg-gray-500 px-4 py-1.5 rounded transition font-medium shadow">🖨️ In Hồ Sơ</button>
-                <button onclick="luuThongTinHo()" class="che-do-chi-xem-an bg-blue-600 hover:bg-blue-700 px-5 py-1.5 rounded transition font-bold shadow">Lưu Hồ Sơ</button>
+            <div class="p-3 bg-gray-800 flex justify-between gap-2 border-t border-gray-700 no-print">
+                <button onclick="moModalXoaHo()" class="che-do-chi-xem-an bg-red-900 hover:bg-red-800 px-3 py-1.5 rounded transition text-red-200 text-xs font-medium">🗑️ Xóa Toàn Bộ Hộ Này</button>
+                <div class="flex gap-2">
+                    <button onclick="dongModal()" class="bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded transition">Đóng</button>
+                    <button onclick="window.print()" class="bg-gray-600 hover:bg-gray-500 px-4 py-1.5 rounded transition font-medium shadow">🖨️ In Hồ Sơ</button>
+                    <button onclick="luuThongTinHo()" class="che-do-chi-xem-an bg-blue-600 hover:bg-blue-700 px-5 py-1.5 rounded transition font-bold shadow">Lưu Hồ Sơ</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal RBAC Phân Quyền -->
+    <!-- ============ XÓA HỘ / XÓA KHẨU — chọn đúng lý do theo Luật Cư trú 2020 ============ -->
+    <div id="xoaHoLyDoModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-[60]">
+        <div class="glass-card w-full max-w-lg rounded-xl shadow-2xl p-4 space-y-3 border border-red-800 text-xs">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-red-400" id="xoaHoTieuDe">🗑️ Xóa hộ khẩu</h3>
+                <button onclick="document.getElementById('xoaHoLyDoModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <div id="xoaHoCanhBaoPhapLy" class="bg-amber-950/40 border border-amber-700/50 rounded-lg p-2.5 text-[11px] text-amber-200"></div>
+            <div>
+                <label class="text-gray-400 block mb-1">Lý do xóa (bắt buộc chọn đúng — sẽ lưu vào nhật ký hệ thống để đối chiếu sau này):</label>
+                <select id="xoaHoLyDo" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></select>
+            </div>
+            <div>
+                <label class="text-gray-400 block mb-1">Căn cứ xác minh thực tế / ghi chú (VD: đã xác minh vắng mặt liên tục từ 03/2025, xác nhận qua tổ trưởng KDC...):</label>
+                <textarea id="xoaHoGhiChu" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></textarea>
+            </div>
+            <div>
+                <label class="text-gray-400 block mb-1">Gõ đúng chữ "XÓA" để xác nhận (thao tác không thể hoàn tác):</label>
+                <input type="text" id="xoaHoXacNhanGo" class="w-full bg-gray-900 border border-red-700 rounded px-2 py-1.5 text-white">
+            </div>
+            <button onclick="thucHienXoaTheoLyDo()" class="w-full bg-red-700 hover:bg-red-600 rounded px-3 py-2 font-bold">Xác Nhận Xóa</button>
+        </div>
+    </div>
+
+    <!-- ============ THÊM HỘ MỚI (nhập tay 1 hộ, không cần file Excel) ============ -->
+    <div id="themHoMoiModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50">
+        <div class="glass-card w-full max-w-2xl rounded-xl shadow-2xl p-4 space-y-3 border border-emerald-800 text-xs max-h-[92vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-emerald-400">➕ Thêm Hộ Mới — <span id="themHoTenPhuong"></span></h3>
+                <button onclick="document.getElementById('themHoMoiModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <p class="text-gray-400">Dùng khi đăng ký MỚI 1 hộ thường trú/tạm trú tại chỗ, không cần chuẩn bị file Excel cho 1 hộ đơn lẻ.</p>
+            <div class="grid grid-cols-2 gap-2">
+                <div><label class="text-gray-400 block mb-0.5">Diện cư trú <span class="text-rose-500">*</span></label>
+                    <select id="themHo_dienNV" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                        <option>Thường trú</option><option>Tạm trú</option><option>Lưu trú</option><option>NOHN</option>
+                    </select>
+                </div>
+                <div><label class="text-gray-400 block mb-0.5">Số HSCT (bỏ trống nếu không phải Thường trú)</label><input id="themHo_hsct" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div class="col-span-2"><label class="text-gray-400 block mb-0.5">Địa chỉ cư trú (ghi rõ khu vực, VD: "..., Khu Vực 7, Phường Tân An") <span class="text-rose-500">*</span></label><input id="themHo_diaChi" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Chủ hộ / Người đại diện <span class="text-rose-500">*</span></label><input id="themHo_chuHo" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Ngày hết hạn (nếu Tạm/Lưu trú)</label><input type="date" id="themHo_ngayHetHan" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+            </div>
+            <div class="border-t border-gray-800 pt-2">
+                <p class="text-emerald-300 font-semibold mb-1.5">Danh sách nhân khẩu trong hộ</p>
+                <div id="themHo_dsThanhVien" class="space-y-1.5"></div>
+                <button onclick="themHo_ThemDongThanhVien()" class="mt-1.5 bg-emerald-800 hover:bg-emerald-700 px-2.5 py-1 rounded text-[11px]">➕ Thêm Thành Viên</button>
+            </div>
+            <button onclick="luuHoMoiThuCong()" class="w-full bg-emerald-600 hover:bg-emerald-500 rounded px-3 py-2 font-bold mt-2">💾 Tạo Hộ Mới</button>
+        </div>
+    </div>
+
+    <!-- ============ RÀ SOÁT TẠM TRÚ / LƯU TRÚ QUÁ HẠN (không đương nhiên xóa — cần xác minh) ============ -->
+    <div id="raSoatQuaHanModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50">
+        <div class="glass-card w-full max-w-4xl rounded-xl shadow-2xl p-4 space-y-3 border border-amber-800 text-xs max-h-[92vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-amber-400">⏰ Rà Soát Tạm Trú / Lưu Trú Quá Hạn — <span id="raSoatQHTenPhuong"></span></h3>
+                <button onclick="document.getElementById('raSoatQuaHanModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <div class="bg-amber-950/40 border border-amber-700/50 rounded-lg p-2.5 text-[11px] text-amber-200">
+                ⚠️ <b>Quá hạn KHÔNG đương nhiên bị xóa đăng ký</b> (Điều 29 Luật Cư trú 2020 không có điểm nào quy định "hết hạn" là căn cứ xóa). Chỉ được xóa khi xác minh đúng 1 trong các căn cứ thật: vắng mặt liên tục ≥6 tháng không khai báo, đã chuyển đi/chấm dứt thuê-mượn-ở nhờ, đã đăng ký cư trú nơi khác, đã chết... Danh sách dưới đây chỉ để RÀ SOÁT VÀ ĐI XÁC MINH THỰC TẾ, không phải danh sách "tự động xóa".
+            </div>
+            <div id="noiDungRaSoatQuaHan"></div>
+        </div>
+    </div>
+
+
     <div id="rbacModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
         <div class="glass-card w-full max-w-lg rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
@@ -2425,6 +2497,10 @@
             // XEM toàn thành phố, KHÔNG được sửa bất kỳ dữ liệu nào, kể cả sửa lỗi HSCT.
             const btnRaSoatLoi = document.getElementById('btnRaSoatLoi');
             if (btnRaSoatLoi) btnRaSoatLoi.classList.toggle('hidden', !['admin', 'chi_huy', 'chi_huy_tp', 'can_bo_du_lieu', 'can_bo'].includes(currentUser.role));
+            const btnThemHoMoi = document.getElementById('btnThemHoMoi');
+            if (btnThemHoMoi) btnThemHoMoi.classList.toggle('hidden', !['admin', 'chi_huy', 'can_bo_du_lieu', 'can_bo'].includes(currentUser.role));
+            const btnRaSoatQuaHan = document.getElementById('btnRaSoatQuaHan');
+            if (btnRaSoatQuaHan) btnRaSoatQuaHan.classList.toggle('hidden', !['admin', 'chi_huy', 'chi_huy_tp', 'can_bo_du_lieu', 'can_bo'].includes(currentUser.role));
             // Bàn giao địa bàn = thao tác thay đổi PHÂN QUYỀN của người khác — chỉ Admin mới có quyền quản lý
             // phân quyền (giống hệt panel RBAC hiện tại cũng chỉ Admin mới sửa được), giữ nhất quán kiến trúc.
             const btnBanGiao = document.getElementById('btnBanGiao');
@@ -4588,6 +4664,9 @@
                             </select>
                             ${tv.trangThaiBienDong && tv.trangThaiBienDong !== 'Đang cư trú' ? `<button type="button" onclick="suaChiTietBienDong(${i})" class="text-[9px] text-blue-400 underline mt-0.5">Chi tiết: ${escHtml((tv.ngayBienDong || '') + ' ' + (tv.ghiChuBienDong || '')).trim() || 'Bấm để nhập'}</button>` : ''}
                         </td>
+                        <td class="p-1.5 text-center">
+                            <button type="button" onclick="moModalXoaKhau(${i})" title="Xóa khẩu này khỏi hộ (đã chết/chuyển đi hẳn...)" class="che-do-chi-xem-an text-red-400 hover:text-red-300">🗑️</button>
+                        </td>
                     </tr>`;
                 });
             }
@@ -4813,6 +4892,215 @@
             }
             document.getElementById('lichKiemTraModal').classList.remove('hidden');
         }
+
+        // ================== XÓA KHẨU / XÓA HỘ — đúng căn cứ Luật Cư trú 2020 ==================
+        // Trạng thái tạm giữ khi đang mở modal chọn lý do xóa (dùng chung cho cả "xóa 1 khẩu" và "xóa cả hộ")
+        let xoaHoTrangThai = null;
+
+        // Danh mục lý do xóa KHẨU (1 người) — bám theo Điều 24 (thường trú) / Điều 29 (tạm trú) Luật Cư trú 2020,
+        // KHÔNG tự bịa lý do ngoài luật.
+        const LY_DO_XOA_KHAU = [
+            "Đã chết / có quyết định của Tòa án tuyên bố mất tích hoặc đã chết",
+            "Đã đăng ký thường trú/tạm trú tại nơi khác (chuyển hộ khẩu đi)",
+            "Đã xuất cảnh, thôi quốc tịch Việt Nam",
+            "Xác minh vắng mặt liên tục đủ thời hạn theo luật, không khai báo tạm vắng",
+            "Khác (ghi rõ căn cứ ở ô bên dưới)"
+        ];
+        // Danh mục lý do xóa CẢ HỘ — tách riêng theo diện, vì căn cứ pháp lý khác nhau (Điều 24 và Điều 29)
+        const LY_DO_XOA_HO_THUONG_TRU = [
+            "Cả hộ đã chết / mất tích theo quyết định Tòa án",
+            "Đã bán nhà / chuyển quyền sở hữu chỗ ở — quá 12 tháng chưa đăng ký nơi mới, chủ mới KHÔNG đồng ý cho tiếp tục đăng ký",
+            "Đã chấm dứt thuê/mượn/ở nhờ — quá 12 tháng chưa đăng ký thường trú nơi khác",
+            "Vắng mặt liên tục tại nơi thường trú từ 12 tháng trở lên, không khai báo tạm vắng",
+            "Chỗ ở đã bị phá dỡ/tịch thu theo quyết định cơ quan có thẩm quyền",
+            "Khác (ghi rõ căn cứ ở ô bên dưới)"
+        ];
+        const LY_DO_XOA_HO_TAM_TRU = [
+            "Cả hộ đã chết / mất tích theo quyết định Tòa án",
+            "Đã xác minh: vắng mặt liên tục tại nơi tạm trú từ 06 tháng trở lên, không đăng ký chỗ khác",
+            "Đã đăng ký thường trú tại chính nơi tạm trú này",
+            "Đã chấm dứt thuê/mượn/ở nhờ, không đăng ký tạm trú chỗ khác",
+            "Chuyển quyền sở hữu chỗ ở, chủ mới KHÔNG đồng ý cho tiếp tục cư trú",
+            "Chỗ ở đã bị phá dỡ/tịch thu theo quyết định cơ quan có thẩm quyền",
+            "Khác (ghi rõ căn cứ ở ô bên dưới)"
+        ];
+
+        function moModalXoaKhau(tvIndex) {
+            if (currentSelectedHoIndex === null) return;
+            const ho = danhSachHoGiaDinh[currentSelectedHoIndex];
+            const tv = ho.thanhVien[tvIndex];
+            xoaHoTrangThai = { mode: 'khau', tvIndex };
+            document.getElementById('xoaHoTieuDe').innerText = '🗑️ Xóa khẩu: ' + (tv.hoTen || '(chưa rõ tên)');
+            document.getElementById('xoaHoCanhBaoPhapLy').innerHTML =
+                'Căn cứ Điều 24 / Điều 29 Luật Cư trú 2020 — chỉ xóa khi có căn cứ thực tế rõ ràng (đã chết, đã chuyển đăng ký nơi khác...). Sau khi xóa, người này sẽ được gỡ hoàn toàn khỏi danh sách nhân khẩu của hộ, không tính vào thống kê nữa. Thao tác được ghi vào nhật ký hệ thống để đối chiếu sau này.';
+            const sel = document.getElementById('xoaHoLyDo');
+            sel.innerHTML = LY_DO_XOA_KHAU.map(l => `<option>${l}</option>`).join('');
+            document.getElementById('xoaHoGhiChu').value = '';
+            document.getElementById('xoaHoXacNhanGo').value = '';
+            document.getElementById('xoaHoLyDoModal').classList.remove('hidden');
+        }
+
+        function moModalXoaHo() {
+            if (currentSelectedHoIndex === null) return;
+            const ho = danhSachHoGiaDinh[currentSelectedHoIndex];
+            xoaHoTrangThai = { mode: 'ho' };
+            document.getElementById('xoaHoTieuDe').innerText = '🗑️ Xóa toàn bộ hộ: ' + (ho.chuHo || ho.hsct || '');
+            const laThuongTru = (ho.dienNghiepVu || 'Thường trú') === 'Thường trú';
+            document.getElementById('xoaHoCanhBaoPhapLy').innerHTML = laThuongTru
+                ? 'Căn cứ <b>Điều 24 Luật Cư trú 2020</b> — hộ diện Thường trú CHỈ được xóa khi có 1 trong các căn cứ thật (không phải chỉ vì "không liên lạc được"). Với lý do "bán nhà/chuyển quyền sở hữu": chỉ áp dụng nếu chủ mới KHÔNG đồng ý cho tiếp tục đăng ký VÀ đã quá 12 tháng.'
+                : 'Căn cứ <b>Điều 29 Luật Cư trú 2020</b> — hộ diện Tạm/Lưu trú CHỈ được xóa khi có 1 trong các căn cứ thật. <b>Lưu ý quan trọng: hết hạn mà chưa gia hạn KHÔNG PHẢI là căn cứ hợp lệ để xóa</b> — luật không quy định "hết hạn" là lý do xóa đăng ký tạm trú, cần xác minh thêm (vắng mặt ≥6 tháng, đã chuyển đi...).';
+            const sel = document.getElementById('xoaHoLyDo');
+            sel.innerHTML = (laThuongTru ? LY_DO_XOA_HO_THUONG_TRU : LY_DO_XOA_HO_TAM_TRU).map(l => `<option>${l}</option>`).join('');
+            document.getElementById('xoaHoGhiChu').value = '';
+            document.getElementById('xoaHoXacNhanGo').value = '';
+            document.getElementById('xoaHoLyDoModal').classList.remove('hidden');
+        }
+
+        async function thucHienXoaTheoLyDo() {
+            if (!xoaHoTrangThai || currentSelectedHoIndex === null) return;
+            if (document.getElementById('xoaHoXacNhanGo').value.trim().toUpperCase() !== 'XÓA' &&
+                document.getElementById('xoaHoXacNhanGo').value.trim().toUpperCase() !== 'XOA') {
+                return alert('Vui lòng gõ đúng chữ "XÓA" vào ô xác nhận để hoàn tất.');
+            }
+            const lyDo = document.getElementById('xoaHoLyDo').value;
+            const ghiChu = document.getElementById('xoaHoGhiChu').value.trim();
+            const ho = danhSachHoGiaDinh[currentSelectedHoIndex];
+
+            try {
+                if (xoaHoTrangThai.mode === 'khau') {
+                    const tv = ho.thanhVien[xoaHoTrangThai.tvIndex];
+                    const tenNguoi = tv.hoTen || '(chưa rõ tên)';
+                    ho.thanhVien.splice(xoaHoTrangThai.tvIndex, 1);
+                    if (CHE_DO_FIREBASE) await dbFirestore.collection('households').doc(ho.id).update({ thanhVien: ho.thanhVien });
+                    ghiNhatKy('Xóa khẩu (Điều 24/29 Luật Cư trú)', `${tenNguoi} — hộ ${ho.hsct || ho.chuHo} — Lý do: ${lyDo}${ghiChu ? ' — ' + ghiChu : ''}`);
+                    document.getElementById('xoaHoLyDoModal').classList.add('hidden');
+                    if (ho.thanhVien.length === 0) {
+                        alert('⚠️ Hộ này vừa hết sạch nhân khẩu. Vui lòng dùng nút "🗑️ Xóa Toàn Bộ Hộ Này" nếu hộ không còn ai cư trú.');
+                    }
+                    xemChiTiet(currentSelectedHoIndex);
+                    alert('✅ Đã xóa khẩu "' + tenNguoi + '" khỏi hộ, đã ghi vào nhật ký hệ thống.');
+                } else {
+                    const tenHo = ho.chuHo || ho.hsct;
+                    const hoId = ho.id;
+                    if (CHE_DO_FIREBASE) await dbFirestore.collection('households').doc(hoId).delete();
+                    else { danhSachHoGiaDinh.splice(currentSelectedHoIndex, 1); localStorage.setItem("danhSachHoGiaDinhCacheGIS_V5", JSON.stringify(danhSachHoGiaDinh)); }
+                    ghiNhatKy('Xóa toàn bộ hộ (Điều 24/29 Luật Cư trú)', `${tenHo} — Diện: ${ho.dienNghiepVu} — Lý do: ${lyDo}${ghiChu ? ' — ' + ghiChu : ''}`);
+                    document.getElementById('xoaHoLyDoModal').classList.add('hidden');
+                    dongModal();
+                    alert('✅ Đã xóa hộ "' + tenHo + '", đã ghi rõ lý do vào nhật ký hệ thống.');
+                }
+            } catch (err) {
+                alert('❌ Lỗi khi xóa: ' + err.message);
+            }
+        }
+
+        // ================== THÊM HỘ MỚI (nhập tay, không cần Excel) ==================
+        let themHo_thanhVienTam = [];
+
+        function moModalThemHoMoi() {
+            document.getElementById('themHoTenPhuong').innerText = khuVucHienTai;
+            ['themHo_hsct', 'themHo_diaChi', 'themHo_chuHo', 'themHo_ngayHetHan'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('themHo_dienNV').value = 'Thường trú';
+            themHo_thanhVienTam = [{ hoTen: '', quanHe: 'Chủ hộ', ngaySinh: '', cccd: '', gioiTinh: 'Nam' }];
+            renderThemHo_DsThanhVien();
+            document.getElementById('themHoMoiModal').classList.remove('hidden');
+        }
+
+        function renderThemHo_DsThanhVien() {
+            const el = document.getElementById('themHo_dsThanhVien');
+            el.innerHTML = themHo_thanhVienTam.map((tv, i) => `
+                <div class="grid grid-cols-12 gap-1 items-center bg-gray-900/70 border border-gray-800 rounded px-2 py-1.5">
+                    <input placeholder="Họ tên" value="${escHtml(tv.hoTen)}" onchange="themHo_thanhVienTam[${i}].hoTen=this.value" class="col-span-3 bg-gray-800 border border-gray-700 rounded px-1.5 py-1 text-white text-[11px]">
+                    <input placeholder="Quan hệ" value="${escHtml(tv.quanHe)}" onchange="themHo_thanhVienTam[${i}].quanHe=this.value" class="col-span-2 bg-gray-800 border border-gray-700 rounded px-1.5 py-1 text-white text-[11px]">
+                    <input placeholder="Ngày sinh" value="${escHtml(tv.ngaySinh)}" onchange="themHo_thanhVienTam[${i}].ngaySinh=this.value" class="col-span-2 bg-gray-800 border border-gray-700 rounded px-1.5 py-1 text-white text-[11px]">
+                    <input placeholder="CCCD" value="${escHtml(tv.cccd)}" onchange="themHo_thanhVienTam[${i}].cccd=this.value" class="col-span-3 bg-gray-800 border border-gray-700 rounded px-1.5 py-1 text-white text-[11px] font-mono">
+                    <select onchange="themHo_thanhVienTam[${i}].gioiTinh=this.value" class="col-span-1 bg-gray-800 border border-gray-700 rounded px-1 py-1 text-white text-[11px]">
+                        <option ${tv.gioiTinh === 'Nam' ? 'selected' : ''}>Nam</option><option ${tv.gioiTinh === 'Nữ' ? 'selected' : ''}>Nữ</option>
+                    </select>
+                    <button onclick="themHo_thanhVienTam.splice(${i},1); renderThemHo_DsThanhVien();" class="col-span-1 text-red-400 hover:text-red-300 text-center">✕</button>
+                </div>`).join('');
+        }
+
+        function themHo_ThemDongThanhVien() {
+            themHo_thanhVienTam.push({ hoTen: '', quanHe: 'Con', ngaySinh: '', cccd: '', gioiTinh: 'Nam' });
+            renderThemHo_DsThanhVien();
+        }
+
+        async function luuHoMoiThuCong() {
+            const chuHo = document.getElementById('themHo_chuHo').value.trim();
+            const diaChi = document.getElementById('themHo_diaChi').value.trim();
+            const dienNV = document.getElementById('themHo_dienNV').value;
+            if (!chuHo) return alert('Vui lòng nhập Chủ hộ / Người đại diện.');
+            if (!diaChi) return alert('Vui lòng nhập Địa chỉ cư trú (nhớ ghi rõ khu vực).');
+            const thanhVienHopLe = themHo_thanhVienTam.filter(tv => tv.hoTen.trim());
+            if (thanhVienHopLe.length === 0) return alert('Vui lòng nhập ít nhất 1 nhân khẩu (Họ tên).');
+
+            const hsctNhap = document.getElementById('themHo_hsct').value.trim();
+            const duLieuHo = {
+                phuong: khuVucHienTai,
+                diaChi,
+                chuHo,
+                dienNghiepVu: dienNV,
+                // Đồng bộ đúng quy tắc đã sửa trước đó: chỉ Thường trú mới có HSCT (sinh mã nếu bỏ trống);
+                // Tạm trú/Lưu trú/NOHN để trống theo đúng nghiệp vụ.
+                hsct: (dienNV === 'Thường trú') ? (hsctNhap || ('HS-' + bamOnDinh(khuVucHienTai + '|' + chuHo + '|' + diaChi + '|' + Date.now()))) : hsctNhap,
+                ngayHetHan: document.getElementById('themHo_ngayHetHan').value || '',
+                thanhVien: thanhVienHopLe,
+                nguoiTao: currentUser.email.toLowerCase(),
+                capNhatLuc: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            try {
+                if (CHE_DO_FIREBASE) await dbFirestore.collection('households').add(duLieuHo);
+                else { duLieuHo.id = 'local-' + Date.now(); danhSachHoGiaDinh.push(duLieuHo); localStorage.setItem("danhSachHoGiaDinhCacheGIS_V5", JSON.stringify(danhSachHoGiaDinh)); capNhatGiaoDienSauKhiTai(); }
+                ghiNhatKy('Thêm hộ mới (nhập tay)', chuHo + ' — ' + diaChi);
+                document.getElementById('themHoMoiModal').classList.add('hidden');
+                alert('✅ Đã tạo hộ mới cho "' + chuHo + '".');
+            } catch (err) {
+                alert('❌ Lỗi khi tạo hộ mới: ' + err.message);
+            }
+        }
+
+        // ================== RÀ SOÁT TẠM TRÚ / LƯU TRÚ QUÁ HẠN ==================
+        function moModalRaSoatQuaHan() {
+            document.getElementById('raSoatQHTenPhuong').innerText = khuVucHienTai;
+            const ds = layDuLieuXuatBaoCaoDayDu().filter(h => (h.dienNghiepVu === 'Tạm trú' || h.dienNghiepVu === 'Lưu trú') && h.ngayHetHan);
+            const homNay = new Date(); homNay.setHours(0, 0, 0, 0);
+            const quaHan = ds.map(h => {
+                const han = new Date(h.ngayHetHan);
+                const soNgayQuaHan = Math.round((homNay - han) / 86400000);
+                return { h, soNgayQuaHan };
+            }).filter(x => x.soNgayQuaHan > 0).sort((a, b) => b.soNgayQuaHan - a.soNgayQuaHan);
+
+            const el = document.getElementById('noiDungRaSoatQuaHan');
+            if (quaHan.length === 0) {
+                el.innerHTML = '<p class="text-emerald-400 p-3">✅ Không có hộ Tạm/Lưu trú nào quá hạn trong phạm vi phụ trách.</p>';
+            } else {
+                el.innerHTML = `<table class="w-full text-left border-collapse text-[11px]">
+                    <thead><tr class="text-gray-400 border-b border-gray-700">
+                        <th class="p-1.5">Chủ hộ</th><th class="p-1.5">Địa chỉ</th><th class="p-1.5">Diện</th>
+                        <th class="p-1.5">Hạn cũ</th><th class="p-1.5 text-right">Số ngày quá hạn</th><th class="p-1.5"></th>
+                    </tr></thead>
+                    <tbody>${quaHan.map(x => `<tr class="border-b border-gray-800 hover:bg-gray-800/40">
+                        <td class="p-1.5 text-white font-medium">${escHtml(x.h.chuHo || '')}</td>
+                        <td class="p-1.5 text-gray-400">${escHtml(x.h.diaChi || '')}</td>
+                        <td class="p-1.5">${escHtml(x.h.dienNghiepVu)}</td>
+                        <td class="p-1.5">${new Date(x.h.ngayHetHan).toLocaleDateString('vi-VN')}</td>
+                        <td class="p-1.5 text-right ${x.soNgayQuaHan > 180 ? 'text-red-400 font-bold' : 'text-amber-400'}">${x.soNgayQuaHan} ngày</td>
+                        <td class="p-1.5 text-right"><button onclick="moChiTietTuRaSoatQuaHan('${x.h.id}')" class="text-blue-400 hover:text-blue-300">Xem hồ sơ ▸</button></td>
+                    </tr>`).join('')}</tbody>
+                </table>
+                <p class="text-gray-500 mt-2">Bấm "Xem hồ sơ" để mở hồ sơ hộ, xác minh thực tế rồi mới quyết định xóa (nút "🗑️ Xóa Toàn Bộ Hộ Này" trong hồ sơ) — không xóa hàng loạt tại đây.</p>`;
+            }
+            document.getElementById('raSoatQuaHanModal').classList.remove('hidden');
+        }
+
+        function moChiTietTuRaSoatQuaHan(hoId) {
+            const idx = danhSachHoGiaDinh.findIndex(h => h.id === hoId);
+            if (idx === -1) return alert('Không tìm thấy hộ này.');
+            document.getElementById('raSoatQuaHanModal').classList.add('hidden');
+            xemChiTiet(idx);
+        }
+
 
         async function luuThongTinHo() {
             if (currentUser.role === 'can_bo_du_lieu_tp') return alert("👁️ Tài khoản Cán bộ dữ liệu PC06 chỉ được XEM dữ liệu toàn thành phố, không có quyền sửa hồ sơ hộ.");
