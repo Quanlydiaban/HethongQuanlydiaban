@@ -144,6 +144,56 @@
     </div>
 
     <!-- GIAO DIỆN CHÍNH -->
+    <!-- ============ CỔNG CHẶN BẮT BUỘC — tài khoản "chưa cấp quyền" phải khai báo họ tên/đơn vị/chức vụ
+         trước khi được vào giao diện chính. Trước đây bước này chỉ là 1 khung nhỏ TÙY CHỌN nằm lẫn trong
+         sidebar — Admin duyệt hàng loạt tài khoản (VD mở rộng toàn quốc) sẽ chỉ thấy địa chỉ Gmail trần,
+         không biết là ai, thuộc Công an xã/phường nào, dễ duyệt nhầm hoặc lọt tài khoản giả mạo. ============ -->
+    <div id="gateChuaCapQuyenModal" class="fixed inset-0 bg-black/95 hidden flex items-center justify-center p-4 z-[70]">
+        <div class="glass-card w-full max-w-md rounded-xl shadow-2xl p-5 space-y-3 border border-blue-700 text-sm">
+            <div class="text-center">
+                <p class="text-3xl mb-1">🪪</p>
+                <h3 class="font-bold text-blue-300 text-base">Khai báo thông tin cán bộ</h3>
+                <p class="text-gray-400 text-xs mt-1">Bắt buộc khai báo đầy đủ trước khi được Admin cấp quyền xem dữ liệu — giúp Admin xác minh đúng người, đúng đơn vị, tránh duyệt nhầm tài khoản lạ.</p>
+            </div>
+            <div id="gateChuaKhaiBao" class="space-y-2">
+                <div>
+                    <label class="text-gray-400 text-xs block mb-0.5">Họ và tên <span class="text-rose-500">*</span></label>
+                    <input type="text" id="gate_hoTen" class="w-full bg-gray-900 border border-gray-700 rounded px-2.5 py-2 text-white text-sm">
+                </div>
+                <div>
+                    <label class="text-gray-400 text-xs block mb-0.5">Loại hình đơn vị <span class="text-rose-500">*</span></label>
+                    <select id="gate_loaiHinhDonVi" onchange="capNhatGoiYChucVuGate()" class="w-full bg-gray-900 border border-gray-700 rounded px-2.5 py-2 text-white text-sm">
+                        <option value="">-- Chọn loại hình --</option>
+                        <option value="phuong">Công an Phường (đô thị — Khu vực/Khu phố)</option>
+                        <option value="xa">Công an Xã (nông thôn — Ấp/Khóm/Thôn)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-gray-400 text-xs block mb-0.5">Đơn vị công tác <span class="text-rose-500">*</span></label>
+                    <input type="text" id="gate_donVi" placeholder="VD: Công an phường Tân An" class="w-full bg-gray-900 border border-gray-700 rounded px-2.5 py-2 text-white text-sm">
+                </div>
+                <div>
+                    <label class="text-gray-400 text-xs block mb-0.5">Chức vụ <span class="text-rose-500">*</span></label>
+                    <input type="text" id="gate_chucVu" placeholder="VD: CSKV" list="gate_goiYChucVu" class="w-full bg-gray-900 border border-gray-700 rounded px-2.5 py-2 text-white text-sm">
+                    <datalist id="gate_goiYChucVu"></datalist>
+                </div>
+                <div>
+                    <label class="text-gray-400 text-xs block mb-0.5">Số điện thoại liên lạc <span class="text-rose-500">*</span></label>
+                    <input type="tel" id="gate_sdt" class="w-full bg-gray-900 border border-gray-700 rounded px-2.5 py-2 text-white text-sm">
+                </div>
+                <button onclick="luuKhaiBaoGate()" class="w-full bg-blue-600 hover:bg-blue-700 rounded px-3 py-2.5 text-sm font-bold mt-1">💾 Gửi Khai Báo</button>
+            </div>
+            <div id="gateDaKhaiBao" class="hidden text-center space-y-2 py-2">
+                <p class="text-4xl">⏳</p>
+                <p class="text-emerald-400 font-semibold">Đã gửi khai báo thành công</p>
+                <p class="text-gray-400 text-xs">Đang chờ Admin duyệt cấp quyền. Vui lòng liên hệ trực tiếp Admin nếu cần gấp, hoặc bấm nút bên dưới để kiểm tra lại.</p>
+                <button onclick="location.reload()" class="bg-gray-700 hover:bg-gray-600 rounded px-3 py-1.5 text-xs">🔄 Kiểm tra lại</button>
+                <button onclick="suaLaiKhaiBaoGate()" class="text-gray-500 hover:text-gray-300 text-[11px] underline block mx-auto mt-1">Sửa lại thông tin đã khai báo</button>
+            </div>
+            <button onclick="dangXuat()" class="w-full text-gray-500 hover:text-gray-300 text-xs underline">Đăng xuất</button>
+        </div>
+    </div>
+
     <div id="mainApp" class="container mx-auto space-y-3 max-w-[98%] hidden mt-2">
         <header class="flex flex-col md:flex-row justify-between items-center glass-card p-3 rounded-xl shadow-xl gap-3">
             <div>
@@ -724,7 +774,7 @@
             </div>
 
             <div id="rbacAdminPanel" class="hidden space-y-2 border-t border-gray-700 pt-2">
-                <p class="font-semibold text-emerald-400">👮 Quản lý phân quyền tài khoản (chỉ Admin thấy mục này)</p>
+                <p id="rbacTieuDePanel" class="font-semibold text-emerald-400">👮 Quản lý phân quyền tài khoản (chỉ Admin thấy mục này)</p>
                 <p class="text-[10px] text-gray-500 leading-relaxed">Lưu ý: đây là ứng dụng tĩnh (không có máy chủ dùng chung), danh sách phân quyền được lưu trên trình duyệt của Admin. Sau khi thêm/sửa, hãy bấm "Xuất danh sách" rồi gửi file cho tài khoản đó để họ bấm "Nhập danh sách" trên máy của họ, đảm bảo đồng bộ đúng quyền/phường/khu vực. Có thể dùng để cấp quyền cho <b>nhiều tài khoản Gmail khác nhau phụ trách các phường khác nhau</b> trong 103 phường/xã TP. Cần Thơ.</p>
                 <div id="rbacGoiYEmail" class="hidden text-[10px] text-gray-500 leading-relaxed"></div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -746,10 +796,12 @@
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                     <select id="inputPhuongCSKV" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></select>
-                    <input type="text" id="inputKhuVucCSKV" placeholder="VD: Khu Vực 3, Khu Vực 4" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <input type="text" id="inputKhuVucCSKV" placeholder="Phường: VD Khu Vực 3, Khu Vực 4 — Xã: VD Ấp 3, Khóm 2, Thôn 1" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
                 </div>
+                <input type="hidden" id="inputLoaiHinhDonViCSKV" value="">
                 <button onclick="themPhanQuyenCSKV()" class="w-full bg-emerald-600 hover:bg-emerald-700 rounded px-2 py-1.5 font-bold">+ Thêm / Cập nhật tài khoản này</button>
                 <input type="text" id="timKiemPhanQuyen" oninput="renderDanhSachCSKV()" placeholder="🔍 Tìm theo tên, email, đơn vị, phường..." class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                <p class="text-[10px] text-gray-500">Tài khoản tô cam bên dưới = đã tự khai báo, đang chờ duyệt — bấm "Cấp quyền" để tự điền lại đúng thông tin họ đã khai báo vào form phía trên.</p>
                 <div id="rbacDanhSachCSKV" class="max-h-52 overflow-y-auto divide-y divide-gray-800 border border-gray-800 rounded-lg"></div>
                 <button onclick="xuatDanhBaCanBo()" class="w-full bg-teal-600 hover:bg-teal-700 rounded px-2 py-1.5 font-medium">📇 Xuất Danh Bạ Cán Bộ (.xlsx)</button>
                 <div id="rbacXuatNhapJson" class="flex gap-2 pt-1">
@@ -2587,6 +2639,11 @@
                 currentUser.phuongPhuTrach = null;
             }
             document.getElementById('mainApp').classList.remove('hidden');
+            // CỔNG CHẶN BẮT BUỘC: tài khoản "chưa cấp quyền" phải khai báo đầy đủ trước khi thao tác gì khác
+            // — che kín màn hình chính bằng modal (mainApp vẫn "hiện" phía sau nhưng bị modal z-70 che hết,
+            // không tương tác được), khác hẳn cách cũ chỉ có 1 khung khai báo TÙY CHỌN lẫn trong sidebar.
+            if (currentUser.role === 'chua_cap_quyen') { moGateChuaCapQuyen(); }
+            else { const g = document.getElementById('gateChuaCapQuyenModal'); if (g) g.classList.add('hidden'); }
             document.getElementById('userNameDisplay').innerText = currentUser.email;
             document.getElementById('userBadgeRole').innerText = currentUser.role === 'admin' ? 'Quyền: Admin' : (currentUser.role === 'chi_huy_tp' ? 'Chỉ Huy TP' : (currentUser.role === 'can_bo_du_lieu_tp' ? '👁️ CB Dữ Liệu PC06' : (currentUser.role === 'chi_huy' ? 'Chỉ Huy' : (currentUser.role === 'can_bo_du_lieu' ? 'Cán Bộ Dữ Liệu' : (currentUser.role === 'can_bo' ? 'CSKV' : '⚠️ Chưa cấp quyền')))));
             const btnTTP = document.getElementById('btnTimToanThanhPho');
@@ -2742,8 +2799,74 @@
             }
         }
 
-        // Hiện form khai báo thông tin cán bộ (cho tài khoản chưa cấp quyền), tự nạp lại nếu đã khai báo
-        // trước đó rồi (VD: mở lại trang, hoặc muốn sửa lại thông tin).
+        // ================== CỔNG CHẶN BẮT BUỘC KHAI BÁO (tài khoản "chưa cấp quyền") ==================
+        // Gợi ý chức vụ đổi theo loại hình đơn vị — đúng thuật ngữ: Công an Phường dùng "CSKV", Công an Xã
+        // dùng đúng cách gọi "Công an xã phụ trách ấp/khóm/thôn" — không dùng chung 1 danh sách gợi ý nữa.
+        const GOI_Y_CHUC_VU = {
+            phuong: ["CSKV (Cảnh sát khu vực)", "Chỉ huy Công an phường", "Cán bộ dữ liệu"],
+            xa: ["Công an xã phụ trách ấp/khóm/thôn", "Chỉ huy Công an xã", "Cán bộ dữ liệu"]
+        };
+        function capNhatGoiYChucVuGate() {
+            const loai = document.getElementById('gate_loaiHinhDonVi').value;
+            const dl = document.getElementById('gate_goiYChucVu');
+            dl.innerHTML = (GOI_Y_CHUC_VU[loai] || []).map(g => `<option value="${escHtml(g)}"></option>`).join('');
+        }
+
+        async function moGateChuaCapQuyen() {
+            const modal = document.getElementById('gateChuaCapQuyenModal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            if (!CHE_DO_FIREBASE) return; // Chế độ local không có Firestore để lưu khai báo — chỉ hiện cổng chặn.
+            try {
+                const doc = await dbFirestore.collection('permissions').doc(currentUser.email.toLowerCase()).get();
+                const daKhaiBaoDu = doc.exists && doc.data().hoTen && doc.data().donVi && doc.data().chucVu && doc.data().sdt;
+                if (daKhaiBaoDu) {
+                    const r = doc.data();
+                    document.getElementById('gate_hoTen').value = r.hoTen || '';
+                    document.getElementById('gate_loaiHinhDonVi').value = r.loaiHinhDonVi || '';
+                    capNhatGoiYChucVuGate();
+                    document.getElementById('gate_donVi').value = r.donVi || '';
+                    document.getElementById('gate_chucVu').value = r.chucVu || '';
+                    document.getElementById('gate_sdt').value = r.sdt || '';
+                    document.getElementById('gateChuaKhaiBao').classList.add('hidden');
+                    document.getElementById('gateDaKhaiBao').classList.remove('hidden');
+                } else {
+                    document.getElementById('gateChuaKhaiBao').classList.remove('hidden');
+                    document.getElementById('gateDaKhaiBao').classList.add('hidden');
+                }
+            } catch (e) { console.warn("Không tải được khai báo trước đó:", e.message); }
+        }
+
+        function suaLaiKhaiBaoGate() {
+            document.getElementById('gateChuaKhaiBao').classList.remove('hidden');
+            document.getElementById('gateDaKhaiBao').classList.add('hidden');
+        }
+
+        async function luuKhaiBaoGate() {
+            const hoTen = document.getElementById('gate_hoTen').value.trim();
+            const loaiHinhDonVi = document.getElementById('gate_loaiHinhDonVi').value;
+            const donVi = document.getElementById('gate_donVi').value.trim();
+            const chucVu = document.getElementById('gate_chucVu').value.trim();
+            const sdt = document.getElementById('gate_sdt').value.trim();
+            if (!hoTen || !loaiHinhDonVi || !donVi || !chucVu || !sdt) {
+                return alert("Vui lòng điền ĐẦY ĐỦ cả 5 mục — bắt buộc để Admin xác minh đúng người trước khi cấp quyền.");
+            }
+            try {
+                await dbFirestore.collection('permissions').doc(currentUser.email.toLowerCase()).set(
+                    { email: currentUser.email.toLowerCase(), hoTen, loaiHinhDonVi, donVi, chucVu, sdt, trangThai: 'cho_duyet' }, { merge: true }
+                );
+                ghiNhatKy('Khai báo thông tin cán bộ (bắt buộc)', hoTen + ' - ' + donVi + ' - ' + chucVu);
+                document.getElementById('gateChuaKhaiBao').classList.add('hidden');
+                document.getElementById('gateDaKhaiBao').classList.remove('hidden');
+            } catch (err) {
+                alert("❌ Lỗi lưu khai báo: " + (err.message || err.code));
+            }
+        }
+
+
+        // (Giữ lại hàm cũ để không phá vỡ khung khai báo trong sidebar đang tồn tại — nay đã có thêm cổng
+        // chặn bắt buộc riêng ở trên, khung này trở thành lối khai báo PHỤ, không bắt buộc, vẫn hoạt động
+        // bình thường cho ai muốn sửa lại thông tin ngay trong sidebar mà không cần mở lại cổng chặn.)
         async function hienFormKhaiBaoCanBoNeuCanThuoc() {
             if (!CHE_DO_FIREBASE || currentUser.role !== 'chua_cap_quyen') return;
             const khung = document.getElementById('khungKhaiBaoCanBo');
@@ -2771,7 +2894,7 @@
             if (!hoTen) return alert("Vui lòng nhập ít nhất Họ tên.");
             try {
                 await dbFirestore.collection('permissions').doc(currentUser.email.toLowerCase()).set(
-                    { email: currentUser.email.toLowerCase(), hoTen, donVi, chucVu, sdt }, { merge: true }
+                    { email: currentUser.email.toLowerCase(), hoTen, donVi, chucVu, sdt, trangThai: 'cho_duyet' }, { merge: true }
                 );
                 document.getElementById('ketQuaKhaiBaoCanBo').classList.remove('hidden');
                 ghiNhatKy('Tự khai báo thông tin cán bộ', hoTen + (donVi ? ' - ' + donVi : ''));
@@ -2815,7 +2938,10 @@
             if (!khongCanPhuong && !phuong) return alert("Vui lòng chọn Phường phụ trách.");
             if (vaiTro === 'can_bo' && !khuVucRaw) return alert("Vui lòng nhập Khu vực phụ trách cho Cảnh sát khu vực (cách nhau bằng dấu phẩy nếu nhiều khu vực).");
             const khuVuc = vaiTro === 'can_bo' ? khuVucRaw.split(',').map(s => chuanHoaNhanKhuVuc(s)).filter(Boolean) : [];
-            const banGhi = { email, vaiTro, hoTen, donVi, chucVu, sdt, phuong: khongCanPhuong ? null : phuong, khuVuc };
+            const loaiHinhDonVi = document.getElementById('inputLoaiHinhDonViCSKV') ? document.getElementById('inputLoaiHinhDonViCSKV').value : '';
+            // trangThai: 'da_duyet' — đánh dấu KHÔNG còn nằm trong danh sách "chờ duyệt" nữa (dùng để lọc
+            // đúng danh sách chờ duyệt trong panel bên dưới, tách biệt với danh sách đã có vai trò).
+            const banGhi = { email, vaiTro, hoTen, donVi, chucVu, sdt, loaiHinhDonVi, phuong: khongCanPhuong ? null : phuong, khuVuc, trangThai: 'da_duyet' };
 
             if (CHE_DO_FIREBASE) {
                 try {
@@ -2882,6 +3008,7 @@
         let huyLangNghePhanQuyen = null;
         function dangKyLangNghePhanQuyen() {
             if (huyLangNghePhanQuyen) return; // đã đăng ký rồi thì thôi
+            // CHỈ Admin gọi hàm này (đã chặn ở moModalRBAC) — luôn nghe TOÀN BỘ collection permissions.
             huyLangNghePhanQuyen = dbFirestore.collection('permissions').onSnapshot(snap => {
                 danhSachPhanQuyen = snap.docs.map(d => d.data());
                 renderDanhSachCSKV();
@@ -2947,6 +3074,10 @@
             document.getElementById('inputChucVuCSKV').value = r.chucVu || '';
             document.getElementById('inputSdtCSKV').value = r.sdt || '';
             document.getElementById('inputKhuVucCSKV').value = (r.khuVuc || []).join(', ');
+            // SỬA THIẾU SÓT: trước đây "Loại hình đơn vị" (Phường/Xã) đã tự khai báo ở cổng chặn KHÔNG được
+            // mang theo vào form cấp quyền — Admin/Chỉ huy phải tự đoán lại. Giờ nạp đúng lại giá trị đã có.
+            const oLoaiHinh = document.getElementById('inputLoaiHinhDonViCSKV');
+            if (oLoaiHinh) oLoaiHinh.value = r.loaiHinhDonVi || '';
             doiVaiTroTrongForm();
             if (r.phuong) document.getElementById('inputPhuongCSKV').value = r.phuong;
             document.getElementById('inputEmailCSKV').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -3796,13 +3927,44 @@
             for (let i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; }
             return h.toString(36).toUpperCase();
         }
+        // Nhận diện PHƯỜNG hay XÃ chỉ từ đúng tiền tố tên gọi chính thức ("Phường ..." / "Xã ...") — không
+        // dùng danh sách liệt kê cứng 103 đơn vị (dễ sai sót/thiếu sót khi nhập dần), mà dựa vào QUY TẮC ĐẶT
+        // TÊN CHÍNH THỨC luôn nhất quán theo đúng Nghị quyết 1668/NQ-UBTVQH15 — tự đúng cho MỌI đơn vị mới
+        // thêm vào sau này, không cần cập nhật thủ công danh sách khi mở rộng.
+        function loaiHinhTuTenDonVi(ten) {
+            const t = boDauTiengViet(ten || '').trim().toLowerCase();
+            if (t.startsWith('xa ') || t === 'xa') return 'xa';
+            return 'phuong'; // mặc định phường nếu không xác định được (an toàn hơn vì đa số thao tác hiện tại vẫn ở phường)
+        }
+        function donViMacDinhTheoLoaiHinh(tenPhuongXa) {
+            return loaiHinhTuTenDonVi(tenPhuongXa) === 'xa' ? 'Ấp 1' : 'Khu Vực 1';
+        }
+
         function layNhanKhuVucTuDiaChi(diaChi, tenPhuongGoiY) {
             // Thay dấu gạch dưới/gạch ngang/chấm bằng khoảng trắng trước khi so khớp, vì \b coi "_" là ký tự chữ
             // nên "Thuong_tru_KV_7.xlsx" trước đây KHÔNG khớp được mẫu "kv" (gây lỗi tự đổi thành Khu Vực 1).
             const s = boDauTiengViet(diaChi).replace(/[_\-.]+/g, ' ');
-            const m = s.match(/khu\s*vuc\s*0*(\d+)/) || s.match(/(?:^|\s)kv\s*0*(\d+)/) || s.match(/khu\s*pho\s*0*(\d+)/);
-            if (!m) return null;
-            let soKV = parseInt(m[1], 10);
+            // SỬA LỖI QUAN TRỌNG (phát hiện sau khi tra lại đúng số liệu hành chính TP. Cần Thơ): trước đây
+            // hàm này CHỈ nhận diện "Khu Vực/KV/Khu Phố" — đúng thuật ngữ của CÔNG AN PHƯỜNG (đô thị), nhưng
+            // Cần Thơ sau sáp nhập có 103 đơn vị = 31 PHƯỜNG + 72 XÃ (đa số là XÃ, dùng "Ấp/Khóm/Thôn", không
+            // phải "Khu Vực"). Với địa chỉ thuộc xã, hàm cũ luôn trả về null -> bị gán nhầm cứng "Khu Vực 1"
+            // ở mọi nơi gọi hàm này -> toàn bộ phân quyền/thống kê theo khu vực SAI HOÀN TOÀN cho dữ liệu xã.
+            // Giờ nhận diện đủ cả 2 bộ thuật ngữ, giữ ĐÚNG tên loại hình đã khớp (không ép về "Khu Vực" nữa).
+            const cacMauKhop = [
+                { re: /khu\s*vuc\s*0*(\d+)/, nhan: 'Khu Vực' },
+                { re: /(?:^|\s)kv\s*0*(\d+)/, nhan: 'Khu Vực' },
+                { re: /khu\s*pho\s*0*(\d+)/, nhan: 'Khu Phố' },
+                { re: /(?:^|\s)ap\s*0*(\d+)/, nhan: 'Ấp' },           // "Ấp 3", "Ap3" — có \b để tránh khớp nhầm vào giữa từ khác (VD "Tháp" -> "Thap" chứa "ap")
+                { re: /khom\s*0*(\d+)/, nhan: 'Khóm' },
+                { re: /thon\s*0*(\d+)/, nhan: 'Thôn' }
+            ];
+            let khop = null;
+            for (const mau of cacMauKhop) {
+                const m = s.match(mau.re);
+                if (m) { khop = { soKV: parseInt(m[1], 10), nhan: mau.nhan }; break; }
+            }
+            if (!khop) return donViMacDinhTheoLoaiHinh(tenPhuongGoiY || khuVucHienTai);
+            let soKV = khop.soKV;
 
             // ĐỔI TÊN KHU VỰC DO TRÙNG TÊN SAU SÁP NHẬP: nếu địa chỉ còn nhắc tên phường/xã CŨ (VD "An Khánh")
             // kèm số khu vực CŨ, tự động quy đổi sang đúng số khu vực MỚI theo bảng BANG_DOI_TEN_KHU_VUC —
@@ -3815,7 +3977,7 @@
                 const doiTen = bangDoiTen.find(d => soKV === d.kvCu && s.includes(boDauTiengViet(d.phuongCu).toLowerCase()));
                 if (doiTen) soKV = doiTen.kvMoi;
             }
-            return "Khu Vực " + soKV;
+            return khop.nhan + " " + soKV;
         }
 
         // Danh sách các từ chỉ QUAN HỆ (không phải TÊN NGƯỜI) — dùng để phát hiện và tự sửa trường hợp cột
@@ -3844,9 +4006,15 @@
         function chuanHoaDiaChiVaKhuVuc(diaChiGoc, phuongXaGoc, khuVucMacDinh) {
             let full = (diaChiGoc || "").trim();
             let pX = (phuongXaGoc || "phường Tân An, thành phố Cần Thơ").trim();
-            
-            if (!layNhanKhuVucTuDiaChi(full)) {
-                full = `${khuVucMacDinh || "Khu Vực 1"}, ${full}`;
+
+            // SỬA LỖI: layNhanKhuVucTuDiaChi() giờ LUÔN trả về 1 nhãn hợp lệ (không còn trả null khi không
+            // khớp mẫu — đã sửa để không còn mặc định sai "Khu Vực 1" cho địa chỉ thuộc XÃ), nên không thể
+            // dùng "!layNhanKhuVucTuDiaChi(...)" để kiểm tra "địa chỉ CÓ ghi rõ khu vực/ấp/khóm/thôn hay
+            // chưa" như trước nữa (điều kiện đó giờ luôn sai, sẽ không bao giờ tự chèn nhãn mặc định vào địa
+            // chỉ nữa). Giờ tự kiểm tra thẳng bằng chính bộ mẫu regex, độc lập với hàm có mặc định.
+            const coGhiRoKhuVuc = /khu\s*vuc\s*0*\d+|(?:^|\s)kv\s*0*\d+|khu\s*pho\s*0*\d+|(?:^|\s)ap\s*0*\d+|khom\s*0*\d+|thon\s*0*\d+/.test(boDauTiengViet(full).replace(/[_\-.]+/g, ' '));
+            if (!coGhiRoKhuVuc) {
+                full = `${khuVucMacDinh || donViMacDinhTheoLoaiHinh(pX)}, ${full}`;
             }
 
             if (!full.toLowerCase().includes("tân an")) full += `, ${pX}`;
@@ -4410,10 +4578,22 @@
                 if (currentUser.role === 'can_bo') {
                     selKvTQ.classList.add('hidden');
                 } else {
-                    const dsKVCoSan = [...new Set(dsPhamViDuocGiao.map(h => layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1'))].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
+                    // SỬA LỖI QUAN TRỌNG: trước đây danh sách chỉ ghi "Khu Vực 6" trơn — khi đủ 103 phường/xã
+                    // cùng có dữ liệu, RẤT NHIỀU phường tự đánh số "Khu Vực 1, 2, 3..." của riêng mình (không
+                    // phải số duy nhất toàn thành phố), khiến người xem liên phường (Chỉ huy TP/Cán bộ dữ liệu/
+                    // Admin) KHÔNG BIẾT đang chọn "Khu Vực 6" của phường nào. Giờ luôn ghép rõ "Tên Phường —
+                    // Khu Vực N" làm 1 nhãn không thể tách rời, và value mã hoá riêng phuong+khuVuc để lọc đúng.
+                    const boKV = new Map(); // key: "phuong|||khuVuc" -> { phuong, khuVuc, nhan }
+                    dsPhamViDuocGiao.forEach(h => {
+                        const kv = layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1';
+                        const ph = h.phuong || khuVucHienTai;
+                        const key = ph + '|||' + kv;
+                        if (!boKV.has(key)) boKV.set(key, { phuong: ph, khuVuc: kv, nhan: ph + ' — ' + kv });
+                    });
+                    const dsKVCoSan = [...boKV.entries()].sort((a, b) => a[1].nhan.localeCompare(b[1].nhan, 'vi', { numeric: true }));
                     if (dsKVCoSan.length > 1) {
                         const giaTriDangChon = selKvTQ.value;
-                        selKvTQ.innerHTML = '<option value="">— Toàn bộ phạm vi được giao —</option>' + dsKVCoSan.map(k => `<option value="${escHtml(k)}" ${k === giaTriDangChon ? 'selected' : ''}>${escHtml(k)}</option>`).join('');
+                        selKvTQ.innerHTML = '<option value="">— Toàn bộ phạm vi được giao —</option>' + dsKVCoSan.map(([key, v]) => `<option value="${escHtml(key)}" ${key === giaTriDangChon ? 'selected' : ''}>${escHtml(v.nhan)}</option>`).join('');
                         selKvTQ.classList.remove('hidden');
                     } else {
                         selKvTQ.classList.add('hidden');
@@ -4421,11 +4601,13 @@
                 }
             }
             const kvDangXemTQ = (selKvTQ && !selKvTQ.classList.contains('hidden')) ? selKvTQ.value : '';
+            const kvDangXemTQParts = kvDangXemTQ ? kvDangXemTQ.split('|||') : null;
             // dsPhuongNay = phạm vi DÙNG ĐỂ TÍNH TOÁN các thẻ số/biểu đồ bên dưới — nếu đang chọn lọc riêng 1
-            // khu vực ở ô trên thì narrow xuống đúng khu vực đó, còn KHÔNG ảnh hưởng gì đến bảng danh sách hộ
-            // (bảng đó dùng ô lọc filterKhuVuc/quickFilterKhuVuc RIÊNG, độc lập hoàn toàn với ô lọc này).
-            const dsPhuongNay = kvDangXemTQ
-                ? dsPhamViDuocGiao.filter(h => (layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1') === kvDangXemTQ)
+            // khu vực ở ô trên thì narrow xuống đúng khu vực đó (khớp CẢ phường lẫn khu vực, không chỉ tên
+            // khu vực trơn như trước — tránh lẫn "Khu Vực 6" của 2 phường khác nhau), còn KHÔNG ảnh hưởng gì
+            // đến bảng danh sách hộ (bảng đó dùng ô lọc filterKhuVuc/quickFilterKhuVuc RIÊNG).
+            const dsPhuongNay = kvDangXemTQParts
+                ? dsPhamViDuocGiao.filter(h => (h.phuong || khuVucHienTai) === kvDangXemTQParts[0] && (layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1') === kvDangXemTQParts[1])
                 : dsPhamViDuocGiao;
 
             dsPhuongNay.forEach(h => {
@@ -4483,8 +4665,10 @@
                 } else if (['chi_huy', 'chi_huy_tp', 'admin', 'can_bo_du_lieu', 'can_bo_du_lieu_tp'].includes(currentUser.role)) {
                     // SỬA LỖI: trước đây đọc nhầm giá trị ô lọc filterKhuVuc CỦA BẢNG DANH SÁCH HỘ để mô tả
                     // phạm vi khối tổng quan — 2 ô lọc khác nhau, dễ gây hiểu sai đang xem đúng khu vực nào.
-                    // Giờ dùng đúng ô lọc RIÊNG của khối tổng quan (kvDangXemTQ) vừa thêm ở trên.
-                    phamViThat = kvDangXemTQ ? kvDangXemTQ : 'toàn bộ khu vực trong phường';
+                    // Giờ dùng đúng ô lọc RIÊNG của khối tổng quan (kvDangXemTQ) vừa thêm ở trên — lấy TEXT
+                    // của option đang chọn (đã ghép sẵn "Tên Phường — Khu Vực N"), không dùng value thô (value
+                    // giờ là key nội bộ "phường|||khuVực", hiện thẳng ra sẽ xấu và dễ hiểu nhầm).
+                    phamViThat = (kvDangXemTQParts && selKvTQ.selectedIndex >= 0) ? selKvTQ.options[selKvTQ.selectedIndex].text : 'toàn bộ khu vực trong phạm vi được giao';
                 } else {
                     phamViThat = 'chưa được cấp quyền';
                 }
@@ -5601,6 +5785,10 @@
                 elKV.innerHTML = '<span class="text-amber-400">⚠️ Chưa được Admin phân phường/khu vực phụ trách. Liên hệ Admin để được cấp quyền.</span>';
             }
             document.getElementById('rbacAdminPanel').classList.toggle('hidden', !isAdmin);
+            // THEO ĐÚNG YÊU CẦU: đã GỠ BỎ hoàn toàn thử nghiệm cho "Chỉ huy phường" tự duyệt tài khoản —
+            // CHỈ Admin duy nhất mới thấy/thao tác được panel phân quyền này. Phần khai báo bắt buộc (họ tên/
+            // loại hình đơn vị/đơn vị/chức vụ/SĐT) ở cổng chặn vẫn giữ nguyên — Admin dùng thông tin đó làm
+            // căn cứ tự tay xét duyệt, không ủy quyền duyệt cho ai khác.
             if (isAdmin) {
                 doDayDanhSachPhuongVaoFormRBAC(); doiVaiTroTrongForm();
                 if (CHE_DO_FIREBASE) {
