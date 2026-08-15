@@ -220,16 +220,20 @@
                 <div class="glass-card p-3 rounded-xl shadow space-y-2">
                     <div class="flex items-center justify-between border-b border-gray-700 pb-1">
                         <p class="font-semibold text-xs text-gray-200">📈 Biểu Đồ Thống Kê</p>
-                        <div class="flex gap-1">
+                        <div class="flex gap-1 flex-wrap justify-end">
                             <button onclick="doiTabBieuDo('cutru')" id="tabBtn_cutru" class="tab-bieudo-btn px-1.5 py-0.5 rounded text-[10px] bg-blue-600 text-white">Cư trú</button>
                             <button onclick="doiTabBieuDo('gioitinh')" id="tabBtn_gioitinh" class="tab-bieudo-btn px-1.5 py-0.5 rounded text-[10px] bg-gray-700 text-gray-300">Giới tính</button>
                             <button onclick="doiTabBieuDo('dotuoi')" id="tabBtn_dotuoi" class="tab-bieudo-btn px-1.5 py-0.5 rounded text-[10px] bg-gray-700 text-gray-300">Độ tuổi</button>
+                            <button onclick="doiTabBieuDo('dantoc')" id="tabBtn_dantoc" class="tab-bieudo-btn px-1.5 py-0.5 rounded text-[10px] bg-gray-700 text-gray-300">Dân tộc</button>
+                            <button onclick="doiTabBieuDo('tongiao')" id="tabBtn_tongiao" class="tab-bieudo-btn px-1.5 py-0.5 rounded text-[10px] bg-gray-700 text-gray-300">Tôn giáo</button>
                         </div>
                     </div>
                     <div class="w-full flex justify-center py-1" style="height: 150px;">
                         <canvas id="statChartCanvas" style="max-height: 150px;"></canvas>
                         <canvas id="gioiTinhChartCanvas" style="max-height: 150px; display:none;"></canvas>
                         <canvas id="doTuoiChartCanvas" style="max-height: 150px; display:none;"></canvas>
+                        <canvas id="danTocChartCanvas" style="max-height: 150px; display:none;"></canvas>
+                        <canvas id="tonGiaoChartCanvas" style="max-height: 150px; display:none;"></canvas>
                     </div>
                 </div>
 
@@ -403,7 +407,7 @@
             <div id="printArea" class="p-3 overflow-y-auto space-y-3 flex-grow text-xs bg-gray-900/50">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
                     <div class="space-y-2.5 bg-gray-900 p-3 rounded-lg border border-gray-700">
-                        <p><strong class="text-gray-400">Số Hồ sơ:</strong> <span id="modalHsct" class="font-mono text-blue-300 font-bold"></span> <button type="button" onclick="hienModalQRHoSo()" class="text-[10px] bg-indigo-700 hover:bg-indigo-600 px-2 py-0.5 rounded ml-1">📱 Mã QR</button></p>
+                        <p><strong class="text-gray-400">Số Hồ sơ:</strong> <span id="modalHsct" class="font-mono text-blue-300 font-bold"></span> <button type="button" onclick="hienModalQRHoSo()" class="no-print text-[10px] bg-indigo-700 hover:bg-indigo-600 px-2 py-0.5 rounded ml-1">📱 Mã QR</button></p>
                         <div>
                             <label class="text-gray-400 block mb-0.5">Họ tên Chủ hộ:</label>
                             <input type="text" id="editChuHo" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white w-full font-semibold">
@@ -514,7 +518,7 @@
                                     <th class="p-1.5 w-20">Dân Tộc</th>
                                     <th class="p-1.5 w-20">Tôn Giáo</th>
                                     <th class="p-1.5 w-28">Trạng Thái</th>
-                                    <th class="p-1.5 w-16">Thao Tác</th>
+                                    <th class="p-1.5 w-16 no-print">Thao Tác</th>
                                 </tr>
                             </thead>
                             <tbody id="modalNhanKhauList" class="divide-y divide-gray-800 text-[11px]"></tbody>
@@ -4372,6 +4376,7 @@
             let tongNhanKhau = 0;
             let cntTT = 0, cntTamT = 0, cntKhac = 0;
             let cntNam = 0, cntNu = 0, cntTreEm = 0, cntLaoDong = 0, cntCaoTuoi = 0;
+            let theoDanToc = {}, theoTonGiao = {};
             let theoKhuVuc = {};
             // Tách riêng số liệu (hộ, nhân khẩu, nam/nữ, độ tuổi) theo TỪNG DIỆN cư trú — không gộp
             // chung nữa, để CSKV báo cáo nhanh được ngay số liệu riêng của Thường trú / Tạm-Lưu trú / NOHN.
@@ -4442,6 +4447,14 @@
                     if (gt === 'nam') { cntNam++; chiTietTheoDien[nhomDien].nam++; }
                     else if (gt === 'nữ' || gt === 'nu') { cntNu++; chiTietTheoDien[nhomDien].nu++; }
 
+                    // Thống kê dân tộc & tôn giáo — trước đây hoàn toàn chưa có trên Dashboard/Phân Tích Dữ
+                    // Liệu dù dữ liệu này đã được nhập sẵn cho từng nhân khẩu (cột "Dân Tộc"/"Tôn Giáo" trong
+                    // hồ sơ hộ) — chỉ là chưa từng được TỔNG HỢP hiển thị ra.
+                    let dt = (tv.danToc || '').trim() || 'Chưa rõ';
+                    let tg = (tv.tonGiao || '').trim() || 'Không';
+                    theoDanToc[dt] = (theoDanToc[dt] || 0) + 1;
+                    theoTonGiao[tg] = (theoTonGiao[tg] || 0) + 1;
+
                     if (tv.ngaySinh) {
                         let mNam = String(tv.ngaySinh).match(/(\d{4})(?!.*\d{4})/);
                         if (mNam) {
@@ -4486,6 +4499,8 @@
             capNhatBieuDoStat(cntTT, cntTamT, cntKhac);
             capNhatBieuDoGioiTinh(cntNam, cntNu);
             capNhatBieuDoDoTuoi(cntTreEm, cntLaoDong, cntCaoTuoi);
+            capNhatBieuDoDanToc(theoDanToc);
+            capNhatBieuDoTonGiao(theoTonGiao);
             capNhatBieuDoKhuVuc(theoKhuVuc);
             thucHienLocVaTimKiem();
         }
@@ -4612,10 +4627,63 @@
             });
         }
 
+        // Bảng màu cố định dùng chung cho cả biểu đồ Dashboard lẫn biểu đồ Phân Tích Dữ Liệu, để 2 nơi hiển
+        // thị luôn đồng bộ (cùng 1 dân tộc/tôn giáo luôn cùng 1 màu, dễ đối chiếu qua lại).
+        const BANG_MAU_DAN_TOC_TON_GIAO = ['#0ea5e9', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#f43f5e', '#22d3ee', '#a3e635', '#fb923c', '#c084fc'];
+
+        // Gộp các nhóm nhỏ (< top 6) vào "Khác" để biểu đồ không bị vỡ chú thích khi có quá nhiều giá trị lẻ
+        // (VD nhập tay sai chính tả sinh ra nhiều biến thể) — vẫn hiển thị đúng TỔNG số người, không mất dữ liệu.
+        function gomNhomChoBieuDo(theoNhom, soNhomToiDa) {
+            const entries = Object.entries(theoNhom).sort((a, b) => b[1] - a[1]);
+            if (entries.length <= soNhomToiDa) return entries;
+            const top = entries.slice(0, soNhomToiDa - 1);
+            const conLai = entries.slice(soNhomToiDa - 1).reduce((t, e) => t + e[1], 0);
+            top.push(['Khác', conLai]);
+            return top;
+        }
+
+        function capNhatBieuDoDanToc(theoDanToc) {
+            const ctx = document.getElementById('danTocChartCanvas');
+            if (!ctx) return;
+            if (window.danTocChartInstance) window.danTocChartInstance.destroy();
+            const entries = gomNhomChoBieuDo(theoDanToc, 8);
+            window.danTocChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: entries.map(e => e[0]),
+                    datasets: [{ data: entries.map(e => e[1]), backgroundColor: BANG_MAU_DAN_TOC_TON_GIAO, borderWidth: 2, borderColor: '#111827', hoverOffset: 8 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    animation: { animateScale: true, animateRotate: true, duration: 800, easing: 'easeOutQuart' },
+                    plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 9 }, padding: 6, boxWidth: 10 } } }
+                }
+            });
+        }
+
+        function capNhatBieuDoTonGiao(theoTonGiao) {
+            const ctx = document.getElementById('tonGiaoChartCanvas');
+            if (!ctx) return;
+            if (window.tonGiaoChartInstance) window.tonGiaoChartInstance.destroy();
+            const entries = gomNhomChoBieuDo(theoTonGiao, 8);
+            window.tonGiaoChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: entries.map(e => e[0]),
+                    datasets: [{ data: entries.map(e => e[1]), backgroundColor: BANG_MAU_DAN_TOC_TON_GIAO, borderWidth: 2, borderColor: '#111827', hoverOffset: 8 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    animation: { animateScale: true, animateRotate: true, duration: 800, easing: 'easeOutQuart' },
+                    plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 9 }, padding: 6, boxWidth: 10 } } }
+                }
+            });
+        }
+
         function doiTabBieuDo(ten) {
-            ['cutru', 'gioitinh', 'dotuoi'].forEach(t => {
-                const canvasId = t === 'cutru' ? 'statChartCanvas' : (t === 'gioitinh' ? 'gioiTinhChartCanvas' : 'doTuoiChartCanvas');
-                document.getElementById(canvasId).style.display = (t === ten) ? 'block' : 'none';
+            const banDo = { cutru: 'statChartCanvas', gioitinh: 'gioiTinhChartCanvas', dotuoi: 'doTuoiChartCanvas', dantoc: 'danTocChartCanvas', tongiao: 'tonGiaoChartCanvas' };
+            Object.keys(banDo).forEach(t => {
+                document.getElementById(banDo[t]).style.display = (t === ten) ? 'block' : 'none';
                 const btn = document.getElementById('tabBtn_' + t);
                 btn.className = 'tab-bieudo-btn px-1.5 py-0.5 rounded text-[10px] ' + (t === ten ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300');
             });
@@ -4636,7 +4704,7 @@
             tbody.innerHTML = '';
             if (data.length === 0) return tbody.innerHTML = `<tr><td colspan="8" class="text-center p-6 text-gray-400">Không tìm thấy dữ liệu phù hợp.</td></tr>`;
             
-            data.forEach((ho) => {
+            data.forEach((ho, viTriHienThi) => {
                 let originalIndex = danhSachHoGiaDinh.indexOf(ho);
                 let dien = ho.dienNghiepVu || 'Thường trú';
                 let styleNV = "bg-emerald-900/50 text-emerald-300 border-emerald-700";
@@ -4655,7 +4723,7 @@
                 let row = document.createElement('tr');
                 row.className = "hover:bg-gray-800/50 border-b border-gray-800 transition";
                 row.innerHTML = `
-                    <td class="p-2">${originalIndex + 1}</td>
+                    <td class="p-2">${viTriHienThi + 1}</td>
                     <td class="p-2 text-blue-300 font-mono">${ho.hsct ? escHtml(ho.hsct) : '<span class="text-gray-500 italic">— (không áp dụng)</span>'}</td>
                     <td class="p-2 text-cyan-300 font-mono">${escHtml(cccdChuHo)}</td>
                     <td class="p-2 font-semibold text-white">${escHtml(ho.chuHo)}</td>
@@ -4778,9 +4846,9 @@
                                 <option value="Đã xóa khẩu" ${tv.trangThaiBienDong === 'Đã xóa khẩu' ? 'selected' : ''}>❌ Đã xóa khẩu</option>
                                 <option value="Ở nước ngoài" ${tv.trangThaiBienDong === 'Ở nước ngoài' ? 'selected' : ''}>✈️ Ở nước ngoài</option>
                             </select>
-                            ${tv.trangThaiBienDong && tv.trangThaiBienDong !== 'Đang cư trú' ? `<button type="button" onclick="suaChiTietBienDong(${i})" class="text-[9px] text-blue-400 underline mt-0.5">Chi tiết: ${escHtml((tv.ngayBienDong || '') + ' ' + (tv.ghiChuBienDong || '')).trim() || 'Bấm để nhập'}</button>` : ''}
+                            ${tv.trangThaiBienDong && tv.trangThaiBienDong !== 'Đang cư trú' ? `<button type="button" onclick="suaChiTietBienDong(${i})" class="no-print text-[9px] text-blue-400 underline mt-0.5">Chi tiết: ${escHtml((tv.ngayBienDong || '') + ' ' + (tv.ghiChuBienDong || '')).trim() || 'Bấm để nhập'}</button>` : ''}
                         </td>
-                        <td class="p-1.5 text-center whitespace-nowrap">
+                        <td class="p-1.5 text-center whitespace-nowrap no-print">
                             <button type="button" onclick="xuatDC01(${i})" title="Xuất Phiếu thu thập thông tin dân cư (DC01)" class="text-indigo-400 hover:text-indigo-300 mr-1.5">📋</button>
                             <button type="button" onclick="moModalXoaKhau(${i})" title="Xóa khẩu này khỏi hộ (đã chết/chuyển đi hẳn...)" class="che-do-chi-xem-an text-red-400 hover:text-red-300">🗑️</button>
                         </td>
@@ -6335,35 +6403,52 @@
         function xuatCT01(loaiThuTuc) {
             const ho = danhSachHoGiaDinh[currentSelectedHoIndex];
             const chuHoObj = (ho.thanhVien && ho.thanhVien.find(tv => (tv.quanHe || '').toLowerCase().includes("chủ hộ"))) || (ho.thanhVien && ho.thanhVien[0]) || {};
+            // ĐÃ SỬA LẠI THEO ĐÚNG MẪU CT01 THẬT ban hành kèm TT116/2026/TT-BCA (bản trước đây tự dựng theo
+            // cấu trúc I/II/III là SAI — mẫu thật đánh số phẳng 1-11, có đủ 3 khối "Ý kiến đồng ý" mà bản cũ
+            // hoàn toàn thiếu — đây là phần bắt buộc về mặt pháp lý khi đăng ký/xóa đăng ký cư trú).
             const html = `
                 <h1>Tờ khai thay đổi thông tin cư trú</h1>
-                <div class="ma-mau">(Mẫu CT01 — ban hành kèm theo Thông tư số 116/2026/TT-BCA)</div>
+                <div class="ma-mau">(Mẫu CT01 — ban hành kèm theo Thông tư số 116/2026/TT-BCA ngày 29/6/2026 của Bộ trưởng Bộ Công an)</div>
+                <div class="truong"><span class="nhan">Kính gửi:</span> Công an ${escHtml(khuVucHienTai)}</div>
                 <div class="truong"><span class="nhan">Loại thủ tục đề nghị giải quyết:</span> ${escHtml(loaiThuTuc)}</div>
                 <table>
-                    <tr><th colspan="4">I. THÔNG TIN NGƯỜI KÊ KHAI</th></tr>
-                    <tr><td class="nhan" style="width:22%">Họ, chữ đệm và tên</td><td style="width:28%">${escHtml(chuHoObj.hoTen || ho.chuHo || '')}</td>
-                        <td class="nhan" style="width:22%">Ngày, tháng, năm sinh</td><td>${escHtml(chuHoObj.ngaySinh || '')}</td></tr>
-                    <tr><td class="nhan">Số định danh cá nhân/CCCD</td><td>${escHtml(chuHoObj.cccd || '')}</td>
-                        <td class="nhan">Giới tính</td><td>${escHtml(chuHoObj.gioiTinh || '')}</td></tr>
-                    <tr><td class="nhan">Số điện thoại liên hệ</td><td colspan="3">${escHtml(chuHoObj.sdt || '')}</td></tr>
+                    <tr><td class="nhan" style="width:30%">1. Họ, chữ đệm và tên khai sinh</td><td colspan="3">${escHtml(chuHoObj.hoTen || ho.chuHo || '')}</td></tr>
+                    <tr><td class="nhan">2. Ngày, tháng, năm sinh</td><td style="width:20%">${escHtml(chuHoObj.ngaySinh || '')}</td>
+                        <td class="nhan" style="width:20%">3. Giới tính</td><td>${escHtml(chuHoObj.gioiTinh || '')}</td></tr>
+                    <tr><td class="nhan">4. Số định danh cá nhân</td><td colspan="3">${escHtml(chuHoObj.cccd || '')}</td></tr>
+                    <tr><td class="nhan">5. Số điện thoại liên hệ</td><td>${escHtml(chuHoObj.sdt || '')}</td>
+                        <td class="nhan">6. Email</td><td></td></tr>
+                    <tr><td class="nhan">7. Họ, chữ đệm và tên chủ hộ</td><td colspan="3">${escHtml(ho.chuHo || '')}</td></tr>
+                    <tr><td class="nhan">8. Mối quan hệ với chủ hộ</td><td>${escHtml(chuHoObj.quanHe || '')}</td>
+                        <td class="nhan">9. Số định danh cá nhân của chủ hộ</td><td>${escHtml(chuHoObj.cccd || '')}</td></tr>
+                    <tr><td class="nhan">10. Nội dung đề nghị</td><td colspan="3" style="height:55px;">${escHtml(loaiThuTuc)} — Địa chỉ: ${escHtml(ho.diaChi || '')}</td></tr>
                 </table>
                 <table>
-                    <tr><th colspan="2">II. NỘI DUNG ĐỀ NGHỊ</th></tr>
-                    <tr><td class="nhan" style="width:30%">Địa chỉ nơi cư trú hiện tại</td><td>${escHtml(ho.diaChi || '')}</td></tr>
-                    <tr><td class="nhan">Diện cư trú</td><td>${escHtml(ho.dienNghiepVu || 'Thường trú')}</td></tr>
-                    <tr><td class="nhan">Số hồ sơ cư trú (nếu có)</td><td>${escHtml(ho.hsct || '(không áp dụng)')}</td></tr>
-                    <tr><td class="nhan">Nội dung đề nghị cụ thể</td><td style="height:60px;"></td></tr>
+                    <tr><th colspan="6">11. Những thành viên trong hộ gia đình cùng thay đổi</th></tr>
+                    <tr><th>TT</th><th>Họ, chữ đệm và tên</th><th>Ngày, tháng, năm sinh</th><th>Giới tính</th><th>Số định danh cá nhân</th><th>Mối quan hệ với chủ hộ</th></tr>
+                    ${(ho.thanhVien || []).map((tv, i) => `<tr><td>${i + 1}</td><td>${escHtml(tv.hoTen || '')}</td><td>${escHtml(tv.ngaySinh || '')}</td><td>${escHtml(tv.gioiTinh || '')}</td><td>${escHtml(tv.cccd || '')}</td><td>${escHtml(tv.quanHe || '')}</td></tr>`).join('')}
                 </table>
-                <table>
-                    <tr><th colspan="6">III. NHỮNG THÀNH VIÊN TRONG HỘ CÙNG ĐỀ NGHỊ THAY ĐỔI (nếu có)</th></tr>
-                    <tr><th>TT</th><th>Họ và tên</th><th>Ngày sinh</th><th>Số định danh/CCCD</th><th>Quan hệ với chủ hộ</th><th>Nội dung thay đổi</th></tr>
-                    ${(ho.thanhVien || []).map((tv, i) => `<tr><td>${i + 1}</td><td>${escHtml(tv.hoTen || '')}</td><td>${escHtml(tv.ngaySinh || '')}</td><td>${escHtml(tv.cccd || '')}</td><td>${escHtml(tv.quanHe || '')}</td><td></td></tr>`).join('')}
-                </table>
-                <div class="ky-ten">
-                    <div><div class="ngay">......., ngày ...... tháng ...... năm ..........</div><b>CÁN BỘ TIẾP NHẬN</b><br>(Ký, ghi rõ họ tên)</div>
-                    <div><div class="ngay">&nbsp;</div><b>NGƯỜI KÊ KHAI</b><br>(Ký, ghi rõ họ tên)</div>
+                <div class="ky-ten" style="margin-top:24px;">
+                    <div style="width:100%;text-align:right;"><div class="ngay">......., ngày ...... tháng ...... năm ..........</div><b>NGƯỜI KÊ KHAI</b><br>(Ký, ghi rõ họ tên)</div>
                 </div>
-                <div class="ghi-chu-cuoi">Bản in hỗ trợ soạn thảo theo đúng nội dung quy định tại Điều 20.1 Thông tư 116/2026/TT-BCA — cán bộ tiếp nhận kiểm tra, đối chiếu với hồ sơ gốc trước khi trình ký chính thức.</div>`;
+                <table style="margin-top:26px;">
+                    <tr>
+                        <th style="width:33.3%">Ý KIẾN CỦA CHỦ HỘ</th>
+                        <th style="width:33.3%">Ý KIẾN CỦA CHỦ SỞ HỮU CHỖ Ở HỢP PHÁP</th>
+                        <th style="width:33.4%">Ý KIẾN CỦA CHA HOẶC MẸ HOẶC NGƯỜI GIÁM HỘ</th>
+                    </tr>
+                    <tr>
+                        <td style="height:70px;">Họ và tên: ..............................<br><br>Số định danh cá nhân: ..............................</td>
+                        <td style="height:70px;">Họ và tên: ..............................<br><br>Số định danh cá nhân: ..............................</td>
+                        <td style="height:70px;">Họ và tên: ..............................<br><br>Số định danh cá nhân: ..............................</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align:center;">......., ngày .... tháng .... năm ....</td>
+                        <td style="text-align:center;">......., ngày .... tháng .... năm ....</td>
+                        <td style="text-align:center;">......., ngày .... tháng .... năm ....</td>
+                    </tr>
+                </table>
+                <div class="ghi-chu-cuoi">Chỉ điền khối "Ý kiến" tương ứng với trường hợp thực tế cần xin ý kiến đồng ý (VD: đăng ký ở nhờ cần ý kiến chủ hộ + chủ sở hữu chỗ ở; người dưới 18 tuổi cần ý kiến cha/mẹ/người giám hộ). Không bắt buộc chữ ký tay — có thể xác nhận qua VNeID/Cổng dịch vụ công theo đúng Thông tư 116/2026/TT-BCA.</div>`;
             moCuaSoInBieuMau("CT01 - " + (ho.chuHo || ''), html);
             ghiSoGiaoNhanHoSo('CT01 - ' + loaiThuTuc, ho.chuHo || '', ho.id || '');
         }
@@ -6375,36 +6460,60 @@
         function xuatDC01(tvIndex) {
             const ho = danhSachHoGiaDinh[currentSelectedHoIndex];
             const tv = ho.thanhVien[tvIndex];
+            // ĐÃ SỬA LẠI THEO ĐÚNG MẪU DC01 THẬT ban hành kèm TT118/2026/TT-BCA (bản trước đây tự dựng theo
+            // trực giác, SAI cả thứ tự lẫn số lượng mục — mẫu thật có đúng 25 mục đánh số, không phải cấu
+            // trúc tự do như bản cũ). Số ĐDCN vẫn dùng chung ô CCCD hiện có (số định danh cá nhân 12 số =
+            // đồng thời là số trên thẻ CCCD hiện hành, đúng quy định).
+            const laNam = (tv.gioiTinh || '').toLowerCase() === 'nam';
             const html = `
                 <h1>Phiếu thu thập thông tin dân cư</h1>
-                <div class="ma-mau">(Mẫu DC01 — ban hành kèm theo Thông tư số 118/2026/TT-BCA)</div>
+                <div class="ma-mau">(Mẫu DC01 — ban hành kèm theo Thông tư số 118/2026/TT-BCA ngày 29/6/2026 của Bộ trưởng Bộ Công an)</div>
+                <div class="truong"><span class="nhan">Tỉnh/thành phố:</span> TP. Cần Thơ &nbsp;&nbsp; <span class="nhan">Xã/phường/đặc khu:</span> ${escHtml(khuVucHienTai)}</div>
                 <table>
                     <tr><td class="nhan" style="width:26%">1. Họ, chữ đệm và tên khai sinh</td><td colspan="3">${escHtml(tv.hoTen || '')}</td></tr>
-                    <tr><td class="nhan">2. Ngày, tháng, năm sinh</td><td style="width:24%">${escHtml(tv.ngaySinh || '')}</td>
-                        <td class="nhan" style="width:24%">3. Giới tính</td><td>${escHtml(tv.gioiTinh || '')}</td></tr>
-                    <tr><td class="nhan">4. Quê quán</td><td colspan="3">${escHtml(tv.queQuan || '')}</td></tr>
-                    <tr><td class="nhan">5. Dân tộc</td><td>${escHtml(tv.danToc || 'Kinh')}</td>
-                        <td class="nhan">6. Tôn giáo</td><td>${escHtml(tv.tonGiao || 'Không')}</td></tr>
-                    <tr><td class="nhan">7. Quốc tịch</td><td>${escHtml(tv.quocTich || 'Việt Nam')}</td>
-                        <td class="nhan">8. Nhóm máu (nếu có)</td><td>......................</td></tr>
-                    <tr><td class="nhan">9. Số định danh cá nhân/CCCD</td><td colspan="3">${escHtml(tv.cccd || '')}</td></tr>
-                    <tr><td class="nhan">10. Tình trạng hôn nhân</td><td colspan="3">☐ Chưa kết hôn &nbsp;&nbsp; ☐ Đã kết hôn &nbsp;&nbsp; ☐ Đã ly hôn</td></tr>
-                    <tr><td class="nhan">11. Nghề nghiệp, nơi làm việc</td><td colspan="3">${escHtml(tv.ngheNghiep || '')}</td></tr>
-                    <tr><td class="nhan">12. Số điện thoại</td><td colspan="3">${escHtml(tv.sdt || '')}</td></tr>
-                    <tr><td class="nhan">13. Nơi thường trú</td><td colspan="3">${escHtml((ho.dienNghiepVu === 'Thường trú' ? ho.diaChi : '') || '')}</td></tr>
-                    <tr><td class="nhan">14. Nơi ở hiện tại</td><td colspan="3">${escHtml(ho.diaChi || '')}</td></tr>
+                    <tr><td class="nhan">2. Tên gọi khác</td><td style="width:24%"></td>
+                        <td class="nhan" style="width:24%">3. Số định danh cá nhân</td><td>${escHtml(tv.cccd || '')}</td></tr>
+                    <tr><td class="nhan">4. Ngày, tháng, năm sinh</td><td>${escHtml(tv.ngaySinh || '')}</td>
+                        <td class="nhan">5. Giới tính</td><td>☐ Nam ${laNam ? '(✓)' : ''} &nbsp;&nbsp; ☐ Nữ ${!laNam && tv.gioiTinh ? '(✓)' : ''}</td></tr>
+                    <tr><td class="nhan">6. Nơi sinh</td><td colspan="3"></td></tr>
+                    <tr><td class="nhan">7. Nơi đăng ký khai sinh</td><td colspan="3"></td></tr>
+                    <tr><td class="nhan">8. Quê quán</td><td colspan="3">${escHtml(tv.queQuan || '')}</td></tr>
+                    <tr><td class="nhan">9. Dân tộc</td><td>${escHtml(tv.danToc || 'Kinh')}</td>
+                        <td class="nhan">10. Tôn giáo</td><td>${escHtml(tv.tonGiao || 'Không')}</td></tr>
+                    <tr><td class="nhan">11. Quốc tịch</td><td colspan="3">☑ Việt Nam &nbsp;&nbsp; Quốc tịch khác: ..........................</td></tr>
+                    <tr><td class="nhan">12. Nhóm máu</td><td>......................</td>
+                        <td class="nhan">13. Số CMND 09 số</td><td></td></tr>
                 </table>
                 <table>
-                    <tr><th colspan="4">THÔNG TIN CHA, MẸ, VỢ/CHỒNG, CON (họ tên — số định danh/CCCD — quốc tịch)</th></tr>
-                    <tr><td class="nhan" style="width:18%">Cha</td><td colspan="3">............................................................................................</td></tr>
-                    <tr><td class="nhan">Mẹ</td><td colspan="3">............................................................................................</td></tr>
-                    <tr><td class="nhan">Vợ/Chồng</td><td colspan="3">............................................................................................</td></tr>
+                    <tr><th colspan="6">14. Họ, chữ đệm và tên, số định danh cá nhân, số CMND 09 số, quốc tịch của cha, mẹ, vợ, chồng, con, người đại diện hợp pháp, người được đại diện</th></tr>
+                    <tr><th>TT</th><th>Họ, chữ đệm và tên khai sinh</th><th>Mối quan hệ với chủ thể thông tin</th><th>Quốc tịch</th><th>Số CMND 09 số</th><th>Số định danh cá nhân</th></tr>
+                    ${[1, 2, 3].map(i => `<tr><td>${i}</td><td></td><td></td><td></td><td></td><td></td></tr>`).join('')}
                 </table>
-                <div class="ky-ten">
-                    <div><div class="ngay">......., ngày ...... tháng ...... năm ..........</div><b>CÁN BỘ THU THẬP</b><br>(Ký, ghi rõ họ tên)</div>
-                    <div><div class="ngay">&nbsp;</div><b>NGƯỜI KÊ KHAI</b><br>(Ký, ghi rõ họ tên)</div>
+                <table>
+                    <tr><td class="nhan" style="width:26%">15. Hộ chiếu/giấy tờ đi lại quốc tế (nếu có)</td><td colspan="3"></td></tr>
+                    <tr><td class="nhan">16. Địa chỉ cư trú tại nước ngoài (nếu có)</td><td colspan="3"></td></tr>
+                    <tr><td class="nhan">17. Nơi thường trú</td><td colspan="3">${escHtml((ho.dienNghiepVu === 'Thường trú' ? ho.diaChi : '') || '')}</td></tr>
+                    <tr><td class="nhan">18. Nơi tạm trú</td><td colspan="3">${escHtml((ho.dienNghiepVu === 'Tạm trú' || ho.dienNghiepVu === 'Lưu trú' ? ho.diaChi : '') || '')}</td></tr>
+                    <tr><td class="nhan">19. Nơi ở hiện tại (nếu khác 17, 18)</td><td colspan="3">${escHtml(ho.diaChi || '')}</td></tr>
+                    <tr><td class="nhan">20. Tình trạng hôn nhân</td><td colspan="3">☐ Chưa kết hôn &nbsp;&nbsp; ☐ Đang có vợ/chồng &nbsp;&nbsp; ☐ Đã ly hôn hoặc có vợ/chồng nhưng đã chết</td></tr>
+                    <tr><td class="nhan">21. Mối quan hệ với chủ hộ</td><td colspan="3">${escHtml(tv.quanHe || '')}</td></tr>
+                    <tr><td class="nhan">22. Số thuê bao di động</td><td>${escHtml(tv.sdt || '')}</td>
+                        <td class="nhan">23. Địa chỉ thư điện tử</td><td></td></tr>
+                </table>
+                <table>
+                    <tr><th colspan="5">24. Họ, chữ đệm và tên, số định danh cá nhân, số CMND 09 số của chủ hộ và các thành viên hộ gia đình</th></tr>
+                    <tr><th>TT</th><th>Họ, chữ đệm và tên khai sinh</th><th>Mối quan hệ với chủ hộ</th><th>Số CMND 09 số</th><th>Số định danh cá nhân</th></tr>
+                    ${(ho.thanhVien || []).map((m, i) => `<tr><td>${i + 1}</td><td>${escHtml(m.hoTen || '')}</td><td>${escHtml(m.quanHe || '')}</td><td></td><td>${escHtml(m.cccd || '')}</td></tr>`).join('')}
+                </table>
+                <table>
+                    <tr><td class="nhan" style="width:26%">25. Số hồ sơ cư trú</td><td colspan="3">${escHtml(ho.hsct || '(không áp dụng)')}</td></tr>
+                </table>
+                <div class="ky-ten" style="justify-content:space-between;">
+                    <div style="width:31%"><div class="ngay">......., ngày ...... tháng ...... năm ..........</div><b>PHÊ DUYỆT CỦA<br>THỦ TRƯỞNG CƠ QUAN</b><br>(Ký, ghi rõ họ tên và đóng dấu)</div>
+                    <div style="width:31%"><div class="ngay">&nbsp;</div><b>CÁN BỘ THU THẬP</b><br>(Ký, ghi rõ họ tên)</div>
+                    <div style="width:31%"><div class="ngay">&nbsp;</div><b>NGƯỜI KÊ KHAI/<br>NGƯỜI KÊ KHAI HỘ</b><br>(Ký, ghi rõ họ tên)</div>
                 </div>
-                <div class="ghi-chu-cuoi">Các mục 8, 10 và phần thông tin cha/mẹ/vợ/chồng cần cán bộ phỏng vấn trực tiếp và ghi tay — phần mềm hiện chưa lưu các trường này trong hồ sơ điện tử.</div>`;
+                <div class="ghi-chu-cuoi">Các mục 2, 3 (nếu chưa có), 6, 7, 11 (quốc tịch khác), 12, 13, 15, 16, 20, 23 và mục 14 cần cán bộ phỏng vấn trực tiếp công dân và ghi tay — phần mềm hiện chưa lưu các trường này trong hồ sơ điện tử.</div>`;
             moCuaSoInBieuMau("DC01 - " + (tv.hoTen || ''), html);
             ghiSoGiaoNhanHoSo('DC01 - Phiếu thu thập thông tin dân cư', tv.hoTen || '', ho.id || '');
         }
@@ -7266,7 +7375,7 @@
         // Gộp 1 danh sách hộ thành số liệu tổng hợp đầy đủ (hộ/khẩu/diện/giới tính/độ tuổi) — dùng chung cho
         // cả khối "theo khu vực" và khối "toàn thành phố" để đảm bảo logic tính TUYỆT ĐỐI giống nhau.
         function gomNhomThongKe(dsHo) {
-            const kq = { ho: dsHo.length, nk: 0, thuongTru: 0, tamTru: 0, nohn: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 };
+            const kq = { ho: dsHo.length, nk: 0, thuongTru: 0, tamTru: 0, nohn: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0, theoDanToc: {}, theoTonGiao: {} };
             const namNay = new Date().getFullYear();
             dsHo.forEach(h => {
                 const dien = h.dienNghiepVu || 'Thường trú';
@@ -7277,6 +7386,10 @@
                     kq.nk++;
                     const gt = (tv.gioiTinh || '').toLowerCase();
                     if (gt === 'nam') kq.nam++; else if (gt === 'nữ' || gt === 'nu') kq.nu++;
+                    const dt = (tv.danToc || '').trim() || 'Chưa rõ';
+                    const tg = (tv.tonGiao || '').trim() || 'Không';
+                    kq.theoDanToc[dt] = (kq.theoDanToc[dt] || 0) + 1;
+                    kq.theoTonGiao[tg] = (kq.theoTonGiao[tg] || 0) + 1;
                     if (tv.ngaySinh) {
                         const m = String(tv.ngaySinh).match(/(\d{4})(?!.*\d{4})/);
                         if (m) { const t = namNay - parseInt(m[1]); if (t >= 0 && t < 130) { if (t < 16) kq.treEm++; else if (t <= 60) kq.laoDong++; else kq.caoTuoi++; } }
@@ -7375,6 +7488,29 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-3">
+                        <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
+                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">🧬 Cơ cấu dân tộc (toàn ${escHtml(khuVucHienTai)})</p>
+                            <div style="height:220px;"><canvas id="ptChartDanToc"></canvas></div>
+                        </div>
+                        <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
+                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">🙏 Cơ cấu tôn giáo (toàn ${escHtml(khuVucHienTai)})</p>
+                            <div style="height:220px;"><canvas id="ptChartTonGiao"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5 overflow-x-auto mb-2">
+                        <p class="text-gray-300 font-semibold mb-2 text-[11px]">📋 Bảng chi tiết dân tộc — tôn giáo</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
+                            <table class="w-full text-left border-collapse">
+                                <thead><tr class="text-gray-400 border-b border-gray-700"><th class="p-1">Dân tộc</th><th class="p-1 text-right">Số người</th><th class="p-1 text-right">Tỷ lệ</th></tr></thead>
+                                <tbody>${Object.entries(kqTongPhuong.theoDanToc).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<tr class="border-b border-gray-800"><td class="p-1 text-white">${escHtml(k)}</td><td class="p-1 text-right">${v}</td><td class="p-1 text-right text-gray-400">${kqTongPhuong.nk > 0 ? Math.round(v / kqTongPhuong.nk * 100) : 0}%</td></tr>`).join('')}</tbody>
+                            </table>
+                            <table class="w-full text-left border-collapse">
+                                <thead><tr class="text-gray-400 border-b border-gray-700"><th class="p-1">Tôn giáo</th><th class="p-1 text-right">Số người</th><th class="p-1 text-right">Tỷ lệ</th></tr></thead>
+                                <tbody>${Object.entries(kqTongPhuong.theoTonGiao).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<tr class="border-b border-gray-800"><td class="p-1 text-white">${escHtml(k)}</td><td class="p-1 text-right">${v}</td><td class="p-1 text-right text-gray-400">${kqTongPhuong.nk > 0 ? Math.round(v / kqTongPhuong.nk * 100) : 0}%</td></tr>`).join('')}</tbody>
+                            </table>
+                        </div>
+                    </div>
                     <div class="bg-indigo-950/30 border border-indigo-800/50 rounded-lg p-2.5 text-[11px]">
                         <p class="text-indigo-300 font-semibold mb-1">💡 Nhận xét nhanh</p>
                         <ul class="list-disc list-inside space-y-0.5 text-gray-300">${nhanXetKV.map(n => `<li>${n}</li>`).join('')}</ul>
@@ -7384,6 +7520,17 @@
                 <div id="phanTichThanhPho" class="border-t border-gray-700 pt-3"></div>
             `;
             el.innerHTML = htmlKV;
+
+            phanTichCharts.danToc = new Chart(document.getElementById('ptChartDanToc'), {
+                type: 'doughnut',
+                data: { labels: gomNhomChoBieuDo(kqTongPhuong.theoDanToc, 8).map(e => e[0]), datasets: [{ data: gomNhomChoBieuDo(kqTongPhuong.theoDanToc, 8).map(e => e[1]), backgroundColor: BANG_MAU_DAN_TOC_TON_GIAO, borderWidth: 2, borderColor: '#111827' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 9 }, boxWidth: 10 } } } }
+            });
+            phanTichCharts.tonGiao = new Chart(document.getElementById('ptChartTonGiao'), {
+                type: 'doughnut',
+                data: { labels: gomNhomChoBieuDo(kqTongPhuong.theoTonGiao, 8).map(e => e[0]), datasets: [{ data: gomNhomChoBieuDo(kqTongPhuong.theoTonGiao, 8).map(e => e[1]), backgroundColor: BANG_MAU_DAN_TOC_TON_GIAO, borderWidth: 2, borderColor: '#111827' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 9 }, boxWidth: 10 } } } }
+            });
 
             phanTichCharts.khuVuc = new Chart(document.getElementById('ptChartKhuVuc'), {
                 type: 'bar',
