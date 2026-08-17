@@ -2073,10 +2073,23 @@
             }
         }
 
+        // ================== CHẶN EMAIL DỄ GÂY NHẦM LẪN (VD "canbo@gmail.com") ==================
+        // Phát hiện thực tế: có cán bộ đăng ký đúng CHỮ MẪU trong ô nhập ("canbo@gmail.com") làm email thật
+        // — không sai quy trình (vẫn qua đúng bước duyệt của Admin), nhưng dễ nhầm lẫn không biết là ai khi
+        // Admin duyệt hàng loạt. Chặn cả đăng ký MỚI lẫn đăng nhập bằng các email dạng chung chung/giống mẫu.
+        const TU_KHOA_EMAIL_CHUNG_CHUNG = ['canbo', 'cskv', 'admin', 'test', 'congan', 'user', 'demo', 'mau', 'example', 'chihuy'];
+        function laEmailDeNhamLan(email) {
+            const phanTruoc = (email || '').split('@')[0].toLowerCase();
+            return TU_KHOA_EMAIL_CHUNG_CHUNG.some(tu => phanTruoc === tu || phanTruoc === tu + '1' || phanTruoc === tu + '01');
+        }
+
         async function xuLyDangNhapFirebase() {
             const email = document.getElementById('gmailInput').value.trim();
             const matKhau = document.getElementById('matKhauInput').value;
             if (!email || !matKhau) return alert("Vui lòng nhập đủ Email và Mật khẩu.");
+            if (laEmailDeNhamLan(email)) {
+                return alert("⛔ Email \"" + email + "\" là dạng CHUNG CHUNG, dễ gây nhầm lẫn không biết là cán bộ nào (email này CHỈ là chữ ví dụ trong ô nhập, không phải email thật).\n\nVui lòng dùng đúng địa chỉ Gmail công vụ/cá nhân thật của anh/chị. Nếu tài khoản này đã được duyệt trước đó, liên hệ Admin để đổi sang email đúng.");
+            }
             const btn = document.getElementById('btnDangNhapChinh');
             btn.disabled = true; btn.innerText = "Đang đăng nhập...";
             try {
@@ -2091,6 +2104,7 @@
                 btn.disabled = false; btn.innerText = "Xác Thực & Tiếp Tục ➔";
             }
         }
+
 
         // Kiểm tra độ mạnh mật khẩu: TỐI THIỂU 8 ký tự, có ít nhất 1 chữ HOA, 1 chữ thường, 1 SỐ, và 1 KÝ TỰ
         // ĐẶC BIỆT. Áp dụng bắt buộc khi đăng ký tài khoản mới.
@@ -2117,6 +2131,9 @@
             const email = document.getElementById('gmailInput').value.trim();
             const matKhau = document.getElementById('matKhauInput').value;
             if (!email || !matKhau) return alert("Vui lòng nhập đủ Email và Mật khẩu.");
+            if (laEmailDeNhamLan(email)) {
+                return alert("⛔ Email \"" + email + "\" là dạng CHUNG CHUNG, dễ gây nhầm lẫn không biết là cán bộ nào. Vui lòng đăng ký bằng đúng địa chỉ Gmail công vụ/cá nhân thật của anh/chị, không dùng chữ ví dụ trong ô nhập.");
+            }
             const loiMatKhau = kiemTraDoMạnhMatKhau(matKhau);
             if (loiMatKhau.length > 0) {
                 return alert("❌ Mật khẩu CHƯA đủ mạnh, còn thiếu:\n\n• " + loiMatKhau.join("\n• ") + "\n\nVí dụ mật khẩu hợp lệ: Cskv@2026 hoặc Tan#An079");
@@ -5370,6 +5387,24 @@
             document.getElementById('xoaHoLyDoModal').classList.remove('hidden');
         }
 
+        // ================== SAO LƯU TỰ ĐỘNG TRƯỚC KHI XÓA — KHOẢNG TRỐNG ĐÃ TỰ PHÁT HIỆN NHƯNG CHƯA XỬ LÝ ==================
+        // Trước đây: có công cụ "Khôi phục từ file sao lưu" nhưng CHỈ khôi phục được từ file .xlsx cũ do người
+        // dùng TỰ xuất trước đó — nếu quên xuất trước khi xóa, không còn cách nào lấy lại. Giờ MỌI thao tác xóa
+        // (xóa khẩu / xóa cả hộ) đều TỰ ĐỘNG lưu lại toàn bộ dữ liệu hộ TRƯỚC khi xóa vào collection riêng,
+        // không cần con người nhớ bấm xuất file trước — giữ được ít nhất 1 lớp an toàn cuối cùng.
+        async function luuSnapshotTruocKhiXoa(ho, loaiThaoTac) {
+            try {
+                const banGhi = {
+                    hoId: ho.id || '', phuong: ho.phuong || khuVucHienTai, loaiThaoTac,
+                    duLieuHoLucXoa: JSON.stringify(ho), // toàn bộ hộ (kể cả thanhVien) tại thời điểm TRƯỚC khi xóa
+                    nguoiXoa: currentUser.email.toLowerCase(), thoiGianXoa: new Date().toISOString()
+                };
+                if (CHE_DO_FIREBASE) await dbFirestore.collection('backup_truoc_xoa').add(banGhi);
+                else { const ds = JSON.parse(localStorage.getItem('backupTruocXoaLocalV1') || '[]'); banGhi.id = 'local-' + Date.now(); ds.push(banGhi); localStorage.setItem('backupTruocXoaLocalV1', JSON.stringify(ds)); }
+            } catch (err) { console.warn('Không lưu được snapshot trước khi xóa (không chặn thao tác xóa chính):', err.message); }
+        }
+
+
         async function thucHienXoaTheoLyDo() {
             if (!xoaHoTrangThai || currentSelectedHoIndex === null) return;
             if (document.getElementById('xoaHoXacNhanGo').value.trim().toUpperCase() !== 'XÓA' &&
@@ -5381,6 +5416,7 @@
             const ho = danhSachHoGiaDinh[currentSelectedHoIndex];
 
             try {
+                await luuSnapshotTruocKhiXoa(ho, xoaHoTrangThai.mode === 'khau' ? 'Xóa khẩu' : 'Xóa toàn bộ hộ');
                 if (xoaHoTrangThai.mode === 'khau') {
                     const tv = ho.thanhVien[xoaHoTrangThai.tvIndex];
                     const tenNguoi = tv.hoTen || '(chưa rõ tên)';
@@ -6582,10 +6618,10 @@
         function moCuaSoInBieuMau(tieuDeCuaSo, noiDungHTML, opts = {}) {
             const cua = window.open('', '_blank', 'width=900,height=1000');
             if (!cua) { alert('Trình duyệt đang chặn cửa sổ mới — vui lòng cho phép popup để in biểu mẫu.'); return; }
-            // SỬA ĐÚNG THỂ THỨC: mặc định Quốc hiệu/Tiêu ngữ căn giữa (đúng cho CT01/CT03...), nhưng mẫu DC01
-            // theo ĐÚNG bản gốc lại có khối "Tỉnh/thành phố... — Xã/phường..." đặt SONG SONG bên trái Quốc
-            // hiệu (dạng bảng 2 cột như tiêu đề công văn), KHÔNG phải xếp trên-dưới như các mẫu khác. Cho phép
-            // truyền opts.khoiTieuDeTrai để ghi đè đúng bố cục này khi cần.
+            // SỬA ĐÚNG THỂ THỨC: đối chiếu trực tiếp với file CT01 thật đơn vị đang dùng — dòng "Mẫu ... ban
+            // hành kèm theo Thông tư..." phải nằm NGAY TRÊN Quốc hiệu (căn giữa, cỡ chữ nhỏ), KHÔNG phải nằm
+            // dưới tiêu đề như bản cũ. Cho phép truyền opts.dongTrenQuocHieu để chèn đúng vị trí này.
+            const dongTren = opts.dongTrenQuocHieu ? `<div class="ma-mau-tren" style="text-align:center;font-size:11px;font-style:italic;margin-bottom:6px;">${opts.dongTrenQuocHieu}</div>` : '';
             const khoiQuocHieu = opts.khoiTieuDeTrai
                 ? `<table style="border:none;margin-bottom:6px;"><tr>
                        <td style="border:none;width:50%;vertical-align:top;font-weight:normal;padding:0;">${opts.khoiTieuDeTrai}</td>
@@ -6614,8 +6650,10 @@
                 .ky-ten > div { width: 46%; text-align: center; }
                 .ky-ten .ngay { font-style: italic; margin-bottom: 46px; }
                 .ghi-chu-cuoi { margin-top: 18px; font-size: 10.5px; font-style: italic; color: #444; }
+                .o-so { display: inline-block; width: 16px; height: 20px; border: 1px solid #111; margin-right: 2px; }
                 @media print { .khong-in { display: none; } }
             </style></head><body>
+            ${dongTren}
             ${khoiQuocHieu}
             ${noiDungHTML}
             <div class="khong-in" style="text-align:center;margin-top:24px;">
@@ -6649,53 +6687,51 @@
         function xuatCT01(loaiThuTuc) {
             const ho = danhSachHoGiaDinh[currentSelectedHoIndex];
             const chuHoObj = (ho.thanhVien && ho.thanhVien.find(tv => (tv.quanHe || '').toLowerCase().includes("chủ hộ"))) || (ho.thanhVien && ho.thanhVien[0]) || {};
-            // ĐÃ SỬA LẠI THEO ĐÚNG MẪU CT01 THẬT ban hành kèm TT116/2026/TT-BCA (bản trước đây tự dựng theo
-            // cấu trúc I/II/III là SAI — mẫu thật đánh số phẳng 1-11, có đủ 3 khối "Ý kiến đồng ý" mà bản cũ
-            // hoàn toàn thiếu — đây là phần bắt buộc về mặt pháp lý khi đăng ký/xóa đăng ký cư trú).
+            // SỬA ĐÚNG THEO FILE CT01 THẬT ĐƠN VỊ ĐANG DÙNG (đối chiếu trực tiếp file .docx, không qua nguồn
+            // tham khảo web nữa) — 3 điểm sai trước đó: (1) dòng "Mẫu CT01 ban hành kèm theo..." phải nằm
+            // TRÊN Quốc hiệu, không phải dưới tiêu đề; (2) Số định danh cá nhân (mục 4, 9) phải là lưới 12 ô
+            // vuông từng số, không phải 1 ô trống; (3) khối ký tên là 1 HÀNG 4 CỘT chung (Chủ hộ | Chủ sở hữu
+            // chỗ ở | Cha mẹ/giám hộ | Người kê khai), không tách "Người kê khai" ra riêng ở trên.
+            const oSo12 = (giaTri) => {
+                const s = (giaTri || '').replace(/\D/g, '').padEnd(12, ' ').slice(0, 12);
+                return [...s].map(c => `<span class="o-so">${c.trim()}</span>`).join('');
+            };
             const html = `
                 <h1>Tờ khai thay đổi thông tin cư trú</h1>
-                <div class="ma-mau">(Mẫu CT01 — ban hành kèm theo Thông tư số 116/2026/TT-BCA ngày 29/6/2026 của Bộ trưởng Bộ Công an)</div>
-                <div class="truong"><span class="nhan">Kính gửi:</span> Công an ${escHtml(khuVucHienTai)}</div>
-                <div class="truong"><span class="nhan">Loại thủ tục đề nghị giải quyết:</span> ${escHtml(loaiThuTuc)}</div>
+                <div class="truong"><span class="nhan">Kính gửi</span><sup>(1)</sup>: Công an ${escHtml(khuVucHienTai)}</div>
                 <table>
-                    <tr><td class="nhan" style="width:30%">1. Họ, chữ đệm và tên khai sinh</td><td colspan="3">${escHtml(chuHoObj.hoTen || ho.chuHo || '')}</td></tr>
+                    <tr><td class="nhan" style="width:30%">1. Họ, chữ đệm và tên</td><td colspan="3">${escHtml((chuHoObj.hoTen || ho.chuHo || '').toUpperCase())}</td></tr>
                     <tr><td class="nhan">2. Ngày, tháng, năm sinh</td><td style="width:20%">${escHtml(chuHoObj.ngaySinh || '')}</td>
                         <td class="nhan" style="width:20%">3. Giới tính</td><td>${escHtml(chuHoObj.gioiTinh || '')}</td></tr>
-                    <tr><td class="nhan">4. Số định danh cá nhân</td><td colspan="3">${escHtml(chuHoObj.cccd || '')}</td></tr>
+                    <tr><td class="nhan">4. Số định danh cá nhân</td><td colspan="3">${oSo12(chuHoObj.cccd)}</td></tr>
                     <tr><td class="nhan">5. Số điện thoại liên hệ</td><td>${escHtml(chuHoObj.sdt || '')}</td>
                         <td class="nhan">6. Email</td><td></td></tr>
-                    <tr><td class="nhan">7. Họ, chữ đệm và tên chủ hộ</td><td colspan="3">${escHtml(ho.chuHo || '')}</td></tr>
+                    <tr><td class="nhan">7. Họ, chữ đệm và tên chủ hộ<sup>(2)</sup></td><td colspan="3">${escHtml(ho.chuHo || '')}</td></tr>
                     <tr><td class="nhan">8. Mối quan hệ với chủ hộ</td><td>${escHtml(chuHoObj.quanHe || '')}</td>
-                        <td class="nhan">9. Số định danh cá nhân của chủ hộ</td><td>${escHtml(chuHoObj.cccd || '')}</td></tr>
-                    <tr><td class="nhan">10. Nội dung đề nghị</td><td colspan="3" style="height:55px;">${escHtml(loaiThuTuc)} — Địa chỉ: ${escHtml(ho.diaChi || '')}</td></tr>
+                        <td class="nhan">9. Số định danh cá nhân của chủ hộ</td><td>${oSo12(chuHoObj.cccd)}</td></tr>
+                    <tr><td class="nhan">10. Nội dung đề nghị<sup>(3)</sup></td><td colspan="3" style="height:45px;">${escHtml(loaiThuTuc)} tại ${escHtml(ho.diaChi || '')}</td></tr>
                 </table>
                 <table>
                     <tr><th colspan="6">11. Những thành viên trong hộ gia đình cùng thay đổi</th></tr>
                     <tr><th>TT</th><th>Họ, chữ đệm và tên</th><th>Ngày, tháng, năm sinh</th><th>Giới tính</th><th>Số định danh cá nhân</th><th>Mối quan hệ với chủ hộ</th></tr>
                     ${(ho.thanhVien || []).map((tv, i) => `<tr><td>${i + 1}</td><td>${escHtml(tv.hoTen || '')}</td><td>${escHtml(tv.ngaySinh || '')}</td><td>${escHtml(tv.gioiTinh || '')}</td><td>${escHtml(tv.cccd || '')}</td><td>${escHtml(tv.quanHe || '')}</td></tr>`).join('')}
                 </table>
-                <div class="ky-ten" style="margin-top:24px;">
-                    <div style="width:100%;text-align:right;"><div class="ngay">......., ngày ...... tháng ...... năm ..........</div><b>NGƯỜI KÊ KHAI</b><br>(Ký, ghi rõ họ tên)</div>
-                </div>
-                <table style="margin-top:26px;">
+                <table style="margin-top:22px;">
                     <tr>
-                        <th style="width:33.3%">Ý KIẾN CỦA CHỦ HỘ</th>
-                        <th style="width:33.3%">Ý KIẾN CỦA CHỦ SỞ HỮU CHỖ Ở HỢP PHÁP</th>
-                        <th style="width:33.4%">Ý KIẾN CỦA CHA HOẶC MẸ HOẶC NGƯỜI GIÁM HỘ</th>
+                        <td style="border:none;text-align:center;font-style:italic;font-size:11.5px;">......,ngày...tháng...năm...</td>
+                        <td style="border:none;text-align:center;font-style:italic;font-size:11.5px;">......,ngày...tháng...năm...</td>
+                        <td style="border:none;text-align:center;font-style:italic;font-size:11.5px;">......,ngày...tháng...năm...</td>
+                        <td style="border:none;text-align:center;font-style:italic;font-size:11.5px;">......,ngày...tháng...năm...</td>
                     </tr>
                     <tr>
-                        <td style="height:70px;">Họ và tên: ..............................<br><br>Số định danh cá nhân: ..............................</td>
-                        <td style="height:70px;">Họ và tên: ..............................<br><br>Số định danh cá nhân: ..............................</td>
-                        <td style="height:70px;">Họ và tên: ..............................<br><br>Số định danh cá nhân: ..............................</td>
-                    </tr>
-                    <tr>
-                        <td style="text-align:center;">......., ngày .... tháng .... năm ....</td>
-                        <td style="text-align:center;">......., ngày .... tháng .... năm ....</td>
-                        <td style="text-align:center;">......., ngày .... tháng .... năm ....</td>
+                        <td style="width:25%;height:80px;text-align:center;vertical-align:top;"><b>Ý KIẾN CỦA CHỦ HỘ</b><sup>(4)</sup></td>
+                        <td style="width:25%;height:80px;text-align:center;vertical-align:top;"><b>Ý KIẾN CỦA CHỦ SỞ HỮU CHỖ Ở HỢP PHÁP</b><sup>(5)</sup></td>
+                        <td style="width:25%;height:80px;text-align:center;vertical-align:top;"><b>Ý KIẾN CỦA CHA, MẸ HOẶC NGƯỜI GIÁM HỘ</b><sup>(6)</sup></td>
+                        <td style="width:25%;height:80px;text-align:center;vertical-align:top;"><b>NGƯỜI KÊ KHAI</b><sup>(7)</sup></td>
                     </tr>
                 </table>
-                <div class="ghi-chu-cuoi">Chỉ điền khối "Ý kiến" tương ứng với trường hợp thực tế cần xin ý kiến đồng ý (VD: đăng ký ở nhờ cần ý kiến chủ hộ + chủ sở hữu chỗ ở; người dưới 18 tuổi cần ý kiến cha/mẹ/người giám hộ). Không bắt buộc chữ ký tay — có thể xác nhận qua VNeID/Cổng dịch vụ công theo đúng Thông tư 116/2026/TT-BCA.</div>`;
-            moCuaSoInBieuMau("CT01 - " + (ho.chuHo || ''), html);
+                <div class="ghi-chu-cuoi">(1) Cơ quan đăng ký cư trú. (2) Trường hợp đăng ký thường trú, đăng ký tạm trú, tách hộ ghi thông tin chủ hộ gia đình mới. (3) Ghi rõ ràng, cụ thể nội dung đề nghị. (4)(5)(6) Chỉ điền khối ý kiến tương ứng với trường hợp thực tế cần xin ý kiến đồng ý. Không bắt buộc chữ ký tay — có thể xác nhận qua VNeID/Cổng dịch vụ công theo đúng Thông tư 116/2026/TT-BCA.</div>`;
+            moCuaSoInBieuMau("CT01 - " + (ho.chuHo || ''), html, { dongTrenQuocHieu: 'Mẫu CT01 ban hành kèm theo Thông tư số 116/2026/TT-BCA<br>ngày 29 tháng 6 năm 2026 của Bộ trưởng Bộ Công an' });
             ghiSoGiaoNhanHoSo('CT01 - ' + loaiThuTuc, ho.chuHo || '', ho.id || '');
         }
 
