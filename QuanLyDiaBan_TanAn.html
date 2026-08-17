@@ -71,6 +71,16 @@
             #printArea, #printArea * { visibility: visible; }
             #printArea { position: absolute; left: 0; top: 0; width: 100%; background: white !important; color: black !important; padding: 20px; }
             .no-print { display: none !important; }
+            /* SỬA LỖI IN ẤN QUAN TRỌNG: modal chi tiết hộ có 2 LỚP giới hạn chiều cao lồng nhau — khung
+               ngoài (.glass-card, "max-h-[95vh] overflow-hidden") VÀ vùng trong (#printArea,
+               "overflow-y-auto") — CSS in trước đây chỉ gỡ giới hạn ở #printArea, KHÔNG đụng đến khung
+               ngoài, nên hộ có nhiều nhân khẩu (phải cuộn mới thấy hết) khi in ra GIẤY sẽ bị CẮT MẤT phần
+               nằm ngoài vùng nhìn thấy trên màn hình lúc bấm In. Giờ gỡ toàn bộ giới hạn chiều cao/tràn ở
+               MỌI cấp cha của #printArea, không chỉ riêng bản thân nó.
+            */
+            #detailModal { position: static !important; }
+            #detailModal > div { max-height: none !important; overflow: visible !important; height: auto !important; }
+            #printArea { max-height: none !important; overflow: visible !important; height: auto !important; }
             /* Khi in, các ô nhập liệu (input/select) hiển thị như CHỮ THUẦN, không còn khung/viền/mũi tên
                của ô nhập liệu — tránh hồ sơ in ra trông như 1 biểu mẫu web dở dang. */
             #printArea input, #printArea select, #printArea textarea {
@@ -3927,6 +3937,41 @@
             for (let i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; }
             return h.toString(36).toUpperCase();
         }
+
+        // ================== SINH SỐ HSCT TẠM — THAY THẾ HÀM BĂM 32-BIT DỄ TRÙNG ==================
+        // LỖ HỔNG ĐÃ TỰ PHÁT HIỆN NHƯNG TRƯỚC ĐÓ CHƯA SỬA: bamOnDinh() là hàm băm 32-bit — theo bài toán
+        // "ngày sinh trùng" (birthday paradox), chỉ cần khoảng 77.000 hộ đã có 50% khả năng va chạm. Với 1
+        // phường (~16-23 nghìn hộ) rủi ro còn thấp, nhưng đây vẫn là NỢ KỸ THUẬT THẬT cần trả, không phải chỉ
+        // để "phòng xa toàn quốc". Thay bằng bộ đếm tăng dần LƯU TRÊN FIRESTORE (transaction — đảm bảo không
+        // 2 người bấm cùng lúc mà bị trùng số), tiền tố "TAM-" để CSKV nhận biết ngay đây là mã PHẦN MỀM tự
+        // sinh khi chưa có số HSCT thật (số HSCT chính thức vẫn phải do đúng thủ tục cấp — phần mềm không có
+        // thẩm quyền "phát minh" ra số hồ sơ chính thức thay cơ quan có thẩm quyền).
+        async function sinhHSCTTam(phuong) {
+            const maPhuongRutGon = boDauTiengViet(phuong || khuVucHienTai).replace(/[^a-z0-9]/gi, '').slice(0, 8).toUpperCase();
+            if (CHE_DO_FIREBASE) {
+                try {
+                    const counterRef = dbFirestore.collection('counters').doc('hsct_' + maPhuongRutGon);
+                    const soMoi = await dbFirestore.runTransaction(async (tx) => {
+                        const doc = await tx.get(counterRef);
+                        const hienTai = doc.exists ? (doc.data().soThuTu || 0) : 0;
+                        const ke = hienTai + 1;
+                        tx.set(counterRef, { soThuTu: ke, phuong: phuong || khuVucHienTai }, { merge: true });
+                        return ke;
+                    });
+                    return 'TAM-' + maPhuongRutGon + '-' + String(soMoi).padStart(6, '0');
+                } catch (err) {
+                    console.warn('Không tạo được số đếm trên máy chủ, dùng phương án dự phòng cục bộ:', err.message);
+                    // rơi xuống nhánh cục bộ bên dưới nếu transaction lỗi (VD mất mạng giữa chừng)
+                }
+            }
+            // Chế độ cục bộ (hoặc dự phòng khi lỗi mạng) — đếm lưu trong localStorage, phạm vi theo TỪNG máy,
+            // vẫn đảm bảo không trùng trong phạm vi máy đó (tốt hơn hẳn hash 32-bit dù không đồng bộ đa máy).
+            const key = 'hsctCounterLocal_' + maPhuongRutGon;
+            const ke = (parseInt(localStorage.getItem(key) || '0', 10) || 0) + 1;
+            localStorage.setItem(key, String(ke));
+            return 'TAM-' + maPhuongRutGon + '-' + String(ke).padStart(6, '0');
+        }
+
         // Nhận diện PHƯỜNG hay XÃ chỉ từ đúng tiền tố tên gọi chính thức ("Phường ..." / "Xã ...") — không
         // dùng danh sách liệt kê cứng 103 đơn vị (dễ sai sót/thiếu sót khi nhập dần), mà dựa vào QUY TẮC ĐẶT
         // TÊN CHÍNH THỨC luôn nhất quán theo đúng Nghị quyết 1668/NQ-UBTVQH15 — tự đúng cho MỌI đơn vị mới
@@ -4226,7 +4271,7 @@
                             if (phuongXaGoc && !phuongTuFile) soHoPhuongKhongTraDuoc++;
                             else if (phuongTuFile && phuongTuFile !== khuVucHienTai) soHoPhuongKhacHienTai++;
                             mapHoMoi[key] = { 
-                                hsct: (dienNV === 'Thường trú') ? (hsct || ('HS-' + bamOnDinh(khuVucHienTai + '|' + chuHoFinal + '|' + diaChiGoc))) : hsct,
+                                hsct: (dienNV === 'Thường trú') ? (hsct || (await sinhHSCTTam(phuongTuFile || khuVucHienTai))) : hsct,
                                 // SỬA THEO ĐÚNG NGHIỆP VỤ: chỉ diện THƯỜNG TRÚ mới có "Số HSCT" (Hồ sơ cư trú)
                                 // theo quy định — Tạm trú/Lưu trú/NOHN đăng ký theo cơ chế khác, KHÔNG có số
                                 // HSCT. Trước đây phần mềm tự sinh mã "HS-xxxxxxxx" cho MỌI diện khi thiếu HSCT,
@@ -5442,7 +5487,7 @@
             const chuHoMoiTen = ho.thanhVien[chuHoMoiIdx].hoTen;
             const hoMoi = {
                 phuong: khuVucHienTai, diaChi: diaChiMoi, chuHo: chuHoMoiTen, dienNghiepVu: dienNVMoi,
-                hsct: (dienNVMoi === 'Thường trú') ? ('HS-' + bamOnDinh(khuVucHienTai + '|' + chuHoMoiTen + '|' + diaChiMoi + '|' + Date.now())) : '',
+                hsct: (dienNVMoi === 'Thường trú') ? (await sinhHSCTTam(khuVucHienTai)) : '',
                 thanhVien: thanhVienTach, tachTuHoId: ho.id, tachTuHsct: ho.hsct || '',
                 nguoiTao: currentUser.email.toLowerCase(), capNhatLuc: firebase.firestore.FieldValue.serverTimestamp()
             };
@@ -5516,7 +5561,7 @@
                 dienNghiepVu: dienNV,
                 // Đồng bộ đúng quy tắc đã sửa trước đó: chỉ Thường trú mới có HSCT (sinh mã nếu bỏ trống);
                 // Tạm trú/Lưu trú/NOHN để trống theo đúng nghiệp vụ.
-                hsct: (dienNV === 'Thường trú') ? (hsctNhap || ('HS-' + bamOnDinh(khuVucHienTai + '|' + chuHo + '|' + diaChi + '|' + Date.now()))) : hsctNhap,
+                hsct: (dienNV === 'Thường trú') ? (hsctNhap || (await sinhHSCTTam(khuVucHienTai))) : hsctNhap,
                 ngayHetHan: document.getElementById('themHo_ngayHetHan').value || '',
                 thanhVien: thanhVienHopLe,
                 nguoiTao: currentUser.email.toLowerCase(),
@@ -6534,9 +6579,23 @@
                 : ds.map(k => `<span class="inline-block bg-gray-800 rounded px-1.5 py-0.5 mr-1 mb-1">${escHtml(k.loaiBieuMau)} — ${new Date(k.ngayGiao).toLocaleDateString('vi-VN')}</span>`).join('');
         }
 
-        function moCuaSoInBieuMau(tieuDeCuaSo, noiDungHTML) {
+        function moCuaSoInBieuMau(tieuDeCuaSo, noiDungHTML, opts = {}) {
             const cua = window.open('', '_blank', 'width=900,height=1000');
             if (!cua) { alert('Trình duyệt đang chặn cửa sổ mới — vui lòng cho phép popup để in biểu mẫu.'); return; }
+            // SỬA ĐÚNG THỂ THỨC: mặc định Quốc hiệu/Tiêu ngữ căn giữa (đúng cho CT01/CT03...), nhưng mẫu DC01
+            // theo ĐÚNG bản gốc lại có khối "Tỉnh/thành phố... — Xã/phường..." đặt SONG SONG bên trái Quốc
+            // hiệu (dạng bảng 2 cột như tiêu đề công văn), KHÔNG phải xếp trên-dưới như các mẫu khác. Cho phép
+            // truyền opts.khoiTieuDeTrai để ghi đè đúng bố cục này khi cần.
+            const khoiQuocHieu = opts.khoiTieuDeTrai
+                ? `<table style="border:none;margin-bottom:6px;"><tr>
+                       <td style="border:none;width:50%;vertical-align:top;font-weight:normal;padding:0;">${opts.khoiTieuDeTrai}</td>
+                       <td style="border:none;width:50%;vertical-align:top;padding:0;">
+                           <div class="quoc-hieu">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                           <div class="tieu-ngu">Độc lập - Tự do - Hạnh phúc</div>
+                       </td>
+                   </tr></table>`
+                : `<div class="quoc-hieu">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                   <div class="tieu-ngu">Độc lập - Tự do - Hạnh phúc</div>`;
             cua.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${tieuDeCuaSo}</title>
             <style>
                 @page { size: A4; margin: 18mm 20mm; }
@@ -6557,8 +6616,7 @@
                 .ghi-chu-cuoi { margin-top: 18px; font-size: 10.5px; font-style: italic; color: #444; }
                 @media print { .khong-in { display: none; } }
             </style></head><body>
-            <div class="quoc-hieu">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
-            <div class="tieu-ngu">Độc lập - Tự do - Hạnh phúc</div>
+            ${khoiQuocHieu}
             ${noiDungHTML}
             <div class="khong-in" style="text-align:center;margin-top:24px;">
                 <button onclick="window.print()" style="padding:8px 20px;font-size:14px;cursor:pointer;">🖨️ In biểu mẫu này</button>
@@ -6648,27 +6706,27 @@
         function xuatDC01(tvIndex) {
             const ho = danhSachHoGiaDinh[currentSelectedHoIndex];
             const tv = ho.thanhVien[tvIndex];
-            // ĐÃ SỬA LẠI THEO ĐÚNG MẪU DC01 THẬT ban hành kèm TT118/2026/TT-BCA (bản trước đây tự dựng theo
-            // trực giác, SAI cả thứ tự lẫn số lượng mục — mẫu thật có đúng 25 mục đánh số, không phải cấu
-            // trúc tự do như bản cũ). Số ĐDCN vẫn dùng chung ô CCCD hiện có (số định danh cá nhân 12 số =
-            // đồng thời là số trên thẻ CCCD hiện hành, đúng quy định).
+            // SỬA ĐÚNG THEO VĂN BẢN GỐC (đã đối chiếu lại toàn văn, không qua bài tóm tắt) — 2 điểm sai
+            // trước đó: (1) khối tiêu đề "Tỉnh/thành phố... — Xã/phường..." phải đặt SONG SONG bên trái Quốc
+            // hiệu (bảng 2 cột kiểu công văn), không phải xếp phía dưới; (2) thiếu đúng số thứ tự ghi chú
+            // (1)-(6) và dòng ghi chú dấu (*) ở cuối văn bản gốc.
             const laNam = (tv.gioiTinh || '').toLowerCase() === 'nam';
+            const khoiTieuDeTrai = `<div>Tỉnh/thành phố: TP. Cần Thơ</div><div>Xã/phường/đặc khu: ${escHtml(khuVucHienTai)}</div>`;
             const html = `
                 <h1>Phiếu thu thập thông tin dân cư</h1>
-                <div class="ma-mau">(Mẫu DC01 — ban hành kèm theo Thông tư số 118/2026/TT-BCA ngày 29/6/2026 của Bộ trưởng Bộ Công an)</div>
-                <div class="truong"><span class="nhan">Tỉnh/thành phố:</span> TP. Cần Thơ &nbsp;&nbsp; <span class="nhan">Xã/phường/đặc khu:</span> ${escHtml(khuVucHienTai)}</div>
+                <div class="ma-mau">Mẫu DC01 ban hành kèm theo Thông tư số 118/2026/TT-BCA<br>ngày 29 tháng 6 năm 2026 của Bộ trưởng Bộ Công an</div>
                 <table>
-                    <tr><td class="nhan" style="width:26%">1. Họ, chữ đệm và tên khai sinh</td><td colspan="3">${escHtml(tv.hoTen || '')}</td></tr>
+                    <tr><td class="nhan" style="width:26%">1. Họ, chữ đệm và tên khai sinh<sup>(1)</sup></td><td colspan="3">${escHtml((tv.hoTen || '').toUpperCase())}</td></tr>
                     <tr><td class="nhan">2. Tên gọi khác</td><td style="width:24%"></td>
-                        <td class="nhan" style="width:24%">3. Số định danh cá nhân</td><td>${escHtml(tv.cccd || '')}</td></tr>
+                        <td class="nhan" style="width:24%">3. Số ĐDCN</td><td>${escHtml(tv.cccd || '')}</td></tr>
                     <tr><td class="nhan">4. Ngày, tháng, năm sinh</td><td>${escHtml(tv.ngaySinh || '')}</td>
                         <td class="nhan">5. Giới tính</td><td>☐ Nam ${laNam ? '(✓)' : ''} &nbsp;&nbsp; ☐ Nữ ${!laNam && tv.gioiTinh ? '(✓)' : ''}</td></tr>
-                    <tr><td class="nhan">6. Nơi sinh</td><td colspan="3"></td></tr>
-                    <tr><td class="nhan">7. Nơi đăng ký khai sinh</td><td colspan="3"></td></tr>
-                    <tr><td class="nhan">8. Quê quán</td><td colspan="3">${escHtml(tv.queQuan || '')}</td></tr>
+                    <tr><td class="nhan">6. Nơi sinh<sup>(2)</sup></td><td colspan="3"></td></tr>
+                    <tr><td class="nhan">7. Nơi đăng ký khai sinh<sup>(2)</sup></td><td colspan="3"></td></tr>
+                    <tr><td class="nhan">8. Quê quán<sup>(2)</sup></td><td colspan="3">${escHtml(tv.queQuan || '')}</td></tr>
                     <tr><td class="nhan">9. Dân tộc</td><td>${escHtml(tv.danToc || 'Kinh')}</td>
                         <td class="nhan">10. Tôn giáo</td><td>${escHtml(tv.tonGiao || 'Không')}</td></tr>
-                    <tr><td class="nhan">11. Quốc tịch</td><td colspan="3">☑ Việt Nam &nbsp;&nbsp; Quốc tịch khác: ..........................</td></tr>
+                    <tr><td class="nhan">11. Quốc tịch<sup>(3)</sup></td><td colspan="3">☑ Việt Nam &nbsp;&nbsp; Quốc tịch khác: ....................<sup>(4)</sup></td></tr>
                     <tr><td class="nhan">12. Nhóm máu</td><td>......................</td>
                         <td class="nhan">13. Số CMND 09 số</td><td></td></tr>
                 </table>
@@ -6678,11 +6736,11 @@
                     ${[1, 2, 3].map(i => `<tr><td>${i}</td><td></td><td></td><td></td><td></td><td></td></tr>`).join('')}
                 </table>
                 <table>
-                    <tr><td class="nhan" style="width:26%">15. Hộ chiếu/giấy tờ đi lại quốc tế (nếu có)</td><td colspan="3"></td></tr>
-                    <tr><td class="nhan">16. Địa chỉ cư trú tại nước ngoài (nếu có)</td><td colspan="3"></td></tr>
-                    <tr><td class="nhan">17. Nơi thường trú</td><td colspan="3">${escHtml((ho.dienNghiepVu === 'Thường trú' ? ho.diaChi : '') || '')}</td></tr>
-                    <tr><td class="nhan">18. Nơi tạm trú</td><td colspan="3">${escHtml((ho.dienNghiepVu === 'Tạm trú' || ho.dienNghiepVu === 'Lưu trú' ? ho.diaChi : '') || '')}</td></tr>
-                    <tr><td class="nhan">19. Nơi ở hiện tại (nếu khác 17, 18)</td><td colspan="3">${escHtml(ho.diaChi || '')}</td></tr>
+                    <tr><td class="nhan" style="width:26%">15. Hộ chiếu hoặc giấy tờ có giá trị đi lại quốc tế do nước ngoài cấp (nếu có)</td><td colspan="3"></td></tr>
+                    <tr><td class="nhan">16. Địa chỉ cư trú tại nước ngoài (đối với người VN học tập/làm việc dài hạn, sinh sống, định cư ở nước ngoài)</td><td colspan="3"></td></tr>
+                    <tr><td class="nhan">17. Nơi thường trú<sup>(5)</sup></td><td colspan="3">${escHtml((ho.dienNghiepVu === 'Thường trú' ? ho.diaChi : '') || '')}</td></tr>
+                    <tr><td class="nhan">18. Nơi tạm trú<sup>(5)</sup></td><td colspan="3">${escHtml((ho.dienNghiepVu === 'Tạm trú' || ho.dienNghiepVu === 'Lưu trú' ? ho.diaChi : '') || '')}</td></tr>
+                    <tr><td class="nhan">19. Nơi ở hiện tại <i>(chỉ kê khai nếu khác nơi thường trú hoặc không có nơi thường trú, nơi tạm trú)</i><sup>(5)</sup></td><td colspan="3">${escHtml(ho.diaChi || '')}</td></tr>
                     <tr><td class="nhan">20. Tình trạng hôn nhân</td><td colspan="3">☐ Chưa kết hôn &nbsp;&nbsp; ☐ Đang có vợ/chồng &nbsp;&nbsp; ☐ Đã ly hôn hoặc có vợ/chồng nhưng đã chết</td></tr>
                     <tr><td class="nhan">21. Mối quan hệ với chủ hộ</td><td colspan="3">${escHtml(tv.quanHe || '')}</td></tr>
                     <tr><td class="nhan">22. Số thuê bao di động</td><td>${escHtml(tv.sdt || '')}</td>
@@ -6694,15 +6752,27 @@
                     ${(ho.thanhVien || []).map((m, i) => `<tr><td>${i + 1}</td><td>${escHtml(m.hoTen || '')}</td><td>${escHtml(m.quanHe || '')}</td><td></td><td>${escHtml(m.cccd || '')}</td></tr>`).join('')}
                 </table>
                 <table>
-                    <tr><td class="nhan" style="width:26%">25. Số hồ sơ cư trú</td><td colspan="3">${escHtml(ho.hsct || '(không áp dụng)')}</td></tr>
+                    <tr><td class="nhan" style="width:26%">25. Số hồ sơ cư trú<sup>(6)</sup></td><td colspan="3">${escHtml(ho.hsct || '')}</td></tr>
                 </table>
-                <div class="ky-ten" style="justify-content:space-between;">
-                    <div style="width:31%"><div class="ngay">......., ngày ...... tháng ...... năm ..........</div><b>PHÊ DUYỆT CỦA<br>THỦ TRƯỞNG CƠ QUAN</b><br>(Ký, ghi rõ họ tên và đóng dấu)</div>
-                    <div style="width:31%"><div class="ngay">&nbsp;</div><b>CÁN BỘ THU THẬP</b><br>(Ký, ghi rõ họ tên)</div>
-                    <div style="width:31%"><div class="ngay">&nbsp;</div><b>NGƯỜI KÊ KHAI/<br>NGƯỜI KÊ KHAI HỘ</b><br>(Ký, ghi rõ họ tên)</div>
-                </div>
-                <div class="ghi-chu-cuoi">Các mục 2, 3 (nếu chưa có), 6, 7, 11 (quốc tịch khác), 12, 13, 15, 16, 20, 23 và mục 14 cần cán bộ phỏng vấn trực tiếp công dân và ghi tay — phần mềm hiện chưa lưu các trường này trong hồ sơ điện tử.</div>`;
-            moCuaSoInBieuMau("DC01 - " + (tv.hoTen || ''), html);
+                <table style="border:none;margin-top:20px;">
+                    <tr>
+                        <td style="border:none;width:33.3%;text-align:center;vertical-align:top;">
+                            <b>PHÊ DUYỆT<br>CỦA THỦ TRƯỞNG CƠ QUAN</b><br><i>(Ký, ghi rõ họ tên và đóng dấu)</i>
+                        </td>
+                        <td style="border:none;width:33.3%;text-align:center;vertical-align:top;">
+                            <b>CÁN BỘ THU THẬP</b><br><i>(Ký, ghi rõ họ tên)</i>
+                        </td>
+                        <td style="border:none;width:33.4%;text-align:center;vertical-align:top;">
+                            <b>NGƯỜI KÊ KHAI/<br>NGƯỜI KÊ KHAI HỘ</b><br><i>(Ký, ghi rõ họ tên)</i>
+                        </td>
+                    </tr>
+                    <tr><td style="border:none;height:55px;"></td><td style="border:none;"></td><td style="border:none;"></td></tr>
+                </table>
+                <div class="ghi-chu-cuoi">
+                    <b>Ghi chú:</b> (1) Viết in hoa đủ dấu. (2) Ghi đầy đủ địa danh hành chính cấp xã, tỉnh theo thông tin trên giấy khai sinh; trường hợp địa danh hành chính có thay đổi thì ghi theo địa danh hành chính mới. (3) Đối với người gốc Việt Nam chưa xác định được quốc tịch khi kê khai thì để trống mục này. (4) Ghi quốc tịch khác và ghi rõ tên quốc tịch nếu công dân có 02 quốc tịch trở lên. (5) Ghi rõ theo thứ tự số nhà, đường phố, xóm, làng...; thôn, ấp, bản, buôn, phum, sóc...; xã/phường/đặc khu; tỉnh/thành phố trực thuộc Trung ương. (6) Cán bộ Công an ghi mục này.
+                    <br>Các mục 2, 3 (nếu chưa có), 6, 7, 11 (quốc tịch khác), 12, 13, 15, 16, 20, 23 và mục 14 cần cán bộ phỏng vấn trực tiếp công dân và ghi tay — phần mềm hiện chưa lưu các trường này trong hồ sơ điện tử.
+                </div>`;
+            moCuaSoInBieuMau("DC01 - " + (tv.hoTen || ''), html, { khoiTieuDeTrai });
             ghiSoGiaoNhanHoSo('DC01 - Phiếu thu thập thông tin dân cư', tv.hoTen || '', ho.id || '');
         }
 
@@ -7974,7 +8044,7 @@
         }
 
         async function suaLoiHsctHangLoat(danhSachId) {
-            if (!confirm(`Sửa Số HSCT cho ${danhSachId.length} hộ đã chọn?\n\n- Hộ diện THƯỜNG TRÚ: tạo lại mã HSCT chuẩn (dạng HS-xxxxxxxx) — anh/chị nên đối chiếu sổ giấy để cập nhật đúng Số HSCT thật cho từng hộ sau khi sửa.\n- Hộ diện Tạm trú/Lưu trú/NOHN: sẽ XÓA giá trị sai và để TRỐNG (theo đúng quy định, các diện này không có Số HSCT).`)) return;
+            if (!confirm(`Sửa Số HSCT cho ${danhSachId.length} hộ đã chọn?\n\n- Hộ diện THƯỜNG TRÚ: tạo lại mã HSCT TẠM (dạng TAM-xxxxxxxx-000123) — đây chỉ là mã tạm của phần mềm, anh/chị BẮT BUỘC đối chiếu sổ giấy để cập nhật đúng Số HSCT chính thức cho từng hộ sau khi sửa.\n- Hộ diện Tạm trú/Lưu trú/NOHN: sẽ XÓA giá trị sai và để TRỐNG (theo đúng quy định, các diện này không có Số HSCT).`)) return;
             let daSua = 0;
             for (const id of danhSachId) {
                 const ho = danhSachHoGiaDinh.find(h => h.id === id);
@@ -7982,7 +8052,7 @@
                 // SỬA THEO ĐÚNG NGHIỆP VỤ: chỉ Thường trú mới sinh mã HSCT thay thế; các diện khác để trống,
                 // đồng bộ với logic tại khâu nhập Excel.
                 const hsctMoi = (ho.dienNghiepVu === 'Thường trú')
-                    ? 'HS-' + bamOnDinh((ho.phuong || khuVucHienTai) + '|' + (ho.chuHo || '') + '|' + (ho.diaChi || '') + '|' + Date.now())
+                    ? await sinhHSCTTam(ho.phuong || khuVucHienTai)
                     : '';
                 try {
                     if (CHE_DO_FIREBASE) await dbFirestore.collection('households').doc(id).update({ hsct: hsctMoi });
