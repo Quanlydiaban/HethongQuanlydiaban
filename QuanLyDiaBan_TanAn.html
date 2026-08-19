@@ -89,7 +89,7 @@
             }
         }
         .app-shell-bg {
-            background-image: linear-gradient(160deg, rgba(3,7,18,.94), rgba(9,13,22,.95), rgba(40,8,12,.92)), var(--app-bg-photo);
+            background-image: linear-gradient(160deg, rgba(3,7,18,.82), rgba(9,13,22,.84), rgba(40,8,12,.80)), var(--app-bg-photo);
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -97,6 +97,9 @@
         }
         @media print {
             .app-shell-bg { background: none !important; background-image: none !important; }
+            [id$="Modal"], #otpScreen, #loginScreen {
+                background: none !important; background-image: none !important;
+            }
         }
     </style>
 </head>
@@ -137,7 +140,7 @@
     </div>
 
     <!-- BƯỚC 2: MÃ OTP AUTHENTICATOR -->
-    <div id="otpScreen" class="fixed inset-0 bg-gray-950/90 backdrop-blur-md flex items-center justify-center z-50 p-4 hidden">
+    <div id="otpScreen" class="fixed inset-0 bg-gray-950/90 backdrop-blur-md flex items-center justify-center z-50 p-4 hidden" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4">
             <div class="text-center space-y-1">
                 <div class="bg-emerald-600/20 text-emerald-400 w-9 h-9 rounded-full flex items-center justify-center mx-auto text-base font-bold border border-emerald-500/30">🔐</div>
@@ -168,7 +171,7 @@
          trước khi được vào giao diện chính. Trước đây bước này chỉ là 1 khung nhỏ TÙY CHỌN nằm lẫn trong
          sidebar — Admin duyệt hàng loạt tài khoản (VD mở rộng toàn quốc) sẽ chỉ thấy địa chỉ Gmail trần,
          không biết là ai, thuộc Công an xã/phường nào, dễ duyệt nhầm hoặc lọt tài khoản giả mạo. ============ -->
-    <div id="gateChuaCapQuyenModal" class="fixed inset-0 bg-black/95 hidden flex items-center justify-center p-4 z-[70]">
+    <div id="gateChuaCapQuyenModal" class="fixed inset-0 bg-black/95 hidden flex items-center justify-center p-4 z-[70]" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-md rounded-xl shadow-2xl p-5 space-y-3 border border-blue-700 text-sm">
             <div class="text-center">
                 <p class="text-3xl mb-1">🪪</p>
@@ -467,7 +470,7 @@
     </div>
 
     <!-- Modal Chi tiết Hộ Khẩu -->
-    <div id="detailModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+    <div id="detailModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-6xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-gray-700">
             <div class="p-3 bg-gray-800/90 flex justify-between items-center border-b border-gray-700 no-print">
                 <h3 class="text-xs font-bold text-blue-400">Hồ Sơ Cư Trú Hộ Gia Đình</h3>
@@ -618,7 +621,7 @@
     </div>
 
     <!-- ============ XÓA HỘ / XÓA KHẨU — chọn đúng lý do theo Luật Cư trú 2020 ============ -->
-    <div id="xoaHoLyDoModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-[60]">
+    <div id="xoaHoLyDoModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-[60]" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-lg rounded-xl shadow-2xl p-4 space-y-3 border border-red-800 text-xs">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-red-400" id="xoaHoTieuDe">🗑️ Xóa hộ khẩu</h3>
@@ -642,7 +645,7 @@
     </div>
 
     <!-- ============ THÊM HỘ MỚI (nhập tay 1 hộ, không cần file Excel) ============ -->
-    <div id="themHoMoiModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50">
+    <div id="themHoMoiModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-2xl rounded-xl shadow-2xl p-4 space-y-3 border border-emerald-800 text-xs max-h-[92vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-emerald-400">➕ Thêm Hộ Mới — <span id="themHoTenPhuong"></span></h3>
@@ -670,7 +673,7 @@
     </div>
 
     <!-- ============ RÀ SOÁT TẠM TRÚ / LƯU TRÚ QUÁ HẠN (không đương nhiên xóa — cần xác minh) ============ -->
-    <div id="raSoatQuaHanModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50">
+    <div id="raSoatQuaHanModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-4xl rounded-xl shadow-2xl p-4 space-y-3 border border-amber-800 text-xs max-h-[92vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-amber-400">⏰ Rà Soát Tạm Trú / Lưu Trú Quá Hạn — <span id="raSoatQHTenPhuong"></span></h3>
@@ -684,7 +687,7 @@
     </div>
 
     <!-- ============ CT03 — KHAI BÁO TẠM VẮNG (Điều 15 TT116/2026, Điều 31 Luật Cư trú) ============ -->
-    <div id="khaiBaoTamVangModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50">
+    <div id="khaiBaoTamVangModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-4xl rounded-xl shadow-2xl p-4 space-y-3 border border-indigo-800 text-xs max-h-[92vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-indigo-400">📋 Khai Báo Tạm Vắng (CT03) — <span id="ktvTenPhuong"></span></h3>
@@ -718,7 +721,7 @@
     </div>
 
     <!-- ============ GIA HẠN TẠM TRÚ (Điều 18.4 TT116, Điều 27 Luật Cư trú) ============ -->
-    <div id="giaHanTamTruModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-[60]">
+    <div id="giaHanTamTruModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-[60]" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-md rounded-xl shadow-2xl p-4 space-y-3 border border-cyan-800 text-xs">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-cyan-400">🔄 Gia Hạn Tạm Trú</h3>
@@ -740,7 +743,7 @@
     </div>
 
     <!-- ============ TÁCH HỘ (Điều 25 Luật Cư trú, dùng biểu mẫu CT01) ============ -->
-    <div id="tachHoModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-[60]">
+    <div id="tachHoModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-[60]" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-2xl rounded-xl shadow-2xl p-4 space-y-3 border border-teal-800 text-xs max-h-[92vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-teal-400">✂️ Tách Hộ — <span id="th_tenHoGoc"></span></h3>
@@ -778,7 +781,7 @@
     </div>
 
 
-    <div id="rbacModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+    <div id="rbacModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-lg rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-blue-400">🔐 Phân Quyền & Khu Vực Phụ Trách</h3>
@@ -840,7 +843,7 @@
     </div>
 
     <!-- Modal hướng dẫn nhập file Excel -->
-    <div id="huongDanExcelModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+    <div id="huongDanExcelModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-2xl rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-blue-400">❓ Hướng Dẫn Nhập File Excel</h3>
@@ -906,7 +909,7 @@
     </div>
 
     <!-- Modal nhắc mốc tuổi đổi CCCD (14/25/40/60 tuổi) -->
-    <div id="nhacCCCDModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+    <div id="nhacCCCDModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-2xl rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[85vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-orange-400">🔔 Nhắc Mốc Tuổi Đổi CCCD (14 / 25 / 40 / 60 tuổi)</h3>
@@ -917,7 +920,7 @@
         </div>
     </div>
 
-    <div id="nhacHanTamTruModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+    <div id="nhacHanTamTruModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-2xl rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[85vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-yellow-400">🏠 Nhắc Hạn Tạm Trú / Lưu Trú Sắp Hết Hạn</h3>
@@ -928,7 +931,7 @@
         </div>
     </div>
 
-    <div id="lichKiemTraModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+    <div id="lichKiemTraModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-2xl rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[85vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-lime-400">🗓️ Lịch Kiểm Tra Định Kỳ (nhắc hàng tháng)</h3>
@@ -939,7 +942,7 @@
         </div>
     </div>
 
-    <div id="nhatKyDiaBanModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+    <div id="nhatKyDiaBanModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-3xl rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[88vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-indigo-400">📋 Nhật Ký Địa Bàn — <span id="nkTenPhuongHienTai"></span></h3>
@@ -971,7 +974,7 @@
     </div>
 
     <!-- ============ QUẢN LÝ ĐỐI TƯỢNG (KV3) — modal danh sách / mục lục ============ -->
-    <div id="doiTuongModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+    <div id="doiTuongModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-4xl rounded-xl shadow-2xl p-4 space-y-3 border border-rose-800 text-xs max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-rose-400">🗂️ Quản Lý Đối Tượng (KV3) — <span id="dtTenPhuongHienTai"></span></h3>
@@ -993,7 +996,7 @@
     </div>
 
     <!-- ============ QUẢN LÝ ĐỐI TƯỢNG (KV3) — modal chi tiết 1 đối tượng (đúng 19 trường mẫu giấy) ============ -->
-    <div id="doiTuongFormModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50">
+    <div id="doiTuongFormModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-3xl rounded-xl shadow-2xl p-4 space-y-3 border border-rose-800 text-xs max-h-[92vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-rose-400" id="dtFormTieuDe">➕ Thêm Đối Tượng Quản Lý (KV3)</h3>
@@ -1099,7 +1102,7 @@
         </div>
     </div>
 
-    <div id="banGiaoModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50">
+    <div id="banGiaoModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-md rounded-xl shadow-2xl p-4 space-y-3 border border-teal-800 text-xs">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-teal-400">🔄 Bàn Giao Địa Bàn</h3>
@@ -1126,7 +1129,7 @@
     </div>
 
     <!-- ============ RÀ SOÁT & SỬA DỮ LIỆU LỖI (HSCT bị nhầm địa chỉ, thiếu khu vực...) ============ -->
-    <div id="raSoatLoiModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50">
+    <div id="raSoatLoiModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-3xl rounded-xl shadow-2xl p-4 space-y-3 border border-amber-800 text-xs max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-amber-400">🔧 Rà Soát & Sửa Dữ Liệu Lỗi — <span id="raSoatTenPhuong"></span></h3>
@@ -1156,7 +1159,7 @@
         </div>
     </div>
 
-    <div id="xoaDuLieuModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50">
+    <div id="xoaDuLieuModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-md rounded-xl shadow-2xl p-4 space-y-3 border border-rose-800 text-xs">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-rose-400">🗑️ Xóa Dữ Liệu — Chọn Đúng Phạm Vi</h3>
@@ -1181,7 +1184,7 @@
         </div>
     </div>
 
-    <div id="soTayPhapLyModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+    <div id="soTayPhapLyModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-3xl rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[88vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-amber-400">📖 Sổ Tay Tra Cứu Nhanh — Luật Cư Trú & TT116/2026/TT-BCA</h3>
@@ -1193,7 +1196,7 @@
         </div>
     </div>
 
-    <div id="qrHoSoModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-[60]">
+    <div id="qrHoSoModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-[60]" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-xs rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs text-center">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-indigo-400">📱 Mã QR Hồ Sơ</h3>
@@ -1206,7 +1209,7 @@
         </div>
     </div>
 
-    <div id="kyBaoCaoModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+    <div id="kyBaoCaoModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-sm rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-cyan-400">📈 Chọn Kỳ Báo Cáo</h3>
@@ -1225,7 +1228,7 @@
         </div>
     </div>
 
-    <div id="doiMatKhauModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+    <div id="doiMatKhauModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-sm rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-slate-300">🔑 Đổi Mật Khẩu</h3>
@@ -1240,7 +1243,7 @@
         </div>
     </div>
 
-    <div id="danhBaCongAnModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+    <div id="danhBaCongAnModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-3xl rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[88vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-red-400">📇 Danh Bạ Trụ Sở Công An Các Phường</h3>
@@ -1261,7 +1264,7 @@
         </div>
     </div>
 
-    <div id="timToanThanhPhoModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+    <div id="timToanThanhPhoModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-5xl rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-fuchsia-400">🌆 Tìm Kiếm Toàn 103 Phường/Xã (PC06)</h3>
@@ -1275,7 +1278,7 @@
         </div>
     </div>
 
-    <div id="dashboardModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+    <div id="dashboardModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-6xl rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[92vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <div>
@@ -1289,7 +1292,7 @@
     </div>
 
     <!-- ============ PHÂN TÍCH DỮ LIỆU (Data Analytics) — Cư trú theo khu vực & toàn thành phố ============ -->
-    <div id="phanTichModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+    <div id="phanTichModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-7xl rounded-xl shadow-2xl p-4 space-y-3 border border-teal-800 text-xs max-h-[94vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <div>
@@ -1302,7 +1305,7 @@
         </div>
     </div>
 
-    <div id="nhatKyModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+    <div id="nhatKyModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-4xl rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[85vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h3 class="font-bold text-slate-300">📜 Nhật Ký Hoạt Động</h3>
