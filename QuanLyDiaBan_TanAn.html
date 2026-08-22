@@ -248,6 +248,8 @@
                 <button onclick="moModalLichKiemTraDinhKy()" class="bg-lime-700 hover:bg-lime-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🗓️ Lịch Kiểm Tra Định Kỳ</button>
                 <button onclick="moModalNhatKyDiaBan()" class="bg-indigo-700 hover:bg-indigo-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📋 Nhật Ký Địa Bàn</button>
                 <button onclick="moModalDoiTuong()" class="bg-rose-700 hover:bg-rose-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🗂️ Quản Lý Đối Tượng (KV3)</button>
+                <button onclick="moModalNguoiNuocNgoai()" class="bg-sky-700 hover:bg-sky-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🌏 Người Nước Ngoài</button>
+                <button onclick="moModalTiepCongDan()" class="bg-violet-700 hover:bg-violet-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🗣️ Sổ Tiếp Công Dân</button>
                 <button onclick="moDashboard()" class="bg-fuchsia-700 hover:bg-fuchsia-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📊 Dashboard</button>
                 <button onclick="moPhanTichDuLieu()" class="bg-teal-700 hover:bg-teal-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📈 Phân Tích Dữ Liệu</button>
                 <button id="btnDongBoDuLieuCu" onclick="dongBoDuLieuCuLenMayChu()" class="hidden bg-amber-600 hover:bg-amber-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">⬆️ Đồng Bộ Dữ Liệu Cũ Lên Máy Chủ</button>
@@ -604,6 +606,7 @@
                 <div class="flex gap-2">
                     <button onclick="moModalXoaHo()" class="che-do-chi-xem-an bg-red-900 hover:bg-red-800 px-3 py-1.5 rounded transition text-red-200 text-xs font-medium">🗑️ Xóa Toàn Bộ Hộ Này</button>
                     <button onclick="moModalXuatCT01()" class="che-do-chi-xem-an bg-indigo-900 hover:bg-indigo-800 px-3 py-1.5 rounded transition text-indigo-200 text-xs font-medium">📝 Xuất CT01</button>
+                    <button onclick="moModalXuatBieuMauKhac()" class="bg-violet-900 hover:bg-violet-800 px-3 py-1.5 rounded transition text-violet-200 text-xs font-medium">📑 Biểu Mẫu Khác (CT04-CT14)</button>
                     <button id="btnGiaHanTamTru" onclick="moModalGiaHanTamTru()" class="che-do-chi-xem-an hidden bg-cyan-900 hover:bg-cyan-800 px-3 py-1.5 rounded transition text-cyan-200 text-xs font-medium">🔄 Gia Hạn Tạm Trú</button>
                     <button onclick="moModalTachHo()" class="che-do-chi-xem-an bg-teal-900 hover:bg-teal-800 px-3 py-1.5 rounded transition text-teal-200 text-xs font-medium">✂️ Tách Hộ</button>
                 </div>
@@ -1098,6 +1101,148 @@
             <div class="flex gap-2 pt-2">
                 <button onclick="luuDoiTuong()" class="flex-1 bg-rose-600 hover:bg-rose-700 rounded px-3 py-2 font-bold">💾 Lưu Hồ Sơ Đối Tượng</button>
                 <button id="dtBtnXoa" onclick="xoaDoiTuong()" class="hidden bg-red-800 hover:bg-red-700 rounded px-3 py-2 font-bold">🗑️ Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ QUẢN LÝ NGƯỜI NƯỚC NGOÀI — danh sách + tìm kiếm + nhắc hạn tạm trú ============ -->
+    <div id="nnnModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
+        <div class="glass-card w-full max-w-5xl rounded-xl shadow-2xl p-4 space-y-3 border border-sky-800 text-xs max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-sky-400">🌏 Quản Lý Người Nước Ngoài — <span id="nnnTenPhuongHienTai"></span></h3>
+                <button onclick="document.getElementById('nnnModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <p class="text-gray-400">Sổ theo dõi riêng người nước ngoài cư trú/tạm trú tại địa bàn (hộ chiếu, thị thực, mục đích nhập cảnh, cơ sở lưu trú) theo Luật Nhập cảnh, xuất cảnh, quá cảnh, cư trú của người nước ngoài tại Việt Nam. Dòng có hạn tạm trú sắp hết (≤ 7 ngày) hoặc đã quá hạn được tô màu cảnh báo.</p>
+
+            <div class="flex flex-wrap gap-1.5 items-center">
+                <input type="text" id="timKiemNNN" oninput="renderDanhSachNNN()" placeholder="🔍 Tìm theo họ tên, số hộ chiếu, quốc tịch, cơ sở lưu trú..." class="flex-1 min-w-[200px] bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                <select id="locQuocTichNNN" onchange="renderDanhSachNNN()" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <option value="">-- Tất cả quốc tịch --</option>
+                </select>
+                <label class="flex items-center gap-1 text-gray-300"><input type="checkbox" id="locSapHetHanNNN" onchange="renderDanhSachNNN()"> Chỉ hiện sắp/đã hết hạn</label>
+                <button onclick="moFormNNN(null)" class="bg-sky-600 hover:bg-sky-700 px-3 py-1.5 rounded font-bold">➕ Thêm Người Nước Ngoài</button>
+                <button onclick="xuatDanhSachNNNExcel()" class="bg-emerald-700 hover:bg-emerald-600 px-3 py-1.5 rounded font-medium">📊 Xuất Danh Sách Excel</button>
+            </div>
+
+            <div id="noiDungDanhSachNNN" class="overflow-x-auto max-h-[60vh] overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <div id="nnnFormModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
+        <div class="glass-card w-full max-w-3xl rounded-xl shadow-2xl p-4 space-y-3 border border-sky-800 text-xs max-h-[92vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-sky-400" id="nnnFormTieuDe">➕ Thêm Người Nước Ngoài</h3>
+                <button onclick="document.getElementById('nnnFormModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <input type="hidden" id="nnnId">
+
+            <div class="grid grid-cols-2 gap-2">
+                <div><label class="text-gray-400 block mb-0.5">Họ và tên (theo hộ chiếu) <span class="text-rose-500">*</span></label><input id="nnn_hoTen" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="text-gray-400 block mb-0.5">Nam/Nữ</label>
+                        <select id="nnn_gioiTinh" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"><option>Nam</option><option>Nữ</option></select></div>
+                    <div><label class="text-gray-400 block mb-0.5">Ngày sinh</label><input type="date" id="nnn_ngaySinh" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                </div>
+                <div><label class="text-gray-400 block mb-0.5">Quốc tịch <span class="text-rose-500">*</span></label><input id="nnn_quocTich" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Số điện thoại liên hệ</label><input id="nnn_soDienThoai" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+            </div>
+
+            <div class="border-t border-gray-800 pt-2 grid grid-cols-2 gap-2">
+                <p class="col-span-2 text-sky-300 font-semibold">📘 Hộ chiếu / Giấy tờ có giá trị đi lại quốc tế</p>
+                <div><label class="text-gray-400 block mb-0.5">Số hộ chiếu/giấy tờ <span class="text-rose-500">*</span></label><input id="nnn_soHoChieu" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Loại giấy tờ</label><input id="nnn_loaiGiayTo" placeholder="Hộ chiếu phổ thông / công vụ / ngoại giao..." class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Ngày cấp</label><input type="date" id="nnn_ngayCapHC" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Ngày hết hạn hộ chiếu</label><input type="date" id="nnn_ngayHetHanHC" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+            </div>
+
+            <div class="border-t border-gray-800 pt-2 grid grid-cols-2 gap-2">
+                <p class="col-span-2 text-sky-300 font-semibold">🛂 Thị thực / Nhập cảnh</p>
+                <div><label class="text-gray-400 block mb-0.5">Loại/ký hiệu thị thực</label><input id="nnn_loaiThiThuc" placeholder="VD: DL, LD1, DT..." class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Số thị thực</label><input id="nnn_soThiThuc" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Ngày nhập cảnh</label><input type="date" id="nnn_ngayNhapCanh" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Cửa khẩu nhập cảnh</label><input id="nnn_cuaKhau" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div class="col-span-2"><label class="text-gray-400 block mb-0.5">Mục đích nhập cảnh/cư trú</label><input id="nnn_mucDich" placeholder="Du lịch, lao động, đầu tư, học tập, thăm thân..." class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Hạn tạm trú đến ngày <span class="text-rose-500">*</span></label><input type="date" id="nnn_hanTamTru" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Cơ quan/tổ chức/cá nhân bảo lãnh</label><input id="nnn_nguoiBaoLanh" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+            </div>
+
+            <div class="border-t border-gray-800 pt-2 grid grid-cols-2 gap-2">
+                <p class="col-span-2 text-sky-300 font-semibold">🏨 Cơ sở lưu trú</p>
+                <div><label class="text-gray-400 block mb-0.5">Tên cơ sở lưu trú</label><input id="nnn_tenCoSoLuuTru" placeholder="Khách sạn, nhà nghỉ, nhà riêng, công ty..." class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Loại hình lưu trú</label>
+                    <select id="nnn_loaiHinhLuuTru" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                        <option value="">-- Chọn --</option><option>Khách sạn/cơ sở kinh doanh lưu trú</option><option>Nhà riêng công dân</option><option>Cơ quan/doanh nghiệp</option><option>Khác</option>
+                    </select>
+                </div>
+                <div class="col-span-2"><label class="text-gray-400 block mb-0.5">Địa chỉ lưu trú tại địa bàn <span class="text-rose-500">*</span></label><input id="nnn_diaChiLuuTru" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div class="col-span-2"><label class="text-gray-400 block mb-0.5">Ghi chú</label><textarea id="nnn_ghiChu" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></textarea></div>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button onclick="luuNNN()" class="flex-1 bg-sky-600 hover:bg-sky-700 rounded px-3 py-2 font-bold">💾 Lưu Hồ Sơ</button>
+                <button id="nnnBtnXoa" onclick="xoaNNN()" class="hidden bg-red-800 hover:bg-red-700 rounded px-3 py-2 font-bold">🗑️ Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SỔ TIẾP CÔNG DÂN ĐIỆN TỬ — ghi nhận công dân đến phản ánh/kiến nghị/khiếu nại/tố cáo ============ -->
+    <div id="tcdModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
+        <div class="glass-card w-full max-w-5xl rounded-xl shadow-2xl p-4 space-y-3 border border-violet-800 text-xs max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-violet-400">🗣️ Sổ Tiếp Công Dân Điện Tử — <span id="tcdTenPhuongHienTai"></span></h3>
+                <button onclick="document.getElementById('tcdModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <p class="text-gray-400">Ghi nhận công dân đến phản ánh, kiến nghị, khiếu nại, tố cáo tại địa bàn; theo dõi trạng thái xử lý và hạn trả lời. Dòng quá hạn trả lời hoặc sắp đến hạn (≤ 3 ngày) được tô màu cảnh báo.</p>
+
+            <div class="flex flex-wrap gap-1.5 items-center">
+                <input type="text" id="timKiemTCD" oninput="renderDanhSachTCD()" placeholder="🔍 Tìm theo họ tên, nội dung, cán bộ tiếp..." class="flex-1 min-w-[200px] bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                <select id="locTrangThaiTCD" onchange="renderDanhSachTCD()" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option>Mới</option><option>Đang xử lý</option><option>Đã xử lý</option>
+                </select>
+                <label class="flex items-center gap-1 text-gray-300"><input type="checkbox" id="locQuaHanTCD" onchange="renderDanhSachTCD()"> Chỉ hiện sắp/quá hạn trả lời</label>
+                <button onclick="moFormTCD(null)" class="bg-violet-600 hover:bg-violet-700 px-3 py-1.5 rounded font-bold">➕ Ghi Nhận Tiếp Công Dân</button>
+                <button onclick="xuatDanhSachTCDExcel()" class="bg-emerald-700 hover:bg-emerald-600 px-3 py-1.5 rounded font-medium">📊 Xuất Sổ Excel</button>
+            </div>
+
+            <div id="noiDungDanhSachTCD" class="overflow-x-auto max-h-[60vh] overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <div id="tcdFormModal" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
+        <div class="glass-card w-full max-w-2xl rounded-xl shadow-2xl p-4 space-y-3 border border-violet-800 text-xs max-h-[92vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-violet-400" id="tcdFormTieuDe">➕ Ghi Nhận Tiếp Công Dân</h3>
+                <button onclick="document.getElementById('tcdFormModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <input type="hidden" id="tcdId">
+
+            <div class="grid grid-cols-2 gap-2">
+                <div><label class="text-gray-400 block mb-0.5">Ngày tiếp <span class="text-rose-500">*</span></label><input type="date" id="tcd_ngayTiep" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Cán bộ tiếp</label><input id="tcd_canBoTiep" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Họ và tên công dân <span class="text-rose-500">*</span></label><input id="tcd_hoTenCongDan" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Số CCCD/giấy tờ</label><input id="tcd_cccd" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Địa chỉ</label><input id="tcd_diaChi" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Số điện thoại</label><input id="tcd_soDienThoai" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div><label class="text-gray-400 block mb-0.5">Hình thức</label>
+                    <select id="tcd_hinhThuc" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                        <option>Phản ánh</option><option>Kiến nghị</option><option>Khiếu nại</option><option>Tố cáo</option><option>Khác</option>
+                    </select>
+                </div>
+                <div><label class="text-gray-400 block mb-0.5">Hạn trả lời (nếu có)</label><input type="date" id="tcd_hanTraLoi" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div class="col-span-2"><label class="text-gray-400 block mb-0.5">Nội dung phản ánh/kiến nghị/khiếu nại/tố cáo <span class="text-rose-500">*</span></label><textarea id="tcd_noiDung" rows="3" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></textarea></div>
+                <div><label class="text-gray-400 block mb-0.5">Trạng thái xử lý</label>
+                    <select id="tcd_trangThai" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                        <option>Mới</option><option>Đang xử lý</option><option>Đã xử lý</option>
+                    </select>
+                </div>
+                <div><label class="text-gray-400 block mb-0.5">Ngày trả lời thực tế</label><input type="date" id="tcd_ngayTraLoi" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                <div class="col-span-2"><label class="text-gray-400 block mb-0.5">Kết quả xử lý</label><textarea id="tcd_ketQua" rows="2" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></textarea></div>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button onclick="luuTCD()" class="flex-1 bg-violet-600 hover:bg-violet-700 rounded px-3 py-2 font-bold">💾 Lưu</button>
+                <button id="tcdBtnXoa" onclick="xoaTCD()" class="hidden bg-red-800 hover:bg-red-700 rounded px-3 py-2 font-bold">🗑️ Xóa</button>
             </div>
         </div>
     </div>
@@ -6633,6 +6778,288 @@
             } catch (err) { alert("❌ Lỗi xóa: " + err.message); }
         }
 
+        // ================== QUẢN LÝ NGƯỜI NƯỚC NGOÀI ==================
+        // Phân hệ riêng cho người nước ngoài cư trú/tạm trú tại địa bàn (trước đây chỉ có ở dạng bộ lọc
+        // trong danh sách hộ khẩu chung, không đủ trường theo Luật Nhập cảnh/xuất cảnh/quá cảnh/cư trú của
+        // người nước ngoài tại VN — nay tách collection riêng "nguoi_nuoc_ngoai" với đủ trường hộ chiếu,
+        // thị thực, mục đích nhập cảnh, cơ sở lưu trú, có nhắc hạn tạm trú sắp hết/đã hết).
+        let danhSachNNN = [];
+        let huyLangNgheNNN = null;
+
+        function _soNgayConLaiNNN(hanTamTru) {
+            if (!hanTamTru) return null;
+            const homNay = new Date(); homNay.setHours(0, 0, 0, 0);
+            const han = new Date(hanTamTru); han.setHours(0, 0, 0, 0);
+            return Math.round((han - homNay) / 86400000);
+        }
+
+        function moModalNguoiNuocNgoai() {
+            if (!CHE_DO_FIREBASE) return alert("Quản lý người nước ngoài chỉ khả dụng khi đã kết nối máy chủ.");
+            document.getElementById('nnnTenPhuongHienTai').innerText = khuVucHienTai;
+            document.getElementById('nnnModal').classList.remove('hidden');
+            if (huyLangNgheNNN) huyLangNgheNNN();
+            huyLangNgheNNN = dbFirestore.collection('nguoi_nuoc_ngoai')
+                .where('phuong', '==', khuVucHienTai)
+                .onSnapshot(snap => {
+                    danhSachNNN = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+                    danhSachNNN.sort((a, b) => (a.hoTen || '').localeCompare(b.hoTen || ''));
+                    capNhatBoLocQuocTichNNN();
+                    renderDanhSachNNN();
+                }, err => {
+                    document.getElementById('noiDungDanhSachNNN').innerHTML = '<p class="text-rose-400 p-3">❌ Lỗi tải danh sách người nước ngoài: ' + escHtml(err.message) + '</p>';
+                });
+        }
+
+        function capNhatBoLocQuocTichNNN() {
+            const sel = document.getElementById('locQuocTichNNN');
+            const giaTriDangChon = sel.value;
+            const dsQuocTich = [...new Set(danhSachNNN.map(d => d.quocTich).filter(Boolean))].sort();
+            sel.innerHTML = '<option value="">-- Tất cả quốc tịch --</option>' + dsQuocTich.map(q => `<option ${q === giaTriDangChon ? 'selected' : ''}>${escHtml(q)}</option>`).join('');
+        }
+
+        function renderDanhSachNNN() {
+            const el = document.getElementById('noiDungDanhSachNNN');
+            const tuKhoa = boDauTiengViet(document.getElementById('timKiemNNN').value.trim());
+            const quocTichLoc = document.getElementById('locQuocTichNNN').value;
+            const chiSapHetHan = document.getElementById('locSapHetHanNNN').checked;
+            let ds = danhSachNNN;
+            if (quocTichLoc) ds = ds.filter(d => d.quocTich === quocTichLoc);
+            if (tuKhoa) ds = ds.filter(d => [d.hoTen, d.quocTich, d.soHoChieu, d.tenCoSoLuuTru, d.diaChiLuuTru].some(t => t && boDauTiengViet(t).includes(tuKhoa)));
+            if (chiSapHetHan) ds = ds.filter(d => { const sn = _soNgayConLaiNNN(d.hanTamTru); return sn !== null && sn <= 7; });
+            if (ds.length === 0) { el.innerHTML = '<p class="text-gray-500 p-3">Chưa có người nước ngoài nào trong danh sách.</p>'; return; }
+            el.innerHTML = `<table class="w-full text-left border-collapse">
+                <thead><tr class="text-gray-400 border-b border-gray-700">
+                    <th class="p-1.5">TT</th><th class="p-1.5">Họ và tên</th><th class="p-1.5">Quốc tịch</th><th class="p-1.5">Số hộ chiếu</th>
+                    <th class="p-1.5">Nơi lưu trú</th><th class="p-1.5">Hạn tạm trú</th><th class="p-1.5"></th>
+                </tr></thead>
+                <tbody>${ds.map((d, i) => {
+                    const soNgay = _soNgayConLaiNNN(d.hanTamTru);
+                    let lopHan = 'text-gray-300', nhanHan = '';
+                    if (soNgay !== null) {
+                        if (soNgay < 0) { lopHan = 'text-rose-400 font-bold'; nhanHan = ' (quá hạn ' + Math.abs(soNgay) + ' ngày)'; }
+                        else if (soNgay <= 7) { lopHan = 'text-amber-400 font-bold'; nhanHan = ' (còn ' + soNgay + ' ngày)'; }
+                    }
+                    const hangCanhBao = soNgay !== null && soNgay < 0 ? 'bg-rose-950/40' : (soNgay !== null && soNgay <= 7 ? 'bg-amber-950/30' : '');
+                    return `<tr class="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer ${hangCanhBao}" onclick="moFormNNN('${d.id}')">
+                        <td class="p-1.5">${i + 1}</td>
+                        <td class="p-1.5 text-white font-medium">${escHtml(d.hoTen || '')}</td>
+                        <td class="p-1.5 text-sky-300">${escHtml(d.quocTich || '')}</td>
+                        <td class="p-1.5">${escHtml(d.soHoChieu || '')}</td>
+                        <td class="p-1.5">${escHtml(d.diaChiLuuTru || '')}</td>
+                        <td class="p-1.5 ${lopHan}">${d.hanTamTru ? new Date(d.hanTamTru).toLocaleDateString('vi-VN') : '—'}${nhanHan}</td>
+                        <td class="p-1.5 text-right"><button onclick="event.stopPropagation(); moFormNNN('${d.id}')" class="text-sky-400 hover:text-sky-300">Chi tiết ▸</button></td>
+                    </tr>`;
+                }).join('')}</tbody></table>`;
+        }
+
+        const _TRUONG_NNN = ['hoTen', 'gioiTinh', 'ngaySinh', 'quocTich', 'soDienThoai', 'soHoChieu', 'loaiGiayTo', 'ngayCapHC', 'ngayHetHanHC',
+            'loaiThiThuc', 'soThiThuc', 'ngayNhapCanh', 'cuaKhau', 'mucDich', 'hanTamTru', 'nguoiBaoLanh', 'tenCoSoLuuTru', 'loaiHinhLuuTru', 'diaChiLuuTru', 'ghiChu'];
+
+        function moFormNNN(id) {
+            document.getElementById('nnnModal').classList.add('hidden');
+            const form = document.getElementById('nnnFormModal');
+            const d = id ? danhSachNNN.find(x => x.id === id) : null;
+            document.getElementById('nnnFormTieuDe').innerText = d ? '📋 Hồ Sơ: ' + d.hoTen : '➕ Thêm Người Nước Ngoài';
+            document.getElementById('nnnId').value = d ? d.id : '';
+            _TRUONG_NNN.forEach(t => {
+                const elInput = document.getElementById('nnn_' + t);
+                if (elInput) elInput.value = d ? (d[t] || '') : '';
+            });
+            document.getElementById('nnn_gioiTinh').value = d ? (d.gioiTinh || 'Nam') : 'Nam';
+            document.getElementById('nnnBtnXoa').classList.toggle('hidden', !d);
+            form.classList.remove('hidden');
+        }
+
+        async function luuNNN() {
+            if (currentUser.role === 'can_bo_du_lieu_tp') return alert("👁️ Tài khoản Cán bộ dữ liệu PC06 chỉ được XEM, không có quyền sửa hồ sơ.");
+            const hoTen = document.getElementById('nnn_hoTen').value.trim();
+            const quocTich = document.getElementById('nnn_quocTich').value.trim();
+            const soHoChieu = document.getElementById('nnn_soHoChieu').value.trim();
+            const diaChiLuuTru = document.getElementById('nnn_diaChiLuuTru').value.trim();
+            const hanTamTru = document.getElementById('nnn_hanTamTru').value;
+            if (!hoTen) return alert("Vui lòng nhập Họ và tên.");
+            if (!quocTich) return alert("Vui lòng nhập Quốc tịch.");
+            if (!soHoChieu) return alert("Vui lòng nhập Số hộ chiếu/giấy tờ.");
+            if (!diaChiLuuTru) return alert("Vui lòng nhập Địa chỉ lưu trú tại địa bàn.");
+            if (!hanTamTru) return alert("Vui lòng nhập Hạn tạm trú đến ngày.");
+            const duLieu = { phuong: khuVucHienTai, capNhatLuc: firebase.firestore.FieldValue.serverTimestamp(), capNhatBoi: currentUser.email.toLowerCase() };
+            _TRUONG_NNN.forEach(t => { const elInput = document.getElementById('nnn_' + t); if (elInput) duLieu[t] = elInput.value.trim ? elInput.value.trim() : elInput.value; });
+            try {
+                const id = document.getElementById('nnnId').value;
+                if (id) { await dbFirestore.collection('nguoi_nuoc_ngoai').doc(id).set(duLieu, { merge: true }); }
+                else { duLieu.nguoiTao = currentUser.email.toLowerCase(); await dbFirestore.collection('nguoi_nuoc_ngoai').add(duLieu); }
+                ghiNhatKy('Lưu hồ sơ người nước ngoài', hoTen);
+                document.getElementById('nnnFormModal').classList.add('hidden');
+                document.getElementById('nnnModal').classList.remove('hidden');
+            } catch (err) { alert("❌ Lỗi lưu hồ sơ: " + (err.message || err.code)); }
+        }
+
+        async function xoaNNN() {
+            if (currentUser.role === 'can_bo_du_lieu_tp') return alert("👁️ Tài khoản Cán bộ dữ liệu PC06 chỉ được XEM, không có quyền xóa hồ sơ.");
+            const id = document.getElementById('nnnId').value;
+            if (!id) return;
+            if (!confirm("Xóa hồ sơ người nước ngoài này? Không thể hoàn tác.")) return;
+            try {
+                await dbFirestore.collection('nguoi_nuoc_ngoai').doc(id).delete();
+                document.getElementById('nnnFormModal').classList.add('hidden');
+                document.getElementById('nnnModal').classList.remove('hidden');
+            } catch (err) { alert("❌ Lỗi xóa: " + err.message); }
+        }
+
+        async function xuatDanhSachNNNExcel() {
+            if (danhSachNNN.length === 0) return alert("Chưa có người nước ngoài nào để xuất.");
+            const ds = [...danhSachNNN].sort((a, b) => (a.hoTen || '').localeCompare(b.hoTen || ''));
+
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet("Nguoi_Nuoc_Ngoai");
+            let d1 = dungSheetBieuMauChuan(ws, { soCot: 8, tieuDe: "DANH SÁCH NGƯỜI NƯỚC NGOÀI CƯ TRÚ/TẠM TRÚ", donVi: "Công an " + khuVucHienTai });
+            veBangDuLieuCoKhung(ws, d1, [
+                { tieuDe: "TT", rong: 6, canGiua: true }, { tieuDe: "Họ và tên", rong: 24 }, { tieuDe: "Quốc tịch", rong: 16 },
+                { tieuDe: "Số hộ chiếu", rong: 16 }, { tieuDe: "Loại/số thị thực", rong: 18 }, { tieuDe: "Mục đích", rong: 20 },
+                { tieuDe: "Địa chỉ lưu trú", rong: 30 }, { tieuDe: "Hạn tạm trú", rong: 14 }
+            ], ds.map((d, i) => [i + 1, d.hoTen || '', d.quocTich || '', d.soHoChieu || '',
+                [d.loaiThiThuc, d.soThiThuc].filter(Boolean).join(' - '), d.mucDich || '', d.diaChiLuuTru || '', d.hanTamTru || '']));
+
+            await taiXuongWorkbookExcelJS(wb, "Nguoi_Nuoc_Ngoai_" + khuVucHienTai.replace(/\s/g, '_') + ".xlsx");
+        }
+
+        // ================== SỔ TIẾP CÔNG DÂN ĐIỆN TỬ ==================
+        // Trước đây không có công cụ riêng để ghi nhận công dân đến phản ánh/kiến nghị/khiếu nại/tố cáo —
+        // nay tách collection riêng "tiep_cong_dan", theo dõi trạng thái xử lý (Mới/Đang xử lý/Đã xử lý)
+        // và có nhắc hạn trả lời (nếu cán bộ có ấn định hạn) tương tự cách làm ở phân hệ Người Nước Ngoài.
+        let danhSachTCD = [];
+        let huyLangNgheTCD = null;
+
+        function _soNgayConLaiTCD(hanTraLoi, trangThai) {
+            if (!hanTraLoi || trangThai === 'Đã xử lý') return null;
+            const homNay = new Date(); homNay.setHours(0, 0, 0, 0);
+            const han = new Date(hanTraLoi); han.setHours(0, 0, 0, 0);
+            return Math.round((han - homNay) / 86400000);
+        }
+
+        function moModalTiepCongDan() {
+            if (!CHE_DO_FIREBASE) return alert("Sổ tiếp công dân điện tử chỉ khả dụng khi đã kết nối máy chủ.");
+            document.getElementById('tcdTenPhuongHienTai').innerText = khuVucHienTai;
+            document.getElementById('tcdModal').classList.remove('hidden');
+            if (huyLangNgheTCD) huyLangNgheTCD();
+            huyLangNgheTCD = dbFirestore.collection('tiep_cong_dan')
+                .where('phuong', '==', khuVucHienTai)
+                .onSnapshot(snap => {
+                    danhSachTCD = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+                    danhSachTCD.sort((a, b) => (b.ngayTiep || '').localeCompare(a.ngayTiep || ''));
+                    renderDanhSachTCD();
+                }, err => {
+                    document.getElementById('noiDungDanhSachTCD').innerHTML = '<p class="text-rose-400 p-3">❌ Lỗi tải Sổ tiếp công dân: ' + escHtml(err.message) + '</p>';
+                });
+        }
+
+        function renderDanhSachTCD() {
+            const el = document.getElementById('noiDungDanhSachTCD');
+            const tuKhoa = boDauTiengViet(document.getElementById('timKiemTCD').value.trim());
+            const trangThaiLoc = document.getElementById('locTrangThaiTCD').value;
+            const chiQuaHan = document.getElementById('locQuaHanTCD').checked;
+            let ds = danhSachTCD;
+            if (trangThaiLoc) ds = ds.filter(d => d.trangThai === trangThaiLoc);
+            if (tuKhoa) ds = ds.filter(d => [d.hoTenCongDan, d.noiDung, d.canBoTiep].some(t => t && boDauTiengViet(t).includes(tuKhoa)));
+            if (chiQuaHan) ds = ds.filter(d => { const sn = _soNgayConLaiTCD(d.hanTraLoi, d.trangThai); return sn !== null && sn <= 3; });
+            if (ds.length === 0) { el.innerHTML = '<p class="text-gray-500 p-3">Chưa có lượt tiếp công dân nào.</p>'; return; }
+            el.innerHTML = `<table class="w-full text-left border-collapse">
+                <thead><tr class="text-gray-400 border-b border-gray-700">
+                    <th class="p-1.5">TT</th><th class="p-1.5">Ngày tiếp</th><th class="p-1.5">Họ và tên công dân</th><th class="p-1.5">Hình thức</th>
+                    <th class="p-1.5">Nội dung</th><th class="p-1.5">Trạng thái</th><th class="p-1.5">Hạn trả lời</th><th class="p-1.5"></th>
+                </tr></thead>
+                <tbody>${ds.map((d, i) => {
+                    const soNgay = _soNgayConLaiTCD(d.hanTraLoi, d.trangThai);
+                    let lopHan = 'text-gray-300', nhanHan = '';
+                    if (soNgay !== null) {
+                        if (soNgay < 0) { lopHan = 'text-rose-400 font-bold'; nhanHan = ' (quá hạn ' + Math.abs(soNgay) + ' ngày)'; }
+                        else if (soNgay <= 3) { lopHan = 'text-amber-400 font-bold'; nhanHan = ' (còn ' + soNgay + ' ngày)'; }
+                    }
+                    const hangCanhBao = soNgay !== null && soNgay < 0 ? 'bg-rose-950/40' : (soNgay !== null && soNgay <= 3 ? 'bg-amber-950/30' : '');
+                    const lopTrangThai = d.trangThai === 'Đã xử lý' ? 'bg-emerald-900 text-emerald-300' : (d.trangThai === 'Đang xử lý' ? 'bg-amber-900 text-amber-300' : 'bg-sky-900 text-sky-300');
+                    return `<tr class="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer ${hangCanhBao}" onclick="moFormTCD('${d.id}')">
+                        <td class="p-1.5">${i + 1}</td>
+                        <td class="p-1.5">${d.ngayTiep ? new Date(d.ngayTiep).toLocaleDateString('vi-VN') : ''}</td>
+                        <td class="p-1.5 text-white font-medium">${escHtml(d.hoTenCongDan || '')}</td>
+                        <td class="p-1.5">${escHtml(d.hinhThuc || '')}</td>
+                        <td class="p-1.5 max-w-xs truncate">${escHtml((d.noiDung || '').slice(0, 60))}</td>
+                        <td class="p-1.5"><span class="px-1.5 py-0.5 rounded ${lopTrangThai}">${escHtml(d.trangThai || 'Mới')}</span></td>
+                        <td class="p-1.5 ${lopHan}">${d.hanTraLoi ? new Date(d.hanTraLoi).toLocaleDateString('vi-VN') : '—'}${nhanHan}</td>
+                        <td class="p-1.5 text-right"><button onclick="event.stopPropagation(); moFormTCD('${d.id}')" class="text-violet-400 hover:text-violet-300">Chi tiết ▸</button></td>
+                    </tr>`;
+                }).join('')}</tbody></table>`;
+        }
+
+        const _TRUONG_TCD = ['ngayTiep', 'canBoTiep', 'hoTenCongDan', 'cccd', 'diaChi', 'soDienThoai', 'hinhThuc', 'hanTraLoi', 'noiDung', 'trangThai', 'ngayTraLoi', 'ketQua'];
+
+        function moFormTCD(id) {
+            document.getElementById('tcdModal').classList.add('hidden');
+            const form = document.getElementById('tcdFormModal');
+            const d = id ? danhSachTCD.find(x => x.id === id) : null;
+            document.getElementById('tcdFormTieuDe').innerText = d ? '📋 Lượt Tiếp: ' + d.hoTenCongDan : '➕ Ghi Nhận Tiếp Công Dân';
+            document.getElementById('tcdId').value = d ? d.id : '';
+            _TRUONG_TCD.forEach(t => {
+                const elInput = document.getElementById('tcd_' + t);
+                if (elInput) elInput.value = d ? (d[t] || '') : '';
+            });
+            if (!d) {
+                document.getElementById('tcd_ngayTiep').value = new Date().toISOString().slice(0, 10);
+                document.getElementById('tcd_hinhThuc').value = 'Phản ánh';
+                document.getElementById('tcd_trangThai').value = 'Mới';
+            }
+            document.getElementById('tcdBtnXoa').classList.toggle('hidden', !d);
+            form.classList.remove('hidden');
+        }
+
+        async function luuTCD() {
+            if (currentUser.role === 'can_bo_du_lieu_tp') return alert("👁️ Tài khoản Cán bộ dữ liệu PC06 chỉ được XEM, không có quyền sửa Sổ tiếp công dân.");
+            const ngayTiep = document.getElementById('tcd_ngayTiep').value;
+            const hoTenCongDan = document.getElementById('tcd_hoTenCongDan').value.trim();
+            const noiDung = document.getElementById('tcd_noiDung').value.trim();
+            if (!ngayTiep) return alert("Vui lòng chọn Ngày tiếp.");
+            if (!hoTenCongDan) return alert("Vui lòng nhập Họ và tên công dân.");
+            if (!noiDung) return alert("Vui lòng nhập Nội dung phản ánh/kiến nghị/khiếu nại/tố cáo.");
+            const duLieu = { phuong: khuVucHienTai, capNhatLuc: firebase.firestore.FieldValue.serverTimestamp(), capNhatBoi: currentUser.email.toLowerCase() };
+            _TRUONG_TCD.forEach(t => { const elInput = document.getElementById('tcd_' + t); if (elInput) duLieu[t] = elInput.value.trim ? elInput.value.trim() : elInput.value; });
+            try {
+                const id = document.getElementById('tcdId').value;
+                if (id) { await dbFirestore.collection('tiep_cong_dan').doc(id).set(duLieu, { merge: true }); }
+                else { duLieu.nguoiTao = currentUser.email.toLowerCase(); await dbFirestore.collection('tiep_cong_dan').add(duLieu); }
+                ghiNhatKy('Ghi Sổ tiếp công dân', hoTenCongDan);
+                document.getElementById('tcdFormModal').classList.add('hidden');
+                document.getElementById('tcdModal').classList.remove('hidden');
+            } catch (err) { alert("❌ Lỗi lưu: " + (err.message || err.code)); }
+        }
+
+        async function xoaTCD() {
+            if (currentUser.role === 'can_bo_du_lieu_tp') return alert("👁️ Tài khoản Cán bộ dữ liệu PC06 chỉ được XEM, không có quyền xóa Sổ tiếp công dân.");
+            const id = document.getElementById('tcdId').value;
+            if (!id) return;
+            if (!confirm("Xóa lượt tiếp công dân này? Không thể hoàn tác.")) return;
+            try {
+                await dbFirestore.collection('tiep_cong_dan').doc(id).delete();
+                document.getElementById('tcdFormModal').classList.add('hidden');
+                document.getElementById('tcdModal').classList.remove('hidden');
+            } catch (err) { alert("❌ Lỗi xóa: " + err.message); }
+        }
+
+        async function xuatDanhSachTCDExcel() {
+            if (danhSachTCD.length === 0) return alert("Chưa có lượt tiếp công dân nào để xuất.");
+            const ds = [...danhSachTCD].sort((a, b) => (a.ngayTiep || '').localeCompare(b.ngayTiep || ''));
+
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet("So_Tiep_Cong_Dan");
+            let d1 = dungSheetBieuMauChuan(ws, { soCot: 9, tieuDe: "SỔ TIẾP CÔNG DÂN", donVi: "Công an " + khuVucHienTai });
+            veBangDuLieuCoKhung(ws, d1, [
+                { tieuDe: "TT", rong: 6, canGiua: true }, { tieuDe: "Ngày tiếp", rong: 12 }, { tieuDe: "Họ và tên công dân", rong: 24 },
+                { tieuDe: "Hình thức", rong: 14 }, { tieuDe: "Nội dung", rong: 40 }, { tieuDe: "Cán bộ tiếp", rong: 18 },
+                { tieuDe: "Trạng thái", rong: 14 }, { tieuDe: "Hạn trả lời", rong: 12 }, { tieuDe: "Kết quả xử lý", rong: 30 }
+            ], ds.map((d, i) => [i + 1, d.ngayTiep || '', d.hoTenCongDan || '', d.hinhThuc || '', d.noiDung || '',
+                d.canBoTiep || '', d.trangThai || 'Mới', d.hanTraLoi || '', d.ketQua || '']));
+
+            await taiXuongWorkbookExcelJS(wb, "So_Tiep_Cong_Dan_" + khuVucHienTai.replace(/\s/g, '_') + ".xlsx");
+        }
+
         // Xuất "Mục Lục" đúng mẫu ảnh 2 (TT, Họ và tên đối tượng, Diện đối tượng, Trang)
         // ================== HẠ TẦNG DÙNG CHUNG: IN BIỂU MẪU CHÍNH THỨC (CT01, DC01, CT03...) ==================
         // Mở cửa sổ in riêng biệt (không đụng vào trang chính) — khổ A4, font phù hợp văn bản hành chính.
@@ -6829,6 +7256,211 @@
             ghiSoGiaoNhanHoSo('CT01 - ' + loaiThuTuc, ho.chuHo || '', ho.id || '');
         }
 
+        // ==================== BIỂU MẪU CT04, CT06, CT07, CT08, CT09, CT12, CT14 ====================
+        // Bổ sung theo đề xuất — tận dụng lại đúng khung in ấn (moCuaSoInBieuMau) và Sổ giao nhận hồ sơ
+        // (ghiSoGiaoNhanHoSo/CT15) đã có sẵn cho CT01/DC01, tự động điền từ dữ liệu hộ/nhân khẩu đang mở.
+        // Các nội dung mang tính đặc thù từng vụ việc (lý do từ chối, nội dung thông báo...) mà hệ thống
+        // không có sẵn thì hỏi nhanh qua prompt() — theo đúng cách app đang làm với "Xuất CT01" (chọn thủ
+        // tục qua prompt), giữ nhất quán trải nghiệm, không phát sinh giao diện mới phức tạp.
+        const DS_BIEU_MAU_KHAC = [
+            { ma: 'CT04', ten: 'Phiếu tiếp nhận hồ sơ và hẹn trả kết quả' },
+            { ma: 'CT06', ten: 'Thông báo về việc giải quyết hồ sơ cư trú (từ chối/không tiếp nhận)' },
+            { ma: 'CT07', ten: 'Xác nhận thông tin về cư trú' },
+            { ma: 'CT08', ten: 'Thông báo về kết quả giải quyết/hủy bỏ đăng ký cư trú' },
+            { ma: 'CT09', ten: 'Quyết định về việc hủy bỏ đăng ký cư trú' },
+            { ma: 'CT12', ten: 'Phiếu đề xuất phê duyệt hồ sơ' },
+            { ma: 'CT14', ten: 'Phiếu thông báo lưu trú' }
+        ];
+        function moModalXuatBieuMauKhac() {
+            if (currentSelectedHoIndex === null) return;
+            const chon = prompt("Chọn biểu mẫu (gõ đúng số):\n" + DS_BIEU_MAU_KHAC.map((t, i) => (i + 1) + ". " + t.ma + " — " + t.ten).join("\n"));
+            const idx = parseInt(chon) - 1;
+            if (isNaN(idx) || idx < 0 || idx >= DS_BIEU_MAU_KHAC.length) return;
+            const ma = DS_BIEU_MAU_KHAC[idx].ma;
+            if (ma === 'CT04') xuatCT04();
+            else if (ma === 'CT06') xuatCT06();
+            else if (ma === 'CT07') xuatCT07();
+            else if (ma === 'CT08') xuatCT08();
+            else if (ma === 'CT09') xuatCT09();
+            else if (ma === 'CT12') xuatCT12();
+            else if (ma === 'CT14') xuatCT14();
+        }
+
+        // Lấy nhanh chủ hộ/người đại diện của hộ đang mở — dùng chung cho các hàm bên dưới.
+        function _chuHoDangMo() {
+            const ho = danhSachHoGiaDinh[currentSelectedHoIndex];
+            const chuHoObj = (ho.thanhVien && ho.thanhVien.find(tv => (tv.quanHe || '').toLowerCase().includes("chủ hộ"))) || (ho.thanhVien && ho.thanhVien[0]) || {};
+            return { ho, chuHoObj };
+        }
+
+        // ---- CT04: Phiếu tiếp nhận hồ sơ và hẹn trả kết quả (Điều 20 TT116) — xuất Excel, đồng bộ định
+        // dạng .xlsx với phần còn lại của phần mềm (theo yêu cầu, chỉ CT01/DC01 giữ nguyên bản in riêng) ----
+        async function xuatCT04() {
+            const { ho, chuHoObj } = _chuHoDangMo();
+            const noiDung = prompt("Nội dung yêu cầu giải quyết (VD: Đăng ký tạm trú, Xác nhận thông tin cư trú...):", "");
+            if (noiDung === null) return;
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet("CT04");
+            let d = dungSheetBieuMauChuan(ws, { coQuocHieu: true, soCot: 4, tieuDe: "PHIẾU TIẾP NHẬN HỒ SƠ VÀ HẸN TRẢ KẾT QUẢ", maBieuMau: "CT04", donVi: "Công an " + khuVucHienTai });
+            d = veKhoiTruongGiaTri(ws, d, 4, [
+                { nhan: "Họ và tên", giaTri: (chuHoObj.hoTen || ho.chuHo || '').toUpperCase() },
+                { nhan: "Nơi thường trú", giaTri: ho.diaChiThuongTruGoc || ho.diaChi || '' },
+                { nhan: "Nơi ở hiện tại", giaTri: ho.diaChi || '' },
+                { nhan: "Số điện thoại", giaTri: chuHoObj.sdt || '' },
+                { nhan: "Nội dung yêu cầu giải quyết", giaTri: noiDung, caoDong: 34 },
+                { nhan: "Thời gian nhận hồ sơ", giaTri: '' },
+                { nhan: "Thời gian trả kết quả giải quyết hồ sơ", giaTri: '' },
+                { nhan: "Hình thức nhận kết quả", giaTri: 'Bản giấy / Bản điện tử / Tin nhắn SMS' },
+                { nhan: "Cán bộ tiếp nhận", giaTri: currentUser.hoTen || currentUser.email || '' }
+            ]);
+            veBangDuLieuCoKhung(ws, d, [
+                { tieuDe: "TT", rong: 6, canGiua: true }, { tieuDe: "Tên giấy tờ", rong: 30 },
+                { tieuDe: "Hình thức (bản chính/bản sao/bản chụp)", rong: 30 }, { tieuDe: "Ghi chú", rong: 20 }
+            ], [1, 2, 3].map(i => [i, '', '', '']));
+            await taiXuongWorkbookExcelJS(wb, "CT04_" + (ho.chuHo || '').replace(/\s+/g, '_') + ".xlsx");
+            ghiSoGiaoNhanHoSo('CT04 - Tiếp nhận hồ sơ', ho.chuHo || '', ho.id || '');
+        }
+
+        // ---- CT06: Phiếu thông báo về việc giải quyết hồ sơ cư trú (từ chối/không tiếp nhận) — xuất Excel ----
+        async function xuatCT06() {
+            const { ho, chuHoObj } = _chuHoDangMo();
+            const lyDo = prompt("Lý do không tiếp nhận/giải quyết hồ sơ (ghi rõ căn cứ Luật Cư trú):", "");
+            if (lyDo === null || !lyDo.trim()) return alert("Cần nhập lý do để lập biểu mẫu này.");
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet("CT06");
+            let d = dungSheetBieuMauChuan(ws, { coQuocHieu: true, soCot: 4, tieuDe: "PHIẾU THÔNG BÁO VỀ VIỆC GIẢI QUYẾT HỒ SƠ CƯ TRÚ", maBieuMau: "CT06", donVi: "Công an " + khuVucHienTai });
+            veKhoiTruongGiaTri(ws, d, 4, [
+                { nhan: "Họ và tên", giaTri: (chuHoObj.hoTen || ho.chuHo || '').toUpperCase() },
+                { tieuMuc: "Căn cứ quy định của Luật Cư trú và các văn bản quy định chi tiết, hướng dẫn thi hành có liên quan, thông báo không tiếp nhận/giải quyết hồ sơ với lý do:" },
+                { nhan: "Lý do", giaTri: lyDo, caoDong: 60 },
+                { nhan: "Đại diện cơ quan đăng ký cư trú", giaTri: currentUser.hoTen || currentUser.email || '' }
+            ]);
+            await taiXuongWorkbookExcelJS(wb, "CT06_" + (ho.chuHo || '').replace(/\s+/g, '_') + ".xlsx");
+            ghiSoGiaoNhanHoSo('CT06 - Từ chối/không tiếp nhận hồ sơ', ho.chuHo || '', ho.id || '');
+        }
+
+        // ---- CT07: Xác nhận thông tin về cư trú (biểu mẫu công dân xin xác nhận hay dùng nhất) — xuất Excel ----
+        async function xuatCT07() {
+            const { ho, chuHoObj } = _chuHoDangMo();
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet("CT07");
+            let d = dungSheetBieuMauChuan(ws, { coQuocHieu: true, soCot: 4, tieuDe: "XÁC NHẬN THÔNG TIN VỀ CƯ TRÚ", maBieuMau: "CT07", donVi: "Công an " + khuVucHienTai });
+            d = veKhoiTruongGiaTri(ws, d, 4, [
+                { nhan: "1. Họ, chữ đệm và tên", giaTri: (chuHoObj.hoTen || '').toUpperCase() },
+                { nhan: "2. Ngày, tháng, năm sinh", giaTri: chuHoObj.ngaySinh || '' },
+                { nhan: "3. Giới tính", giaTri: chuHoObj.gioiTinh || '' },
+                { nhan: "4. Dân tộc", giaTri: chuHoObj.danToc || 'Kinh' },
+                { nhan: "5. Tôn giáo", giaTri: chuHoObj.tonGiao || 'Không' },
+                { nhan: "6. Quê quán", giaTri: chuHoObj.queQuan || '' },
+                { nhan: "7. Nơi thường trú", giaTri: ho.diaChiThuongTruGoc || (ho.dienNghiepVu === 'Thường trú' ? ho.diaChi : '') || '' },
+                { nhan: "8. Nơi tạm trú", giaTri: ho.dienNghiepVu === 'Tạm trú' ? (ho.diaChi || '') : '' },
+                { nhan: "9. Nơi ở hiện tại", giaTri: ho.diaChi || '' },
+                { nhan: "10. Họ, chữ đệm và tên chủ hộ", giaTri: ho.chuHo || '' },
+                { nhan: "11. Quan hệ với chủ hộ", giaTri: chuHoObj.quanHe || '' },
+                { nhan: "III. Nội dung xác nhận khác", giaTri: '' },
+                { nhan: "Giá trị sử dụng đến", giaTri: 'Hết 01 năm kể từ ngày cấp (Điều 16.3 TT116/2026/TT-BCA)' }
+            ]);
+            veBangDuLieuCoKhung(ws, d, [
+                { tieuDe: "TT", rong: 6, canGiua: true }, { tieuDe: "Họ, chữ đệm và tên", rong: 26 },
+                { tieuDe: "Ngày, tháng, năm sinh", rong: 16 }, { tieuDe: "Giới tính", rong: 10 }, { tieuDe: "Quan hệ với chủ hộ", rong: 18 }
+            ], (ho.thanhVien || []).map((tv, i) => [i + 1, tv.hoTen || '', tv.ngaySinh || '', tv.gioiTinh || '', tv.quanHe || '']));
+            await taiXuongWorkbookExcelJS(wb, "CT07_" + (ho.chuHo || '').replace(/\s+/g, '_') + ".xlsx");
+            ghiSoGiaoNhanHoSo('CT07 - Xác nhận thông tin cư trú', ho.chuHo || '', ho.id || '');
+        }
+
+        // ---- CT08: Thông báo về kết quả giải quyết, hủy bỏ đăng ký cư trú — xuất Excel ----
+        async function xuatCT08() {
+            const { ho, chuHoObj } = _chuHoDangMo();
+            const noiDung = prompt("Nội dung thông báo (VD: Đã đăng ký thường trú thành công tại...):", "");
+            if (noiDung === null || !noiDung.trim()) return alert("Cần nhập nội dung thông báo.");
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet("CT08");
+            let d = dungSheetBieuMauChuan(ws, { coQuocHieu: true, soCot: 4, tieuDe: "THÔNG BÁO VỀ KẾT QUẢ GIẢI QUYẾT, HỦY BỎ ĐĂNG KÝ CƯ TRÚ", maBieuMau: "CT08", donVi: "Công an " + khuVucHienTai });
+            veKhoiTruongGiaTri(ws, d, 4, [
+                { nhan: "Kính gửi", giaTri: (chuHoObj.hoTen || ho.chuHo || '').toUpperCase() },
+                { nhan: "1. Họ, chữ đệm và tên", giaTri: (chuHoObj.hoTen || '').toUpperCase() },
+                { nhan: "2. Ngày, tháng, năm sinh", giaTri: chuHoObj.ngaySinh || '' },
+                { nhan: "3. Giới tính", giaTri: chuHoObj.gioiTinh || '' },
+                { nhan: "4. Nội dung thông báo", giaTri: noiDung, caoDong: 45 },
+                { nhan: "Thủ trưởng cơ quan", giaTri: '' }
+            ]);
+            await taiXuongWorkbookExcelJS(wb, "CT08_" + (ho.chuHo || '').replace(/\s+/g, '_') + ".xlsx");
+            ghiSoGiaoNhanHoSo('CT08 - Thông báo kết quả giải quyết', ho.chuHo || '', ho.id || '');
+        }
+
+        // ---- CT09: Quyết định về việc hủy bỏ đăng ký cư trú (dùng khi phát hiện đăng ký sai thẩm quyền/đối tượng/điều kiện — Điều 11, Điều 13 TT116) — xuất Excel ----
+        async function xuatCT09() {
+            const { ho, chuHoObj } = _chuHoDangMo();
+            const loaiHuyBo = prompt("Hủy bỏ loại đăng ký nào? (gõ đúng số)\n1. Đăng ký thường trú\n2. Đăng ký tạm trú\n3. Thủ tục khác về cư trú", "1");
+            const dsLoai = { '1': 'đăng ký thường trú', '2': 'đăng ký tạm trú', '3': 'thủ tục khác về cư trú' };
+            const loai = dsLoai[loaiHuyBo];
+            if (!loai) return;
+            const lyDo = prompt("Lý do hủy bỏ (ghi rõ căn cứ Luật Cư trú — VD: không đúng thẩm quyền/đối tượng/điều kiện):", "");
+            if (lyDo === null || !lyDo.trim()) return alert("Cần nhập lý do để lập quyết định.");
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet("CT09");
+            let d = dungSheetBieuMauChuan(ws, { coQuocHieu: true, soCot: 4, tieuDe: "QUYẾT ĐỊNH VỀ VIỆC HỦY BỎ ĐĂNG KÝ CƯ TRÚ", maBieuMau: "CT09", donVi: "Công an " + khuVucHienTai });
+            veKhoiTruongGiaTri(ws, d, 4, [
+                { tieuMuc: "Căn cứ Luật Cư trú và các văn bản quy định chi tiết, hướng dẫn thi hành có liên quan; theo đề nghị của cán bộ đăng ký, quản lý cư trú — QUYẾT ĐỊNH:" },
+                { nhan: "Điều 1 — Hủy bỏ", giaTri: loai.charAt(0).toUpperCase() + loai.slice(1) },
+                { nhan: "Của Ông/Bà", giaTri: (chuHoObj.hoTen || ho.chuHo || '').toUpperCase() },
+                { nhan: "Đối với nơi ở", giaTri: ho.diaChi || '' },
+                { nhan: "Lý do", giaTri: lyDo, caoDong: 45 },
+                { nhan: "Điều 2", giaTri: "Quyết định này có hiệu lực thi hành kể từ ngày ký." },
+                { nhan: "Điều 3", giaTri: "Công an " + khuVucHienTai + " và Ông/Bà có tên tại Điều 1 chịu trách nhiệm thi hành Quyết định này./." },
+                { nhan: "Thủ trưởng cơ quan", giaTri: '' }
+            ]);
+            await taiXuongWorkbookExcelJS(wb, "CT09_" + (ho.chuHo || '').replace(/\s+/g, '_') + ".xlsx");
+            ghiSoGiaoNhanHoSo('CT09 - Hủy bỏ ' + loai, ho.chuHo || '', ho.id || '');
+        }
+
+        // ---- CT12: Phiếu đề xuất phê duyệt hồ sơ (cán bộ đề xuất → thủ trưởng phê duyệt, trước khi cấp CT01/CT07...) — xuất Excel ----
+        async function xuatCT12() {
+            const { ho, chuHoObj } = _chuHoDangMo();
+            const noiDungDeXuat = prompt("Nội dung đề xuất phê duyệt (VD: Đề nghị phê duyệt đăng ký tạm trú theo hồ sơ đã tiếp nhận ngày...):", "");
+            if (noiDungDeXuat === null || !noiDungDeXuat.trim()) return alert("Cần nhập nội dung đề xuất.");
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet("CT12");
+            let d = dungSheetBieuMauChuan(ws, { coQuocHieu: true, soCot: 4, tieuDe: "PHIẾU ĐỀ XUẤT PHÊ DUYỆT HỒ SƠ", maBieuMau: "CT12", donVi: "Công an " + khuVucHienTai });
+            veKhoiTruongGiaTri(ws, d, 4, [
+                { nhan: "Cán bộ đề xuất", giaTri: (currentUser.hoTen || currentUser.email || '') + ' — Chức vụ: CSKV' },
+                { nhan: "Đề xuất phê duyệt hồ sơ của Ông/Bà", giaTri: (chuHoObj.hoTen || ho.chuHo || '').toUpperCase() },
+                { nhan: "Mã số hồ sơ", giaTri: ho.hsct || '' },
+                { nhan: "1. Thời gian nhận hồ sơ", giaTri: '' },
+                { nhan: "2. Thành phần hồ sơ gồm", giaTri: '', caoDong: 30 },
+                { nhan: "Nội dung đề xuất (căn cứ hồ sơ và quy định pháp luật)", giaTri: noiDungDeXuat, caoDong: 45 },
+                { nhan: "Ý kiến của thủ trưởng cơ quan", giaTri: '' },
+                { nhan: "Cán bộ đề xuất (ký, ghi rõ họ tên)", giaTri: '' }
+            ]);
+            await taiXuongWorkbookExcelJS(wb, "CT12_" + (ho.chuHo || '').replace(/\s+/g, '_') + ".xlsx");
+            ghiSoGiaoNhanHoSo('CT12 - Đề xuất phê duyệt hồ sơ', ho.chuHo || '', ho.id || '');
+        }
+
+        // ---- CT14: Phiếu thông báo lưu trú (Điều 14 TT116/2026, Điều 30 Luật Cư trú — khác CT03 khai báo TẠM VẮNG) — xuất Excel ----
+        async function xuatCT14() {
+            const { ho, chuHoObj } = _chuHoDangMo();
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet("CT14");
+            let d = dungSheetBieuMauChuan(ws, { coQuocHieu: true, soCot: 6, tieuDe: "PHIẾU THÔNG BÁO LƯU TRÚ", maBieuMau: "CT14", donVi: "Công an " + khuVucHienTai });
+            d = veKhoiTruongGiaTri(ws, d, 6, [
+                { tieuMuc: "I. Thông tin người thông báo" },
+                { nhan: "1. Họ, chữ đệm và tên", giaTri: (chuHoObj.hoTen || ho.chuHo || '').toUpperCase() },
+                { nhan: "2. Ngày, tháng, năm sinh", giaTri: chuHoObj.ngaySinh || '' },
+                { nhan: "3. Giới tính", giaTri: chuHoObj.gioiTinh || '' },
+                { nhan: "4. Số định danh cá nhân", giaTri: chuHoObj.cccd || '' },
+                { nhan: "5. Đại diện (nếu có)", giaTri: '' },
+                { nhan: "Địa chỉ lưu trú", giaTri: ho.diaChi || '' },
+                { nhan: "Thời gian lưu trú", giaTri: 'Từ ngày...đến ngày... (không quá 30 ngày)' },
+                { tieuMuc: "II. Nội dung thông báo lưu trú" }
+            ]);
+            veBangDuLieuCoKhung(ws, d, [
+                { tieuDe: "TT", rong: 6, canGiua: true }, { tieuDe: "Họ, chữ đệm và tên", rong: 26 }, { tieuDe: "Ngày, tháng, năm sinh", rong: 16 },
+                { tieuDe: "Giới tính", rong: 10 }, { tieuDe: "Số định danh cá nhân/Hộ chiếu", rong: 22 }, { tieuDe: "Lý do lưu trú", rong: 22 }
+            ], (ho.thanhVien || []).map((tv, i) => [i + 1, tv.hoTen || '', tv.ngaySinh || '', tv.gioiTinh || '', tv.cccd || '', '']));
+            await taiXuongWorkbookExcelJS(wb, "CT14_" + (ho.chuHo || '').replace(/\s+/g, '_') + ".xlsx");
+            ghiSoGiaoNhanHoSo('CT14 - Thông báo lưu trú', ho.chuHo || '', ho.id || '');
+        }
+
         // ---- DC01: Phiếu thu thập thông tin dân cư (theo Thông tư 118/2026/TT-BCA — văn bản BAN HÀNH CÙNG NGÀY
         // với TT116/2026, không thuộc bộ CT01-CT16 của Luật Cư trú mà thuộc mảng Cơ sở dữ liệu quốc gia về dân
         // cư/Căn cước. Phần mềm CHƯA có sẵn đủ trường (nhóm máu, quốc tịch, tình trạng hôn nhân, thông tin cha/
@@ -6844,7 +7476,6 @@
             const khoiTieuDeTrai = `<div>Tỉnh/thành phố: TP. Cần Thơ</div><div>Xã/phường/đặc khu: ${escHtml(khuVucHienTai)}</div>`;
             const html = `
                 <h1>Phiếu thu thập thông tin dân cư</h1>
-                <div class="ma-mau">Mẫu DC01 ban hành kèm theo Thông tư số 118/2026/TT-BCA<br>ngày 29 tháng 6 năm 2026 của Bộ trưởng Bộ Công an</div>
                 <table>
                     <tr><td class="nhan" style="width:26%">1. Họ, chữ đệm và tên khai sinh<sup>(1)</sup></td><td colspan="3">${escHtml((tv.hoTen || '').toUpperCase())}</td></tr>
                     <tr><td class="nhan">2. Tên gọi khác</td><td style="width:24%"></td>
@@ -6899,10 +7530,14 @@
                     <tr><td style="border:none;height:55px;"></td><td style="border:none;"></td><td style="border:none;"></td></tr>
                 </table>
                 <div class="ghi-chu-cuoi">
-                    <b>Ghi chú:</b> (1) Viết in hoa đủ dấu. (2) Ghi đầy đủ địa danh hành chính cấp xã, tỉnh theo thông tin trên giấy khai sinh; trường hợp địa danh hành chính có thay đổi thì ghi theo địa danh hành chính mới. (3) Đối với người gốc Việt Nam chưa xác định được quốc tịch khi kê khai thì để trống mục này. (4) Ghi quốc tịch khác và ghi rõ tên quốc tịch nếu công dân có 02 quốc tịch trở lên. (5) Ghi rõ theo thứ tự số nhà, đường phố, xóm, làng...; thôn, ấp, bản, buôn, phum, sóc...; xã/phường/đặc khu; tỉnh/thành phố trực thuộc Trung ương. (6) Cán bộ Công an ghi mục này.
-                    <br>Các mục 2, 3 (nếu chưa có), 6, 7, 11 (quốc tịch khác), 12, 13, 15, 16, 20, 23 và mục 14 cần cán bộ phỏng vấn trực tiếp công dân và ghi tay — phần mềm hiện chưa lưu các trường này trong hồ sơ điện tử.
+                    <b>Ghi chú:</b> (1) Viết in hoa đủ dấu. (2) Ghi đầy đủ địa danh hành chính cấp xã, tỉnh theo thông tin trên giấy khai sinh; trường hợp địa danh hành chính có thay đổi thì ghi theo địa danh hành chính mới đã được thay đổi (trừ trường hợp nơi sinh, nơi đăng ký khai sinh, quê quán ở nước ngoài). (3) Đối với người gốc Việt Nam chưa xác định được quốc tịch khi kê khai thì để trống mục này. (4) Ghi quốc tịch khác và ghi rõ tên quốc tịch nếu công dân có 02 quốc tịch trở lên. (5) Ghi rõ theo thứ tự số nhà, đường phố, xóm, làng...; thôn, ấp, bản, buôn, phum, sóc...; xã/phường/đặc khu; tỉnh/thành phố trực thuộc Trung ương. (6) Cán bộ Công an ghi mục này.
+                    <br>* Khi thu thập thông tin dân cư đối với người gốc Việt Nam chưa xác định quốc tịch thì kê khai các thông tin cá nhân quy định tại khoản 3 Điều 30 Luật Căn cước tương ứng với các thông tin cá nhân quy định tại biểu mẫu này; Đối với các thông tin không có hoặc không thu thập được thì để trống.
+                    <br><i>Ghi chú thêm của phần mềm: Các mục 2, 3 (nếu chưa có), 6, 7, 11 (quốc tịch khác), 12, 13, 15, 16, 20, 23 và mục 14 cần cán bộ phỏng vấn trực tiếp công dân và ghi tay — phần mềm hiện chưa lưu các trường này trong hồ sơ điện tử.</i>
                 </div>`;
-            moCuaSoInBieuMau("DC01 - " + (tv.hoTen || ''), html, { khoiTieuDeTrai });
+            moCuaSoInBieuMau("DC01 - " + (tv.hoTen || ''), html, {
+                khoiTieuDeTrai,
+                dongTrenQuocHieu: 'Mẫu DC01 ban hành kèm theo Thông tư số 118/2026/TT-BCA ngày 29 tháng 6 năm 2026 của Bộ trưởng Bộ Công an<br>Mẫu CC04 ban hành kèm theo Thông tư số 17/2024/TT-BCA ngày 15/5/2024'
+            });
             ghiSoGiaoNhanHoSo('DC01 - Phiếu thu thập thông tin dân cư', tv.hoTen || '', ho.id || '');
         }
 
@@ -7547,6 +8182,35 @@
                 ws.autoFilter = { from: { row: dongBatDau, column: 1 }, to: { row: dongCuoi, column: cacCot.length } };
             }
             return dongCuoi + 1;
+        }
+
+        // Dựng khối "nhãn: giá trị" cho các biểu mẫu 1 hồ sơ/1 lần lập (CT04, CT06-09, CT12, CT14...) — cột 1
+        // là nhãn (in đậm, nền nhạt), các cột còn lại gộp làm giá trị. Dùng cho các mẫu KHÔNG phải danh sách
+        // nhiều dòng như KV1/KV2/Mục lục, để tránh phải mở cửa sổ in riêng (đồng bộ định dạng .xlsx toàn phần
+        // mềm, trừ CT01/DC01 vẫn giữ nguyên bản in theo đúng yêu cầu).
+        function veKhoiTruongGiaTri(ws, dongBatDau, soCot, danhSachTruong) {
+            let dong = dongBatDau;
+            danhSachTruong.forEach(t => {
+                if (t.tieuMuc) {
+                    ws.mergeCells(dong, 1, dong, soCot);
+                    const oTM = ws.getCell(dong, 1);
+                    oTM.value = t.tieuMuc;
+                    oKeKhung(oTM, { bold: true, fill: 'FFE0E7F5' });
+                    dong++;
+                    return;
+                }
+                const oNhan = ws.getCell(dong, 1);
+                oNhan.value = t.nhan;
+                oKeKhung(oNhan, { bold: true, fill: 'FFF3F4F6' });
+                ws.getColumn(1).width = 30;
+                if (soCot > 2) ws.mergeCells(dong, 2, dong, soCot);
+                const oGiaTri = ws.getCell(dong, 2);
+                oGiaTri.value = t.giaTri || '';
+                oKeKhung(oGiaTri, {});
+                if (t.caoDong) ws.getRow(dong).height = t.caoDong;
+                dong++;
+            });
+            return dong + 1;
         }
 
 
