@@ -17,6 +17,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Nhãn % / số liệu trực tiếp trên biểu đồ tròn (donut) — để báo cáo phân tích dữ liệu chuyên nghiệp
+         hơn, không bắt người xem phải tự nhìn chú giải rồi suy ra tỉ lệ. Mặc định TẮT cho mọi biểu đồ, chỉ
+         BẬT rõ ràng ở từng biểu đồ cần (options.plugins.datalabels), để không ảnh hưởng các biểu đồ khác. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
@@ -340,7 +344,7 @@
                         <p id="ketQuaKhaiBaoCanBo" class="text-[10px] text-emerald-400 hidden">✅ Đã lưu — Admin sẽ thấy thông tin này khi cấp quyền cho anh/chị.</p>
                     </div>
                     <select id="filterKhuVuc" onchange="thucHienLocVaTimKiem()" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-white">
-                        <option value="">-- Tất cả Khu Vực --</option>
+                        <option value="">-- Tất cả Khu Vực/Ấp/Khóm/Thôn --</option>
                     </select>
                     <select id="filterDienNV" onchange="thucHienLocVaTimKiem()" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-blue-300 font-medium">
                         <option value="">-- Tất cả Diện Cư Trú --</option>
@@ -426,7 +430,7 @@
                 <div id="mainMiniMap"></div>
                 <div id="boxThongTinPhuong" class="text-[11px] leading-relaxed bg-gray-900/70 border border-gray-800 rounded-lg p-2.5 space-y-0.5"></div>
                 <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
-                    <p class="text-gray-400 text-[11px] font-semibold mb-1">📊 Số Hộ Theo Khu Vực</p>
+                    <p class="text-gray-400 text-[11px] font-semibold mb-1" id="lblSoHoTheoKV">📊 Số Hộ Theo Khu Vực</p>
                     <div class="w-full" style="height:150px;"><canvas id="khuVucChartCanvas"></canvas></div>
                 </div>
                 <div id="boxTienIchThamKhao" class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5"></div>
@@ -439,7 +443,7 @@
                 <h2 class="text-xs font-semibold text-gray-200">Danh Sách Hộ Gia Đình & Nhân Khẩu Cư Trú (Phường Tân An, TP. Cần Thơ)</h2>
                 <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
                     <select id="quickFilterKhuVuc" onchange="dongBoQuickFilterKhuVuc(this.value)" class="bg-gray-900 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-white w-full sm:w-44">
-                        <option value="">-- Tất cả Khu Vực --</option>
+                        <option value="">-- Tất cả Khu Vực/Ấp/Khóm/Thôn --</option>
                     </select>
                     <input type="text" id="searchInput" placeholder="Tìm tên chủ hộ, nhân khẩu, số nhà, hồ sơ, CCCD..." onkeyup="thucHienLocVaTimKiem()" class="bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-white w-full md:w-80 focus:outline-none focus:border-blue-500">
                 </div>
@@ -787,7 +791,7 @@
     <div id="rbacModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50" style="background-image: linear-gradient(160deg, rgba(3,7,18,.80), rgba(9,13,22,.82), rgba(40,8,12,.78)), var(--app-bg-photo); background-size: cover; background-position: center; background-attachment: fixed;">
         <div class="glass-card w-full max-w-lg rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                <h3 class="font-bold text-blue-400">🔐 Phân Quyền & Khu Vực Phụ Trách</h3>
+                <h3 class="font-bold text-blue-400">🔐 Phân Quyền & Địa Bàn Phụ Trách (Khu vực/Ấp/Khóm/Thôn)</h3>
                 <button onclick="dongModalRBAC()" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
             </div>
 
@@ -1299,7 +1303,7 @@
                     </div>
                 </div>
                 <p id="chuyenPhuongSoLuong" class="text-gray-400"></p>
-                <button onclick="thucHienChuyenPhuong()" class="w-full bg-purple-700 hover:bg-purple-600 rounded px-3 py-2 font-bold">🔀 Chuyển Toàn Bộ Hộ Trong Khu Vực Này</button>
+                <button onclick="thucHienChuyenPhuong()" class="w-full bg-purple-700 hover:bg-purple-600 rounded px-3 py-2 font-bold">🔀 Chuyển Toàn Bộ Hộ Trong Địa Bàn Này</button>
             </div>
         </div>
     </div>
@@ -3202,7 +3206,7 @@
             if (!email) return alert("Vui lòng nhập Email tài khoản.");
             const khongCanPhuong = (vaiTro === 'chi_huy_tp' || vaiTro === 'can_bo_du_lieu_tp');
             if (!khongCanPhuong && !phuong) return alert("Vui lòng chọn Phường phụ trách.");
-            if (vaiTro === 'can_bo' && !khuVucRaw) return alert("Vui lòng nhập Khu vực phụ trách cho Cảnh sát khu vực (cách nhau bằng dấu phẩy nếu nhiều khu vực).");
+            if (vaiTro === 'can_bo' && !khuVucRaw) return alert("Vui lòng nhập Khu vực (phường) hoặc Ấp/Khóm/Thôn (xã) phụ trách cho Cảnh sát khu vực (cách nhau bằng dấu phẩy nếu phụ trách nhiều nơi).");
             const khuVuc = vaiTro === 'can_bo' ? khuVucRaw.split(',').map(s => chuanHoaNhanKhuVuc(s)).filter(Boolean) : [];
             const loaiHinhDonVi = document.getElementById('inputLoaiHinhDonViCSKV') ? document.getElementById('inputLoaiHinhDonViCSKV').value : '';
             // trangThai: 'da_duyet' — đánh dấu KHÔNG còn nằm trong danh sách "chờ duyệt" nữa (dùng để lọc
@@ -3232,7 +3236,7 @@
         function xuatDanhBaCanBo() {
             if (danhSachPhanQuyen.length === 0) return alert("Chưa có tài khoản nào được phân quyền để xuất danh bạ.");
             const nhanVaiTro = v => v === 'chi_huy_tp' ? 'Chỉ huy cấp Thành phố' : (v === 'can_bo_du_lieu_tp' ? 'Cán bộ dữ liệu PC06 (chỉ xem)' : (v === 'chi_huy' ? 'Chỉ huy phường' : (v === 'can_bo_du_lieu' ? 'Cán bộ dữ liệu phường' : 'Cảnh sát khu vực')));
-            const rows = [["Họ Tên", "Chức Vụ", "Đơn Vị Công Tác", "SĐT Liên Hệ", "Email", "Vai Trò Hệ Thống", "Phường Phụ Trách", "Khu Vực Phụ Trách"]];
+            const rows = [["Họ Tên", "Chức Vụ", "Đơn Vị Công Tác", "SĐT Liên Hệ", "Email", "Vai Trò Hệ Thống", "Phường/Xã Phụ Trách", "Khu Vực/Ấp/Khóm/Thôn Phụ Trách"]];
             danhSachPhanQuyen.forEach(r => {
                 rows.push([r.hoTen || '', r.chucVu || '', r.donVi || '', r.sdt || '', r.email, nhanVaiTro(r.vaiTro), r.phuong || 'Tất cả các phường', (r.khuVuc || []).join(', ')]);
             });
@@ -4241,6 +4245,16 @@
             return loaiHinhTuTenDonVi(tenPhuongXa) === 'xa' ? 'Ấp 1' : 'Khu Vực 1';
         }
 
+        // Nhãn CHUNG (không kèm số) để hiển thị trên giao diện — thay cho chữ "Khu Vực" cứng trước đây đang
+        // dùng ở khắp nơi (bộ lọc, dashboard, phân tích dữ liệu...) dù thực tế PHƯỜNG mới dùng "Khu vực/Khu
+        // phố", còn XÃ dùng "Ấp/Khóm/Thôn" (Cần Thơ sau sáp nhập có 72/103 đơn vị là XÃ — chiếm đa số). Gộp
+        // chung "Ấp/Khóm/Thôn" cho xã vì mỗi xã chỉ dùng ĐÚNG 1 trong 3 từ này tùy địa phương, phần mềm không
+        // có căn cứ để tự chọn đúng 1 từ nếu không có danh mục riêng cho từng xã. Mặc định không truyền tham
+        // số sẽ lấy theo phường/xã đang xem (khuVucHienTai) — dùng đúng chỗ nào có 1 phường/xã cụ thể đang mở.
+        function nhanDiaBanChung(tenPhuongXa) {
+            return loaiHinhTuTenDonVi(tenPhuongXa || khuVucHienTai) === 'xa' ? 'Ấp/Khóm/Thôn' : 'Khu vực';
+        }
+
         function layNhanKhuVucTuDiaChi(diaChi, tenPhuongGoiY) {
             // Thay dấu gạch dưới/gạch ngang/chấm bằng khoảng trắng trước khi so khớp, vì \b coi "_" là ký tự chữ
             // nên "Thuong_tru_KV_7.xlsx" trước đây KHÔNG khớp được mẫu "kv" (gây lỗi tự đổi thành Khu Vực 1).
@@ -4403,7 +4417,7 @@
             const khongKhopPhuong = dsPhuongDuocGiao && !dsPhuongDuocGiao.includes(khuVucHienTai);
 
             let noiDungNhac = `📥 SẮP NHẬP FILE: "${file.name}"\n\n➡️ Toàn bộ hộ/nhân khẩu trong file này sẽ được ghi vào:\n   📍 PHƯỜNG: ${khuVucHienTai}`;
-            if (dsKhuVucDuocGiao) noiDungNhac += `\n   🏘️ Khu vực phân công của tài khoản: ${dsKhuVucDuocGiao.join(', ')} (địa chỉ trong file không thuộc khu vực này vẫn được nhập nhưng nên kiểm tra lại)`;
+            if (dsKhuVucDuocGiao) noiDungNhac += `\n   🏘️ ${nhanDiaBanChung(khuVucHienTai)} phân công của tài khoản: ${dsKhuVucDuocGiao.join(', ')} (địa chỉ trong file không thuộc phạm vi này vẫn được nhập nhưng nên kiểm tra lại)`;
             if (dsPhuongDuocGiao) noiDungNhac += `\n\n👤 Tài khoản của anh/chị được Admin phân công phụ trách: ${dsPhuongDuocGiao.join(', ')}.`;
             if (khongKhopPhuong) {
                 noiDungNhac += `\n\n⚠️⚠️⚠️ CẢNH BÁO: Phường ĐANG CHỌN ("${khuVucHienTai}") KHÔNG nằm trong danh sách phường được phân công cho tài khoản này!\nRất có thể anh/chị đang chọn NHẦM phường trên bản đồ trước khi nhập. Nếu tiếp tục, dữ liệu sẽ bị gắn SAI phường và dễ sinh trùng lặp về sau.\n\n👉 Khuyến nghị: Bấm HỦY, đổi đúng phường ở góc trên bên trái rồi nhập lại.`;
@@ -4725,7 +4739,7 @@
             const nv = document.getElementById('filterDienNV') ? document.getElementById('filterDienNV').value : '';
             const kw = document.getElementById('searchInput') ? document.getElementById('searchInput').value.trim() : '';
             const phanLoc = [];
-            if (kv) phanLoc.push('Khu vực: ' + kv);
+            if (kv) phanLoc.push(nhanDiaBanChung() + ': ' + kv);
             if (nv) phanLoc.push('Diện: ' + nv);
             if (kw) phanLoc.push('Từ khóa: "' + kw + '"');
             if (phanLoc.length > 0) {
@@ -4744,6 +4758,8 @@
         }
 
         function phanTichDuLieuPhanCap() {
+            const elLblSoHo = document.getElementById('lblSoHoTheoKV');
+            if (elLblSoHo) elLblSoHo.innerText = '📊 Số Hộ Theo ' + nhanDiaBanChung();
             let setKhuVuc = new Set();
             layDuLieuThuocPhuongHienTai().forEach(ho => {
                 let nhan = layNhanKhuVucTuDiaChi(ho.diaChi, ho.phuong);
@@ -4758,7 +4774,7 @@
                 if (selKvNhanh) selKvNhanh.innerHTML = selKv.innerHTML;
                 return;
             }
-            const dsOption = '<option value="">-- Tất cả Khu Vực --</option>' + Array.from(setKhuVuc).sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }))
+            const dsOption = '<option value="">-- Tất cả ' + nhanDiaBanChung() + ' --</option>' + Array.from(setKhuVuc).sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }))
                 .map(kv => `<option value="${kv}">${kv}</option>`).join('');
             selKv.innerHTML = dsOption;
             if (selKvNhanh) { const giaDangChon = selKvNhanh.value; selKvNhanh.innerHTML = dsOption; selKvNhanh.value = giaDangChon; }
@@ -4843,15 +4859,17 @@
 
         function capNhatGiaoDienSauKhiTai() {
             let tongNhanKhau = 0;
-            let cntTT = 0, cntTamT = 0, cntKhac = 0;
+            let cntTT = 0, cntTamT = 0, cntLuuT = 0, cntKhac = 0;
             let cntNam = 0, cntNu = 0, cntTreEm = 0, cntLaoDong = 0, cntCaoTuoi = 0;
             let theoDanToc = {}, theoTonGiao = {};
             let theoKhuVuc = {};
-            // Tách riêng số liệu (hộ, nhân khẩu, nam/nữ, độ tuổi) theo TỪNG DIỆN cư trú — không gộp
-            // chung nữa, để CSKV báo cáo nhanh được ngay số liệu riêng của Thường trú / Tạm-Lưu trú / NOHN.
+            // Tách riêng số liệu (hộ, nhân khẩu, nam/nữ, độ tuổi) theo TỪNG DIỆN cư trú — Tạm trú và Lưu trú
+            // là 2 diện khác nhau về pháp lý (Điều 27 vs Điều 30 Luật Cư trú) nên tách riêng, không gộp
+            // chung, để CSKV báo cáo nhanh đúng số liệu từng diện: Thường trú / Tạm trú / Lưu trú / NOHN.
             const chiTietTheoDien = {
                 'Thường trú': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 },
-                'Tạm/Lưu trú': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 },
+                'Tạm trú': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 },
+                'Lưu trú': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 },
                 'NOHN/Khác': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 }
             };
 
@@ -4917,7 +4935,8 @@
                 let dien = h.dienNghiepVu || 'Thường trú';
                 let nhomDien;
                 if (dien === 'Thường trú') { cntTT++; nhomDien = 'Thường trú'; }
-                else if (dien === 'Tạm trú' || dien === 'Lưu trú') { cntTamT++; nhomDien = 'Tạm/Lưu trú'; }
+                else if (dien === 'Tạm trú') { cntTamT++; nhomDien = 'Tạm trú'; }
+                else if (dien === 'Lưu trú') { cntLuuT++; nhomDien = 'Lưu trú'; }
                 else { cntKhac++; nhomDien = 'NOHN/Khác'; }
                 chiTietTheoDien[nhomDien].ho++;
                 chiTietTheoDien[nhomDien].nk += soNguoiHo;
@@ -4981,7 +5000,7 @@
             // chỉ vì đang lọc xem riêng 1 khu vực.
             capNhatCanhBaoLoiDuLieuTuDong(dsPhamViDuocGiao);
 
-            capNhatBieuDoStat(cntTT, cntTamT, cntKhac);
+            capNhatBieuDoStat(cntTT, cntTamT, cntLuuT, cntKhac);
             capNhatBieuDoGioiTinh(cntNam, cntNu);
             capNhatBieuDoDoTuoi(cntTreEm, cntLaoDong, cntCaoTuoi);
             capNhatBieuDoDanToc(theoDanToc);
@@ -4995,7 +5014,7 @@
         function renderChiTietTheoDien(chiTiet, tongHo, tongNk) {
             const el = document.getElementById('chiTietTheoDienBox');
             if (!el) return;
-            const mau = { 'Thường trú': ['🟢', 'text-emerald-400', 'border-emerald-800'], 'Tạm/Lưu trú': ['🟡', 'text-amber-400', 'border-amber-800'], 'NOHN/Khác': ['🔴', 'text-rose-400', 'border-rose-800'] };
+            const mau = { 'Thường trú': ['🟢', 'text-emerald-400', 'border-emerald-800'], 'Tạm trú': ['🟡', 'text-amber-400', 'border-amber-800'], 'Lưu trú': ['🟠', 'text-orange-400', 'border-orange-800'], 'NOHN/Khác': ['🔴', 'text-rose-400', 'border-rose-800'] };
             el.innerHTML = Object.keys(chiTiet).map(nhom => {
                 const d = chiTiet[nhom]; const [icon, mauChu, mauVien] = mau[nhom];
                 return `<div class="bg-gray-900/70 border ${mauVien} rounded-lg p-2 space-y-0.5">
@@ -5051,21 +5070,18 @@
             });
         }
 
-        function capNhatBieuDoStat(tt, tamt, khac) {
+        function capNhatBieuDoStat(tt, tamt, luut, khac) {
             const ctx = document.getElementById('statChartCanvas');
             if(!ctx) return;
             if (statChartInstance) statChartInstance.destroy();
+            const dsCuTru = [['Thường trú', tt], ['Tạm trú', tamt], ['Lưu trú', luut], ['NOHN (Nơi ở hiện nay)', khac]];
             statChartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Thường trú', 'Tạm/Lưu trú', 'NOHN (Nơi ở hiện nay)'],
-                    datasets: [{ data: [tt, tamt, khac], backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'], borderWidth: 2, borderColor: '#111827', hoverOffset: 8 }]
+                    labels: dsCuTru.map(e => e[0]),
+                    datasets: [{ data: dsCuTru.map(e => e[1]), backgroundColor: [MAU_DIEN_CU_TRU.thuongTru, MAU_DIEN_CU_TRU.tamTru, MAU_DIEN_CU_TRU.luuTru, MAU_DIEN_CU_TRU.nohn], borderWidth: 2, borderColor: '#111827', hoverOffset: 8 }]
                 },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    animation: { animateScale: true, animateRotate: true, duration: 800, easing: 'easeOutQuart' },
-                    plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 10 }, padding: 8 } } }
-                }
+                options: tuyChonDonutChuyenNghiep(dsCuTru)
             });
         }
 
@@ -5114,10 +5130,60 @@
 
         // Bảng màu cố định dùng chung cho cả biểu đồ Dashboard lẫn biểu đồ Phân Tích Dữ Liệu, để 2 nơi hiển
         // thị luôn đồng bộ (cùng 1 dân tộc/tôn giáo luôn cùng 1 màu, dễ đối chiếu qua lại).
-        const BANG_MAU_DAN_TOC_TON_GIAO = ['#0ea5e9', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#f43f5e', '#22d3ee', '#a3e635', '#fb923c', '#c084fc'];
+        // BẢNG MÀU CHUẨN cho biểu đồ (đã kiểm định phân biệt được ngay cả với người mù màu — CVD ΔE ≥ 8,
+        // thứ tự KHÔNG được đảo/lặp lại tuỳ tiện vì chính thứ tự này là cơ chế đảm bảo phân biệt được từng
+        // cặp màu liền kề). Tối đa 8 nhóm hiển thị riêng — nhóm thứ 9 trở đi luôn gộp vào "Khác" (đã có sẵn
+        // trong gomNhomChoBieuDo bên dưới), không tự sinh thêm màu mới ngoài bảng này.
+        const BANG_MAU_DAN_TOC_TON_GIAO = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'];
+        // Màu riêng cho diện cư trú (Thường trú/Tạm trú/Lưu trú/NOHN) — lấy từ CÙNG bảng màu chuẩn ở trên
+        // (không bịa hex mới) nhưng gán cố định theo Ý NGHĨA quen thuộc đã dùng xuyên suốt phần mềm: xanh lá
+        // = bình thường/đã rõ, vàng/cam = cần chú ý, đỏ = NOHN/chưa rõ nơi ở.
+        const MAU_DIEN_CU_TRU = { thuongTru: '#008300', tamTru: '#c98500', luuTru: '#d95926', nohn: '#e66767' };
+        if (window.ChartDataLabels) Chart.register(ChartDataLabels);
+        Chart.defaults.set('plugins.datalabels', { display: false }); // TẮT mặc định toàn cục — chỉ bật riêng ở từng biểu đồ cần nhãn %/số liệu
 
         // Gộp các nhóm nhỏ (< top 6) vào "Khác" để biểu đồ không bị vỡ chú thích khi có quá nhiều giá trị lẻ
         // (VD nhập tay sai chính tả sinh ra nhiều biến thể) — vẫn hiển thị đúng TỔNG số người, không mất dữ liệu.
+        // Cấu hình dùng CHUNG cho mọi biểu đồ tròn (donut) dân tộc/tôn giáo trong phần mềm (sidebar,
+        // Dashboard, Phân Tích Dữ Liệu) — hiện % NGAY TRÊN từng lát cắt (không bắt người xem tự nhẩm), và
+        // chú giải bên dưới có kèm số người (không chỉ tên nhóm trơn) cho đúng chuẩn báo cáo phân tích dữ
+        // liệu. Nhãn % chỉ hiện với lát ≥ 6% để tránh chữ đè lên nhau ở các lát quá nhỏ.
+        function tuyChonDonutChuyenNghiep(entries) {
+            const tong = entries.reduce((t, e) => t + e[1], 0);
+            return {
+                responsive: true, maintainAspectRatio: false,
+                animation: { animateScale: true, animateRotate: true, duration: 800, easing: 'easeOutQuart' },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#c3c2b7', font: { size: 9 }, padding: 6, boxWidth: 10,
+                            generateLabels: (chart) => chart.data.labels.map((nhan, i) => {
+                                const v = chart.data.datasets[0].data[i];
+                                const tl = tong > 0 ? Math.round(v / tong * 100) : 0;
+                                return {
+                                    text: `${nhan} — ${v.toLocaleString('vi-VN')} (${tl}%)`,
+                                    fillStyle: chart.data.datasets[0].backgroundColor[i],
+                                    strokeStyle: chart.data.datasets[0].backgroundColor[i],
+                                    fontColor: '#c3c2b7', index: i
+                                };
+                            })
+                        }
+                    },
+                    tooltip: { callbacks: { label: (ctx) => {
+                        const v = ctx.parsed; const tl = tong > 0 ? Math.round(v / tong * 100) : 0;
+                        return `${ctx.label}: ${v.toLocaleString('vi-VN')} người (${tl}%)`;
+                    } } },
+                    datalabels: {
+                        display: (ctx) => { const v = ctx.dataset.data[ctx.dataIndex]; return tong > 0 && (v / tong) >= 0.06; },
+                        color: '#ffffff', font: { size: 10, weight: 'bold' },
+                        textStrokeColor: 'rgba(0,0,0,0.65)', textStrokeWidth: 3,
+                        formatter: (v) => (tong > 0 ? Math.round(v / tong * 100) + '%' : '')
+                    }
+                }
+            };
+        }
+
         function gomNhomChoBieuDo(theoNhom, soNhomToiDa) {
             const entries = Object.entries(theoNhom).sort((a, b) => b[1] - a[1]);
             if (entries.length <= soNhomToiDa) return entries;
@@ -5138,11 +5204,7 @@
                     labels: entries.map(e => e[0]),
                     datasets: [{ data: entries.map(e => e[1]), backgroundColor: BANG_MAU_DAN_TOC_TON_GIAO, borderWidth: 2, borderColor: '#111827', hoverOffset: 8 }]
                 },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    animation: { animateScale: true, animateRotate: true, duration: 800, easing: 'easeOutQuart' },
-                    plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 9 }, padding: 6, boxWidth: 10 } } }
-                }
+                options: tuyChonDonutChuyenNghiep(entries)
             });
         }
 
@@ -5157,11 +5219,7 @@
                     labels: entries.map(e => e[0]),
                     datasets: [{ data: entries.map(e => e[1]), backgroundColor: BANG_MAU_DAN_TOC_TON_GIAO, borderWidth: 2, borderColor: '#111827', hoverOffset: 8 }]
                 },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    animation: { animateScale: true, animateRotate: true, duration: 800, easing: 'easeOutQuart' },
-                    plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 9 }, padding: 6, boxWidth: 10 } } }
-                }
+                options: tuyChonDonutChuyenNghiep(entries)
             });
         }
 
@@ -6100,7 +6158,8 @@
             } else if (isChiHuy || isCanBoDuLieu) {
                 elKV.innerHTML = 'Phường phụ trách: <span class="text-emerald-400 font-semibold">' + (currentUser.phuongPhuTrach ? currentUser.phuongPhuTrach.join(', ') : '(chưa gán)') + '</span>';
             } else if (currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length > 0) {
-                elKV.innerHTML = 'Phường: <span class="text-emerald-400 font-semibold">' + (currentUser.phuongPhuTrach ? currentUser.phuongPhuTrach.join(', ') : '?') + '</span> — Khu vực: <span class="text-emerald-400 font-semibold">' + escHtml(currentUser.khuVucPhuTrach.join(', ')) + '</span>';
+                const nhanDB = nhanDiaBanChung(currentUser.phuongPhuTrach ? currentUser.phuongPhuTrach[0] : '');
+                elKV.innerHTML = 'Phường/Xã: <span class="text-emerald-400 font-semibold">' + (currentUser.phuongPhuTrach ? currentUser.phuongPhuTrach.join(', ') : '?') + '</span> — ' + nhanDB + ': <span class="text-emerald-400 font-semibold">' + escHtml(currentUser.khuVucPhuTrach.join(', ')) + '</span>';
             } else {
                 elKV.innerHTML = '<span class="text-amber-400">⚠️ Chưa được Admin phân phường/khu vực phụ trách. Liên hệ Admin để được cấp quyền.</span>';
             }
@@ -6301,7 +6360,7 @@
             if (!email) { el.classList.add('hidden'); return; }
             const r = danhSachPhanQuyen.find(x => x.email === email);
             if (!r) { el.classList.add('hidden'); return; }
-            el.innerHTML = `📋 Phạm vi sẽ bàn giao:<br><b class="text-teal-300">${escHtml(r.vaiTro === 'chi_huy' ? 'Chỉ huy phường' : (r.vaiTro === 'can_bo_du_lieu' ? 'Cán bộ dữ liệu' : 'CSKV'))} — ${escHtml(r.phuong || '?')}</b>${r.khuVuc && r.khuVuc.length ? ' — Khu vực: <b class="text-teal-300">' + escHtml(r.khuVuc.join(', ')) + '</b>' : ''}`;
+            el.innerHTML = `📋 Phạm vi sẽ bàn giao:<br><b class="text-teal-300">${escHtml(r.vaiTro === 'chi_huy' ? 'Chỉ huy phường' : (r.vaiTro === 'can_bo_du_lieu' ? 'Cán bộ dữ liệu' : 'CSKV'))} — ${escHtml(r.phuong || '?')}</b>${r.khuVuc && r.khuVuc.length ? ' — ' + nhanDiaBanChung(r.phuong) + ': <b class="text-teal-300">' + escHtml(r.khuVuc.join(', ')) + '</b>' : ''}`;
             el.classList.remove('hidden');
         }
 
@@ -7623,16 +7682,16 @@
                         <div style="height:150px;"><canvas id="dbChartChiTietTuoiGT"></canvas></div>
                     </div>
                     <div class="bg-gray-950/60 rounded-lg p-2">
-                        <p class="text-gray-400 text-[10px] mb-1">Theo khu vực (${tenKV.length} khu vực)</p>
+                        <p class="text-gray-400 text-[10px] mb-1">Theo ${nhanDiaBanChung(tenPhuong)} (${tenKV.length})</p>
                         <div style="height:150px;"><canvas id="dbChartChiTietKV"></canvas></div>
                     </div>
                 </div>
                 <div class="bg-gray-950/60 rounded-lg p-2.5 overflow-x-auto">
-                    <p class="text-gray-400 text-[11px] mb-2">📋 Bảng chi tiết từng khu vực — ${escHtml(tenPhuong)}</p>
+                    <p class="text-gray-400 text-[11px] mb-2">📋 Bảng chi tiết từng ${nhanDiaBanChung(tenPhuong)} — ${escHtml(tenPhuong)}</p>
                     <table class="w-full text-left border-collapse text-[11px]">
                         <thead><tr class="text-gray-400 border-b border-gray-700">
-                            <th class="p-1.5">Khu vực</th><th class="p-1.5 text-right">Hộ</th><th class="p-1.5 text-right">Nhân khẩu</th>
-                            <th class="p-1.5 text-right">Th.trú</th><th class="p-1.5 text-right">Tạm/Lưu</th><th class="p-1.5 text-right">NOHN</th>
+                            <th class="p-1.5">${nhanDiaBanChung(tenPhuong)}</th><th class="p-1.5 text-right">Hộ</th><th class="p-1.5 text-right">Nhân khẩu</th>
+                            <th class="p-1.5 text-right">Th.trú</th><th class="p-1.5 text-right">Tạm trú</th><th class="p-1.5 text-right">Lưu trú</th><th class="p-1.5 text-right">NOHN</th>
                             <th class="p-1.5 text-right">Nam</th><th class="p-1.5 text-right">Nữ</th>
                             <th class="p-1.5 text-right">&lt;16</th><th class="p-1.5 text-right">16-60</th><th class="p-1.5 text-right">&gt;60</th>
                         </tr></thead>
@@ -7640,13 +7699,13 @@
                             ${tenKV.map(k => { const d = kqTheoKV[k]; return `<tr class="border-b border-gray-800 hover:bg-gray-800/40">
                                 <td class="p-1.5 text-white font-medium">${escHtml(k)}</td>
                                 <td class="p-1.5 text-right">${d.ho}</td><td class="p-1.5 text-right">${d.nk}</td>
-                                <td class="p-1.5 text-right text-emerald-400">${d.thuongTru}</td><td class="p-1.5 text-right text-amber-400">${d.tamTru}</td><td class="p-1.5 text-right text-rose-400">${d.nohn}</td>
+                                <td class="p-1.5 text-right text-emerald-400">${d.thuongTru}</td><td class="p-1.5 text-right text-amber-400">${d.tamTru}</td><td class="p-1.5 text-right text-orange-400">${d.luuTru}</td><td class="p-1.5 text-right text-rose-400">${d.nohn}</td>
                                 <td class="p-1.5 text-right text-sky-400">${d.nam}</td><td class="p-1.5 text-right text-pink-400">${d.nu}</td>
                                 <td class="p-1.5 text-right text-cyan-400">${d.treEm}</td><td class="p-1.5 text-right text-blue-300">${d.laoDong}</td><td class="p-1.5 text-right text-violet-400">${d.caoTuoi}</td>
                             </tr>`; }).join('')}
                             <tr class="font-bold text-gray-200 border-t border-gray-600">
                                 <td class="p-1.5">Σ Tổng</td><td class="p-1.5 text-right">${dsHo.length}</td><td class="p-1.5 text-right">${kqTong.nk}</td>
-                                <td class="p-1.5 text-right">${kqTong.thuongTru}</td><td class="p-1.5 text-right">${kqTong.tamTru}</td><td class="p-1.5 text-right">${kqTong.nohn}</td>
+                                <td class="p-1.5 text-right">${kqTong.thuongTru}</td><td class="p-1.5 text-right">${kqTong.tamTru}</td><td class="p-1.5 text-right">${kqTong.luuTru}</td><td class="p-1.5 text-right">${kqTong.nohn}</td>
                                 <td class="p-1.5 text-right">${kqTong.nam}</td><td class="p-1.5 text-right">${kqTong.nu}</td>
                                 <td class="p-1.5 text-right">${kqTong.treEm}</td><td class="p-1.5 text-right">${kqTong.laoDong}</td><td class="p-1.5 text-right">${kqTong.caoTuoi}</td>
                             </tr>
@@ -7655,11 +7714,12 @@
                     <button onclick='xuatPhanTichExcel(${JSON.stringify(kqTheoKV)}, ${JSON.stringify(tenPhuong)})' class="mt-2 bg-emerald-700 hover:bg-emerald-600 px-2.5 py-1 rounded text-[10px] font-medium">📥 Xuất Excel Bảng Này</button>
                 </div>
             </div>`;
-            const soThuongTru = kqTong.thuongTru, soTamTru = kqTong.tamTru, soKhau = kqTong.nk, soNam = kqTong.nam, soNu = kqTong.nu, soTreEm = kqTong.treEm, soLaoDong = kqTong.laoDong, soCaoTuoi = kqTong.caoTuoi;
+            const soThuongTru = kqTong.thuongTru, soTamTru = kqTong.tamTru, soLuuTru = kqTong.luuTru, soKhau = kqTong.nk, soNam = kqTong.nam, soNu = kqTong.nu, soTreEm = kqTong.treEm, soLaoDong = kqTong.laoDong, soCaoTuoi = kqTong.caoTuoi;
+            const dsCuTruDbChiTiet = [['Thường trú', soThuongTru], ['Tạm trú', soTamTru], ['Lưu trú', soLuuTru], ['NOHN/Khác', kqTong.nohn]];
             dashboardCharts.chiTietCuTru = new Chart(document.getElementById('dbChartChiTietCuTru'), {
                 type: 'doughnut',
-                data: { labels: ['Thường trú', 'Tạm/Lưu trú', 'NOHN/Khác'], datasets: [{ data: [soThuongTru, soTamTru, dsHo.length - soThuongTru - soTamTru], backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'], borderWidth: 2, borderColor: '#0f172a' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 8 }, boxWidth: 8 } } } }
+                data: { labels: dsCuTruDbChiTiet.map(e => e[0]), datasets: [{ data: dsCuTruDbChiTiet.map(e => e[1]), backgroundColor: [MAU_DIEN_CU_TRU.thuongTru, MAU_DIEN_CU_TRU.tamTru, MAU_DIEN_CU_TRU.luuTru, MAU_DIEN_CU_TRU.nohn], borderWidth: 2, borderColor: '#0f172a' }] },
+                options: tuyChonDonutChuyenNghiep(dsCuTruDbChiTiet)
             });
             dashboardCharts.chiTietTuoiGT = new Chart(document.getElementById('dbChartChiTietTuoiGT'), {
                 type: 'bar',
@@ -7702,20 +7762,24 @@
             const nhanPhamVi = phamViKVDashboard ? (' — ' + currentUser.khuVucPhuTrach.join(', ')) : ' (tất cả khu vực)';
             const soKhau = dsPhuongNay.reduce((t, h) => t + (h.thanhVien ? h.thanhVien.length : 0), 0);
             const soThuongTru = dsPhuongNay.filter(h => (h.dienNghiepVu || 'Thường trú') === 'Thường trú').length;
-            const soTamTru = dsPhuongNay.filter(h => h.dienNghiepVu === 'Tạm trú' || h.dienNghiepVu === 'Lưu trú').length;
+            const soTamTruRieng = dsPhuongNay.filter(h => h.dienNghiepVu === 'Tạm trú').length;
+            const soLuuTruRieng = dsPhuongNay.filter(h => h.dienNghiepVu === 'Lưu trú').length;
+            const soTamTru = soTamTruRieng + soLuuTruRieng; // Tổng gộp — chỉ dùng cho biểu đồ tỉ lệ tổng quan, KHÔNG dùng để báo cáo chi tiết (xem bảng tách riêng bên dưới)
             const soKhac = dsPhuongNay.length - soThuongTru - soTamTru;
             let soNam = 0, soNu = 0, soTreEm = 0, soLaoDong = 0, soCaoTuoi = 0, soBienDong = 0;
-            // Tách riêng chi tiết nam/nữ/độ tuổi theo TỪNG DIỆN cư trú (không gộp chung) — dùng cho bảng
-            // "Chi Tiết Theo Diện Cư Trú" bên dưới, phục vụ báo cáo nhanh theo từng diện riêng biệt.
+            // Tách riêng chi tiết nam/nữ/độ tuổi theo TỪNG DIỆN cư trú — Tạm trú và Lưu trú là 2 diện khác
+            // nhau về pháp lý (Điều 27 vs Điều 30 Luật Cư trú) nên KHÔNG gộp chung, tránh gây nhầm lẫn khi
+            // báo cáo/thống kê.
             const dbChiTietTheoDien = {
                 'Thường trú': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 },
-                'Tạm/Lưu trú': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 },
+                'Tạm trú': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 },
+                'Lưu trú': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 },
                 'NOHN/Khác': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 }
             };
             const namNay = new Date().getFullYear();
             dsPhuongNay.forEach(h => {
                 const dien = h.dienNghiepVu || 'Thường trú';
-                const nhomDien = dien === 'Thường trú' ? 'Thường trú' : (dien === 'Tạm trú' || dien === 'Lưu trú') ? 'Tạm/Lưu trú' : 'NOHN/Khác';
+                const nhomDien = dien === 'Thường trú' ? 'Thường trú' : dien === 'Tạm trú' ? 'Tạm trú' : dien === 'Lưu trú' ? 'Lưu trú' : 'NOHN/Khác';
                 const d = dbChiTietTheoDien[nhomDien];
                 d.ho++;
                 (h.thanhVien || []).forEach(tv => {
@@ -7766,10 +7830,11 @@
                 <div class="mb-3">
                     <p class="font-bold text-gray-100 text-sm mb-2">🏘️ ${escHtml(khuVucHienTai)}${escHtml(nhanPhamVi)}</p>
                     ${canhBaoDoPhu}
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-2 mb-3">
                         ${theKPI('🏠', dsPhuongNay.length, 'Tổng số hộ', 'linear-gradient(135deg,#1e3a8a,#1e40af)', '#93c5fd')}
                         ${theKPI('👥', soKhau, 'Tổng nhân khẩu', 'linear-gradient(135deg,#065f46,#047857)', '#6ee7b7')}
-                        ${theKPI('🟡', soTamTru, 'Hộ tạm/lưu trú', 'linear-gradient(135deg,#78350f,#92400e)', '#fcd34d')}
+                        ${theKPI('🟡', soTamTruRieng, 'Hộ tạm trú', 'linear-gradient(135deg,#78350f,#92400e)', '#fcd34d')}
+                        ${theKPI('🟠', soLuuTruRieng, 'Hộ lưu trú', 'linear-gradient(135deg,#7c2d12,#9a3412)', '#fdba74')}
                         ${theKPI('🔄', soBienDong, 'Nhân khẩu biến động', 'linear-gradient(135deg,#7f1d1d,#991b1b)', '#fca5a5')}
                         ${theKPI('📋', soSuVuDangXuLy, 'Sự vụ đang xử lý', 'linear-gradient(135deg,#3730a3,#4338ca)', '#c7d2fe')}
                     </div>
@@ -7783,7 +7848,7 @@
                             <div style="height:170px;"><canvas id="dbChartTuoiGioiTinh"></canvas></div>
                         </div>
                         <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
-                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">${phamViKVDashboard ? 'Chi tiết khu vực phụ trách' : 'Số hộ theo khu vực'}</p>
+                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">${phamViKVDashboard ? 'Chi tiết ' + nhanDiaBanChung() + ' phụ trách' : 'Số hộ theo ' + nhanDiaBanChung()}</p>
                             <div style="height:170px;"><canvas id="dbChartKhuVuc"></canvas></div>
                         </div>
                     </div>
@@ -7799,7 +7864,7 @@
                             </tr></thead>
                             <tbody>
                                 ${(() => {
-                                    const mauNhom = { 'Thường trú': '🟢 text-emerald-400', 'Tạm/Lưu trú': '🟡 text-amber-400', 'NOHN/Khác': '🔴 text-rose-400' };
+                                    const mauNhom = { 'Thường trú': '🟢 text-emerald-400', 'Tạm trú': '🟡 text-amber-400', 'Lưu trú': '🟠 text-orange-400', 'NOHN/Khác': '🔴 text-rose-400' };
                                     return Object.keys(dbChiTietTheoDien).map(nhom => {
                                         const d = dbChiTietTheoDien[nhom]; const [icon, cls] = mauNhom[nhom].split(' ');
                                         return `<tr class="border-b border-gray-800">
@@ -7832,10 +7897,11 @@
                 <div id="dashboardThanhPho"></div>
             `;
 
+            const dsCuTruDb = [['Thường trú', soThuongTru], ['Tạm trú', soTamTruRieng], ['Lưu trú', soLuuTruRieng], ['NOHN/Khác', soKhac]];
             dashboardCharts.cuTru = new Chart(document.getElementById('dbChartCuTru'), {
                 type: 'doughnut',
-                data: { labels: ['Thường trú', 'Tạm/Lưu trú', 'NOHN/Khác'], datasets: [{ data: [soThuongTru, soTamTru, soKhac], backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'], borderWidth: 2, borderColor: '#111827' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 9 }, boxWidth: 10 } } } }
+                data: { labels: dsCuTruDb.map(e => e[0]), datasets: [{ data: dsCuTruDb.map(e => e[1]), backgroundColor: [MAU_DIEN_CU_TRU.thuongTru, MAU_DIEN_CU_TRU.tamTru, MAU_DIEN_CU_TRU.luuTru, MAU_DIEN_CU_TRU.nohn], borderWidth: 2, borderColor: '#111827' }] },
+                options: tuyChonDonutChuyenNghiep(dsCuTruDb)
             });
             dashboardCharts.tuoiGioiTinh = new Chart(document.getElementById('dbChartTuoiGioiTinh'), {
                 type: 'bar',
@@ -8272,24 +8338,26 @@
                 return d >= tuNgay && d <= denNgay;
             }
 
-            // Sheet 1: Theo Khu vực / Tổ
+            // Sheet 1: Theo Khu vực/Ấp/Khóm/Thôn (Tạm trú và Lưu trú đếm riêng — 2 diện khác nhau về pháp lý)
             let theoKV = {};
             dsBaoCao.forEach(h => {
                 let kvKey = layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || "Khu Vực 1";
-                if (!theoKV[kvKey]) theoKV[kvKey] = { ho: 0, khau: 0, thuongTru: 0, tamTru: 0, khac: 0 };
+                if (!theoKV[kvKey]) theoKV[kvKey] = { ho: 0, khau: 0, thuongTru: 0, tamTru: 0, luuTru: 0, khac: 0 };
                 theoKV[kvKey].ho++;
                 theoKV[kvKey].khau += (h.thanhVien ? h.thanhVien.length : 0);
                 let dien = h.dienNghiepVu || 'Thường trú';
                 if (dien === 'Thường trú') theoKV[kvKey].thuongTru++;
-                else if (dien === 'Tạm trú' || dien === 'Lưu trú') theoKV[kvKey].tamTru++;
+                else if (dien === 'Tạm trú') theoKV[kvKey].tamTru++;
+                else if (dien === 'Lưu trú') theoKV[kvKey].luuTru++;
                 else theoKV[kvKey].khac++;
             });
+            const nhanKVBaoCao = nhanDiaBanChung(khuVucHienTai);
             const wsKV = wb.addWorksheet("Theo Khu Vuc");
-            let dKV = dungSheetBieuMauChuan(wsKV, { soCot: 6, tieuDe: "THỐNG KÊ THEO KHU VỰC", donVi: khuVucHienTai + " — Kỳ: " + tenKy });
+            let dKV = dungSheetBieuMauChuan(wsKV, { soCot: 7, tieuDe: "THỐNG KÊ THEO " + nhanKVBaoCao.toUpperCase(), donVi: khuVucHienTai + " — Kỳ: " + tenKy });
             veBangDuLieuCoKhung(wsKV, dKV, [
-                { tieuDe: "Khu Vực", rong: 20 }, { tieuDe: "Số Hộ", rong: 10, canGiua: true }, { tieuDe: "Số Nhân Khẩu", rong: 14, canGiua: true },
-                { tieuDe: "Thường Trú", rong: 12, canGiua: true }, { tieuDe: "Tạm/Lưu Trú", rong: 14, canGiua: true }, { tieuDe: "NOHN/Khác", rong: 12, canGiua: true }
-            ], Object.keys(theoKV).sort().map(k => { const v = theoKV[k]; return [k, v.ho, v.khau, v.thuongTru, v.tamTru, v.khac]; }));
+                { tieuDe: nhanKVBaoCao, rong: 20 }, { tieuDe: "Số Hộ", rong: 10, canGiua: true }, { tieuDe: "Số Nhân Khẩu", rong: 14, canGiua: true },
+                { tieuDe: "Thường Trú", rong: 12, canGiua: true }, { tieuDe: "Tạm Trú", rong: 12, canGiua: true }, { tieuDe: "Lưu Trú", rong: 12, canGiua: true }, { tieuDe: "NOHN/Khác", rong: 12, canGiua: true }
+            ], Object.keys(theoKV).sort().map(k => { const v = theoKV[k]; return [k, v.ho, v.khau, v.thuongTru, v.tamTru, v.luuTru, v.khac]; }));
 
             // Sheet 2: Theo giới tính & độ tuổi
             let cntNam = 0, cntNu = 0, cntTreEm = 0, cntLaoDong = 0, cntCaoTuoi = 0;
@@ -8395,11 +8463,11 @@
             const kqTong = gomNhomThongKe(dsHo);
 
             el.innerHTML = `<div class="bg-fuchsia-950/20 border border-fuchsia-800/50 rounded-lg p-2.5 overflow-x-auto">
-                <p class="text-fuchsia-300 font-semibold mb-2 text-[12px]">📍 Chi Tiết Theo Khu Vực — ${escHtml(tenPhuong)} (${dsHo.length} hộ, ${kqTong.nk} nhân khẩu, ${tenKV.length} khu vực)</p>
+                <p class="text-fuchsia-300 font-semibold mb-2 text-[12px]">📍 Chi Tiết Theo ${nhanDiaBanChung(tenPhuong)} — ${escHtml(tenPhuong)} (${dsHo.length} hộ, ${kqTong.nk} nhân khẩu, ${tenKV.length} ${nhanDiaBanChung(tenPhuong).toLowerCase()})</p>
                 <table class="w-full text-left border-collapse text-[11px]">
                     <thead><tr class="text-gray-400 border-b border-gray-700">
-                        <th class="p-1.5">Khu vực</th><th class="p-1.5 text-right">Hộ</th><th class="p-1.5 text-right">Nhân khẩu</th>
-                        <th class="p-1.5 text-right">Th.trú</th><th class="p-1.5 text-right">Tạm/Lưu</th><th class="p-1.5 text-right">NOHN</th>
+                        <th class="p-1.5">${nhanDiaBanChung(tenPhuong)}</th><th class="p-1.5 text-right">Hộ</th><th class="p-1.5 text-right">Nhân khẩu</th>
+                        <th class="p-1.5 text-right">Th.trú</th><th class="p-1.5 text-right">Tạm trú</th><th class="p-1.5 text-right">Lưu trú</th><th class="p-1.5 text-right">NOHN</th>
                         <th class="p-1.5 text-right">Nam</th><th class="p-1.5 text-right">Nữ</th>
                         <th class="p-1.5 text-right">&lt;16</th><th class="p-1.5 text-right">16-60</th><th class="p-1.5 text-right">&gt;60</th>
                     </tr></thead>
@@ -8407,13 +8475,13 @@
                         ${tenKV.map(k => { const d = kqTheoKV[k]; return `<tr class="border-b border-gray-800 hover:bg-gray-800/40">
                             <td class="p-1.5 text-white font-medium">${escHtml(k)}</td>
                             <td class="p-1.5 text-right">${d.ho}</td><td class="p-1.5 text-right">${d.nk}</td>
-                            <td class="p-1.5 text-right text-emerald-400">${d.thuongTru}</td><td class="p-1.5 text-right text-amber-400">${d.tamTru}</td><td class="p-1.5 text-right text-rose-400">${d.nohn}</td>
+                            <td class="p-1.5 text-right text-emerald-400">${d.thuongTru}</td><td class="p-1.5 text-right text-amber-400">${d.tamTru}</td><td class="p-1.5 text-right text-orange-400">${d.luuTru}</td><td class="p-1.5 text-right text-rose-400">${d.nohn}</td>
                             <td class="p-1.5 text-right text-sky-400">${d.nam}</td><td class="p-1.5 text-right text-pink-400">${d.nu}</td>
                             <td class="p-1.5 text-right text-cyan-400">${d.treEm}</td><td class="p-1.5 text-right text-blue-300">${d.laoDong}</td><td class="p-1.5 text-right text-violet-400">${d.caoTuoi}</td>
-                        </tr>`; }).join('') || '<tr><td colspan="11" class="p-3 text-center text-gray-500">Không có dữ liệu.</td></tr>'}
+                        </tr>`; }).join('') || '<tr><td colspan="12" class="p-3 text-center text-gray-500">Không có dữ liệu.</td></tr>'}
                         <tr class="font-bold text-gray-200 border-t border-gray-600">
                             <td class="p-1.5">Σ Tổng</td><td class="p-1.5 text-right">${dsHo.length}</td><td class="p-1.5 text-right">${kqTong.nk}</td>
-                            <td class="p-1.5 text-right">${kqTong.thuongTru}</td><td class="p-1.5 text-right">${kqTong.tamTru}</td><td class="p-1.5 text-right">${kqTong.nohn}</td>
+                            <td class="p-1.5 text-right">${kqTong.thuongTru}</td><td class="p-1.5 text-right">${kqTong.tamTru}</td><td class="p-1.5 text-right">${kqTong.luuTru}</td><td class="p-1.5 text-right">${kqTong.nohn}</td>
                             <td class="p-1.5 text-right">${kqTong.nam}</td><td class="p-1.5 text-right">${kqTong.nu}</td>
                             <td class="p-1.5 text-right">${kqTong.treEm}</td><td class="p-1.5 text-right">${kqTong.laoDong}</td><td class="p-1.5 text-right">${kqTong.caoTuoi}</td>
                         </tr>
@@ -8427,12 +8495,17 @@
         // Gộp 1 danh sách hộ thành số liệu tổng hợp đầy đủ (hộ/khẩu/diện/giới tính/độ tuổi) — dùng chung cho
         // cả khối "theo khu vực" và khối "toàn thành phố" để đảm bảo logic tính TUYỆT ĐỐI giống nhau.
         function gomNhomThongKe(dsHo) {
-            const kq = { ho: dsHo.length, nk: 0, thuongTru: 0, tamTru: 0, nohn: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0, theoDanToc: {}, theoTonGiao: {} };
+            // LƯU Ý: Tạm trú và Lưu trú là 2 diện cư trú KHÁC NHAU về pháp lý (Tạm trú — Điều 27 Luật Cư trú,
+            // đăng ký dài hạn hơn, có CT01/CT02; Lưu trú — Điều 30 Luật Cư trú, ở qua đêm/ngắn ngày, dùng
+            // CT14/CT15) nên đếm RIÊNG (kq.tamTru, kq.luuTru) thay vì gộp chung như trước, để báo cáo phân
+            // tích dữ liệu thể hiện đúng bản chất từng diện — không gây nhầm lẫn giữa tạm trú và thường trú/lưu trú.
+            const kq = { ho: dsHo.length, nk: 0, thuongTru: 0, tamTru: 0, luuTru: 0, nohn: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0, theoDanToc: {}, theoTonGiao: {} };
             const namNay = new Date().getFullYear();
             dsHo.forEach(h => {
                 const dien = h.dienNghiepVu || 'Thường trú';
                 if (dien === 'Thường trú') kq.thuongTru++;
-                else if (dien === 'Tạm trú' || dien === 'Lưu trú') kq.tamTru++;
+                else if (dien === 'Tạm trú') kq.tamTru++;
+                else if (dien === 'Lưu trú') kq.luuTru++;
                 else kq.nohn++;
                 (h.thanhVien || []).forEach(tv => {
                     kq.nk++;
@@ -8472,16 +8545,25 @@
 
             // ---- 2) Nhận xét nhanh (rule-based) cho khối khu vực ----
             const nhanXetKV = [];
-            if (tenKV.length > 0) {
+            if (tenKV.length > 1) {
+                // Chỉ so sánh "đông nhất/ít nhất" khi có TỪ 2 khu vực trở lên — 1 khu vực duy nhất thì so
+                // sánh với chính nó là vô nghĩa (trước đây vẫn hiện cả 2 vế dù chỉ có 1 khu vực, gây khó hiểu).
                 const kvDongNhat = tenKV.reduce((a, b) => (kqTheoKV[a].nk >= kqTheoKV[b].nk ? a : b));
                 const kvItNhat = tenKV.reduce((a, b) => (kqTheoKV[a].nk <= kqTheoKV[b].nk ? a : b));
                 nhanXetKV.push(`📍 <b>${escHtml(kvDongNhat)}</b> đông nhất với ${kqTheoKV[kvDongNhat].nk} nhân khẩu / ${kqTheoKV[kvDongNhat].ho} hộ; <b>${escHtml(kvItNhat)}</b> ít nhất với ${kqTheoKV[kvItNhat].nk} nhân khẩu.`);
+            }
+            if (tenKV.length === 1) {
+                nhanXetKV.push(`📍 Dữ liệu hiện chỉ có <b>${escHtml(tenKV[0])}</b> (${kqTheoKV[tenKV[0]].nk} nhân khẩu / ${kqTheoKV[tenKV[0]].ho} hộ) — chưa đủ để so sánh giữa các ${nhanDiaBanChung().toLowerCase()} trong ${escHtml(khuVucHienTai)}.`);
+            }
+            if (tenKV.length > 0) {
                 const tyLeTamTru = kqTongPhuong.ho > 0 ? Math.round((kqTongPhuong.tamTru / kqTongPhuong.ho) * 100) : 0;
-                nhanXetKV.push(`🟡 Tỷ lệ hộ Tạm/Lưu trú toàn ${escHtml(khuVucHienTai)}: <b>${tyLeTamTru}%</b> (${kqTongPhuong.tamTru}/${kqTongPhuong.ho} hộ).`);
+                const tyLeLuuTru = kqTongPhuong.ho > 0 ? Math.round((kqTongPhuong.luuTru / kqTongPhuong.ho) * 100) : 0;
+                nhanXetKV.push(`🟡 Tỷ lệ hộ Tạm trú toàn ${escHtml(khuVucHienTai)}: <b>${tyLeTamTru}%</b> (${kqTongPhuong.tamTru}/${kqTongPhuong.ho} hộ).`);
+                nhanXetKV.push(`🟠 Tỷ lệ hộ Lưu trú toàn ${escHtml(khuVucHienTai)}: <b>${tyLeLuuTru}%</b> (${kqTongPhuong.luuTru}/${kqTongPhuong.ho} hộ).`);
                 const kvTamTruCao = tenKV.filter(k => kqTheoKV[k].ho > 0).sort((a, b) => (kqTheoKV[b].tamTru / kqTheoKV[b].ho) - (kqTheoKV[a].tamTru / kqTheoKV[a].ho))[0];
                 if (kvTamTruCao) {
                     const tl = Math.round((kqTheoKV[kvTamTruCao].tamTru / kqTheoKV[kvTamTruCao].ho) * 100);
-                    if (tl > tyLeTamTru + 10) nhanXetKV.push(`⚠️ <b>${escHtml(kvTamTruCao)}</b> có tỷ lệ Tạm/Lưu trú cao vượt trội (${tl}%) — nên ưu tiên kiểm tra biến động cư trú tại khu vực này.`);
+                    if (tl > tyLeTamTru + 10) nhanXetKV.push(`⚠️ <b>${escHtml(kvTamTruCao)}</b> có tỷ lệ Tạm trú cao vượt trội (${tl}%) — nên ưu tiên kiểm tra biến động cư trú tại khu vực này.`);
                 }
                 if (kqTongPhuong.nk > 0) {
                     const tlCaoTuoi = Math.round((kqTongPhuong.caoTuoi / kqTongPhuong.nk) * 100);
@@ -8496,30 +8578,31 @@
                     <p class="text-gray-400">Cấp <b>hộ</b>: diện cư trú, loại hình nơi ở, khu vực. Cấp <b>nhân khẩu</b>: giới tính, ngày sinh (→ nhóm tuổi), tình trạng biến động. Trục phân tích: <b>Bao nhiêu</b> (hộ/khẩu) — <b>Ai</b> (giới tính/tuổi/diện) — <b>Ở đâu</b> (khu vực/phường).</p>
                 </div>
                 <div class="mb-3">
-                    <p class="font-bold text-gray-100 text-sm mb-2">🏘️ Theo Khu Vực — ${escHtml(khuVucHienTai)}</p>
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
+                    <p class="font-bold text-gray-100 text-sm mb-2">🏘️ Theo ${nhanDiaBanChung()} — ${escHtml(khuVucHienTai)}</p>
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-2 mb-3">
                         ${theKPI('🏠', kqTongPhuong.ho, 'Tổng số hộ', 'linear-gradient(135deg,#1e3a8a,#1e40af)', '#93c5fd')}
                         ${theKPI('👥', kqTongPhuong.nk, 'Tổng nhân khẩu', 'linear-gradient(135deg,#065f46,#047857)', '#6ee7b7')}
                         ${theKPI('🟢', kqTongPhuong.thuongTru, 'Hộ thường trú', 'linear-gradient(135deg,#065f46,#047857)', '#6ee7b7')}
-                        ${theKPI('🟡', kqTongPhuong.tamTru, 'Hộ tạm/lưu trú', 'linear-gradient(135deg,#78350f,#92400e)', '#fcd34d')}
+                        ${theKPI('🟡', kqTongPhuong.tamTru, 'Hộ tạm trú', 'linear-gradient(135deg,#78350f,#92400e)', '#fcd34d')}
+                        ${theKPI('🟠', kqTongPhuong.luuTru, 'Hộ lưu trú', 'linear-gradient(135deg,#7c2d12,#9a3412)', '#fdba74')}
                         ${theKPI('🔴', kqTongPhuong.nohn, 'Hộ NOHN/Khác', 'linear-gradient(135deg,#7f1d1d,#991b1b)', '#fca5a5')}
                     </div>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-3">
                         <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
-                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">Số hộ & nhân khẩu theo khu vực</p>
+                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">Số hộ & nhân khẩu theo ${nhanDiaBanChung()}</p>
                             <div style="height:220px;"><canvas id="ptChartKhuVuc"></canvas></div>
                         </div>
                         <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
-                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">Cơ cấu diện cư trú theo khu vực (%)</p>
+                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">Cơ cấu diện cư trú theo ${nhanDiaBanChung()} (%)</p>
                             <div style="height:220px;"><canvas id="ptChartDienKV"></canvas></div>
                         </div>
                     </div>
                     <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5 overflow-x-auto mb-2">
-                        <p class="text-gray-300 font-semibold mb-2 text-[11px]">📋 Bảng tóm tắt theo khu vực</p>
+                        <p class="text-gray-300 font-semibold mb-2 text-[11px]">📋 Bảng tóm tắt theo ${nhanDiaBanChung()}</p>
                         <table class="w-full text-left border-collapse text-[11px]">
                             <thead><tr class="text-gray-400 border-b border-gray-700">
-                                <th class="p-1.5">Khu vực</th><th class="p-1.5 text-right">Hộ</th><th class="p-1.5 text-right">Nhân khẩu</th>
-                                <th class="p-1.5 text-right">Th.trú</th><th class="p-1.5 text-right">Tạm/Lưu</th><th class="p-1.5 text-right">NOHN</th>
+                                <th class="p-1.5">${nhanDiaBanChung()}</th><th class="p-1.5 text-right">Hộ</th><th class="p-1.5 text-right">Nhân khẩu</th>
+                                <th class="p-1.5 text-right">Th.trú</th><th class="p-1.5 text-right">Tạm trú</th><th class="p-1.5 text-right">Lưu trú</th><th class="p-1.5 text-right">NOHN</th>
                                 <th class="p-1.5 text-right">Nam</th><th class="p-1.5 text-right">Nữ</th>
                                 <th class="p-1.5 text-right">&lt;16</th><th class="p-1.5 text-right">16-60</th><th class="p-1.5 text-right">&gt;60</th>
                             </tr></thead>
@@ -8527,13 +8610,13 @@
                                 ${tenKV.map(k => { const d = kqTheoKV[k]; return `<tr class="border-b border-gray-800 hover:bg-gray-800/40">
                                     <td class="p-1.5 text-white font-medium">${escHtml(k)}</td>
                                     <td class="p-1.5 text-right">${d.ho}</td><td class="p-1.5 text-right">${d.nk}</td>
-                                    <td class="p-1.5 text-right text-emerald-400">${d.thuongTru}</td><td class="p-1.5 text-right text-amber-400">${d.tamTru}</td><td class="p-1.5 text-right text-rose-400">${d.nohn}</td>
+                                    <td class="p-1.5 text-right text-emerald-400">${d.thuongTru}</td><td class="p-1.5 text-right text-amber-400">${d.tamTru}</td><td class="p-1.5 text-right text-orange-400">${d.luuTru}</td><td class="p-1.5 text-right text-rose-400">${d.nohn}</td>
                                     <td class="p-1.5 text-right text-sky-400">${d.nam}</td><td class="p-1.5 text-right text-pink-400">${d.nu}</td>
                                     <td class="p-1.5 text-right text-cyan-400">${d.treEm}</td><td class="p-1.5 text-right text-blue-300">${d.laoDong}</td><td class="p-1.5 text-right text-violet-400">${d.caoTuoi}</td>
-                                </tr>`; }).join('') || '<tr><td colspan="11" class="p-3 text-center text-gray-500">Chưa có dữ liệu.</td></tr>'}
+                                </tr>`; }).join('') || '<tr><td colspan="12" class="p-3 text-center text-gray-500">Chưa có dữ liệu.</td></tr>'}
                                 <tr class="font-bold text-gray-200 border-t border-gray-600">
                                     <td class="p-1.5">Σ Tổng</td><td class="p-1.5 text-right">${kqTongPhuong.ho}</td><td class="p-1.5 text-right">${kqTongPhuong.nk}</td>
-                                    <td class="p-1.5 text-right">${kqTongPhuong.thuongTru}</td><td class="p-1.5 text-right">${kqTongPhuong.tamTru}</td><td class="p-1.5 text-right">${kqTongPhuong.nohn}</td>
+                                    <td class="p-1.5 text-right">${kqTongPhuong.thuongTru}</td><td class="p-1.5 text-right">${kqTongPhuong.tamTru}</td><td class="p-1.5 text-right">${kqTongPhuong.luuTru}</td><td class="p-1.5 text-right">${kqTongPhuong.nohn}</td>
                                     <td class="p-1.5 text-right">${kqTongPhuong.nam}</td><td class="p-1.5 text-right">${kqTongPhuong.nu}</td>
                                     <td class="p-1.5 text-right">${kqTongPhuong.treEm}</td><td class="p-1.5 text-right">${kqTongPhuong.laoDong}</td><td class="p-1.5 text-right">${kqTongPhuong.caoTuoi}</td>
                                 </tr>
@@ -8567,28 +8650,30 @@
                         <p class="text-indigo-300 font-semibold mb-1">💡 Nhận xét nhanh</p>
                         <ul class="list-disc list-inside space-y-0.5 text-gray-300">${nhanXetKV.map(n => `<li>${n}</li>`).join('')}</ul>
                     </div>
-                    <button onclick='xuatPhanTichExcel(${JSON.stringify(kqTheoKV)}, ${JSON.stringify(khuVucHienTai)})' class="mt-2 bg-emerald-700 hover:bg-emerald-600 px-2.5 py-1 rounded text-[10px] font-medium">📥 Xuất Excel Bảng Theo Khu Vực</button>
+                    <button onclick='xuatPhanTichExcel(${JSON.stringify(kqTheoKV)}, ${JSON.stringify(khuVucHienTai)})' class="mt-2 bg-emerald-700 hover:bg-emerald-600 px-2.5 py-1 rounded text-[10px] font-medium">📥 Xuất Excel Bảng Theo ${nhanDiaBanChung()}</button>
                 </div>
                 <div id="phanTichThanhPho" class="border-t border-gray-700 pt-3"></div>
             `;
             el.innerHTML = htmlKV;
 
+            const dsDanTocPT = gomNhomChoBieuDo(kqTongPhuong.theoDanToc, 8);
             phanTichCharts.danToc = new Chart(document.getElementById('ptChartDanToc'), {
                 type: 'doughnut',
-                data: { labels: gomNhomChoBieuDo(kqTongPhuong.theoDanToc, 8).map(e => e[0]), datasets: [{ data: gomNhomChoBieuDo(kqTongPhuong.theoDanToc, 8).map(e => e[1]), backgroundColor: BANG_MAU_DAN_TOC_TON_GIAO, borderWidth: 2, borderColor: '#111827' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 9 }, boxWidth: 10 } } } }
+                data: { labels: dsDanTocPT.map(e => e[0]), datasets: [{ data: dsDanTocPT.map(e => e[1]), backgroundColor: BANG_MAU_DAN_TOC_TON_GIAO, borderWidth: 2, borderColor: '#111827' }] },
+                options: tuyChonDonutChuyenNghiep(dsDanTocPT)
             });
+            const dsTonGiaoPT = gomNhomChoBieuDo(kqTongPhuong.theoTonGiao, 8);
             phanTichCharts.tonGiao = new Chart(document.getElementById('ptChartTonGiao'), {
                 type: 'doughnut',
-                data: { labels: gomNhomChoBieuDo(kqTongPhuong.theoTonGiao, 8).map(e => e[0]), datasets: [{ data: gomNhomChoBieuDo(kqTongPhuong.theoTonGiao, 8).map(e => e[1]), backgroundColor: BANG_MAU_DAN_TOC_TON_GIAO, borderWidth: 2, borderColor: '#111827' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 9 }, boxWidth: 10 } } } }
+                data: { labels: dsTonGiaoPT.map(e => e[0]), datasets: [{ data: dsTonGiaoPT.map(e => e[1]), backgroundColor: BANG_MAU_DAN_TOC_TON_GIAO, borderWidth: 2, borderColor: '#111827' }] },
+                options: tuyChonDonutChuyenNghiep(dsTonGiaoPT)
             });
 
             phanTichCharts.khuVuc = new Chart(document.getElementById('ptChartKhuVuc'), {
                 type: 'bar',
                 data: { labels: tenKV, datasets: [
-                    { label: 'Số hộ', data: tenKV.map(k => kqTheoKV[k].ho), backgroundColor: '#3b82f6', borderRadius: 4 },
-                    { label: 'Nhân khẩu', data: tenKV.map(k => kqTheoKV[k].nk), backgroundColor: '#a855f7', borderRadius: 4 }
+                    { label: 'Số hộ', data: tenKV.map(k => kqTheoKV[k].ho), backgroundColor: BANG_MAU_DAN_TOC_TON_GIAO[0], borderRadius: 4 },
+                    { label: 'Nhân khẩu', data: tenKV.map(k => kqTheoKV[k].nk), backgroundColor: BANG_MAU_DAN_TOC_TON_GIAO[6], borderRadius: 4 }
                 ] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 9 } } } },
                     scales: { x: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { color: '#374151' } } } }
@@ -8596,9 +8681,10 @@
             phanTichCharts.dienKV = new Chart(document.getElementById('ptChartDienKV'), {
                 type: 'bar',
                 data: { labels: tenKV, datasets: [
-                    { label: 'Thường trú', data: tenKV.map(k => kqTheoKV[k].thuongTru), backgroundColor: '#10b981' },
-                    { label: 'Tạm/Lưu trú', data: tenKV.map(k => kqTheoKV[k].tamTru), backgroundColor: '#f59e0b' },
-                    { label: 'NOHN/Khác', data: tenKV.map(k => kqTheoKV[k].nohn), backgroundColor: '#f43f5e' }
+                    { label: 'Thường trú', data: tenKV.map(k => kqTheoKV[k].thuongTru), backgroundColor: MAU_DIEN_CU_TRU.thuongTru },
+                    { label: 'Tạm trú', data: tenKV.map(k => kqTheoKV[k].tamTru), backgroundColor: MAU_DIEN_CU_TRU.tamTru },
+                    { label: 'Lưu trú', data: tenKV.map(k => kqTheoKV[k].luuTru), backgroundColor: MAU_DIEN_CU_TRU.luuTru },
+                    { label: 'NOHN/Khác', data: tenKV.map(k => kqTheoKV[k].nohn), backgroundColor: MAU_DIEN_CU_TRU.nohn }
                 ] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 9 } } } },
                     scales: { x: { stacked: true, ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { display: false } }, y: { stacked: true, ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { color: '#374151' } } } }
@@ -8645,12 +8731,12 @@
                             <table class="w-full text-left border-collapse text-[11px]">
                                 <thead class="sticky top-0 bg-gray-900"><tr class="text-gray-400 border-b border-gray-700">
                                     <th class="p-1.5">#</th><th class="p-1.5">Phường/Xã</th><th class="p-1.5 text-right">Hộ</th><th class="p-1.5 text-right">Nhân khẩu</th>
-                                    <th class="p-1.5 text-right">Th.trú</th><th class="p-1.5 text-right">Tạm/Lưu</th><th class="p-1.5 text-right">NOHN</th>
+                                    <th class="p-1.5 text-right">Th.trú</th><th class="p-1.5 text-right">Tạm trú</th><th class="p-1.5 text-right">Lưu trú</th><th class="p-1.5 text-right">NOHN</th>
                                 </tr></thead>
                                 <tbody>${tenPhuongXep.map((p, i) => { const d = kqTheoPhuong[p]; return `<tr class="border-b border-gray-800 hover:bg-gray-800/40 cursor-pointer" onclick="xemChiTietKhuVucPhanTich('${escHtml(p)}')">
                                     <td class="p-1.5">${i + 1}</td><td class="p-1.5 text-white font-medium">${escHtml(p)} <span class="text-fuchsia-400">▸</span></td>
                                     <td class="p-1.5 text-right">${d.ho}</td><td class="p-1.5 text-right">${d.nk}</td>
-                                    <td class="p-1.5 text-right text-emerald-400">${d.thuongTru}</td><td class="p-1.5 text-right text-amber-400">${d.tamTru}</td><td class="p-1.5 text-right text-rose-400">${d.nohn}</td>
+                                    <td class="p-1.5 text-right text-emerald-400">${d.thuongTru}</td><td class="p-1.5 text-right text-amber-400">${d.tamTru}</td><td class="p-1.5 text-right text-orange-400">${d.luuTru}</td><td class="p-1.5 text-right text-rose-400">${d.nohn}</td>
                                 </tr>`; }).join('')}</tbody>
                             </table>
                         </div>
@@ -8675,16 +8761,16 @@
 
         // Xuất Excel bảng phân tích (dùng chung cho khối "theo khu vực" và "toàn thành phố")
         function xuatPhanTichExcel(kqTheoNhom, ten) {
-            const rows = [["Tên", "Số hộ", "Nhân khẩu", "Thường trú", "Tạm/Lưu trú", "NOHN/Khác", "Nam", "Nữ", "Dưới 16", "16-60", "Trên 60"]];
-            let t = { ho: 0, nk: 0, thuongTru: 0, tamTru: 0, nohn: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 };
+            const rows = [["Tên", "Số hộ", "Nhân khẩu", "Thường trú", "Tạm trú", "Lưu trú", "NOHN/Khác", "Nam", "Nữ", "Dưới 16", "16-60", "Trên 60"]];
+            let t = { ho: 0, nk: 0, thuongTru: 0, tamTru: 0, luuTru: 0, nohn: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 };
             Object.keys(kqTheoNhom).forEach(k => {
                 const d = kqTheoNhom[k];
-                rows.push([k, d.ho, d.nk, d.thuongTru, d.tamTru, d.nohn, d.nam, d.nu, d.treEm, d.laoDong, d.caoTuoi]);
-                Object.keys(t).forEach(f => t[f] += d[f]);
+                rows.push([k, d.ho, d.nk, d.thuongTru, d.tamTru, d.luuTru || 0, d.nohn, d.nam, d.nu, d.treEm, d.laoDong, d.caoTuoi]);
+                Object.keys(t).forEach(f => t[f] += (d[f] || 0));
             });
-            rows.push(["Σ Tổng cộng", t.ho, t.nk, t.thuongTru, t.tamTru, t.nohn, t.nam, t.nu, t.treEm, t.laoDong, t.caoTuoi]);
+            rows.push(["Σ Tổng cộng", t.ho, t.nk, t.thuongTru, t.tamTru, t.luuTru, t.nohn, t.nam, t.nu, t.treEm, t.laoDong, t.caoTuoi]);
             const ws = XLSX.utils.aoa_to_sheet(rows);
-            ws['!cols'] = [{ wch: 20 }, { wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 7 }, { wch: 7 }, { wch: 9 }, { wch: 8 }, { wch: 9 }];
+            ws['!cols'] = [{ wch: 20 }, { wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 9 }, { wch: 9 }, { wch: 10 }, { wch: 7 }, { wch: 7 }, { wch: 9 }, { wch: 8 }, { wch: 9 }];
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Phan_Tich");
             XLSX.writeFile(wb, "Phan_Tich_Du_Lieu_" + String(ten).replace(/\s/g, '_') + ".xlsx");
