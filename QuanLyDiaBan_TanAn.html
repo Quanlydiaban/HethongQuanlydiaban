@@ -38,9 +38,9 @@
            input, nút Lưu, nút xóa, khu vực kéo-thả trên bản đồ... để không ai lỡ bấm rồi nhận lỗi khó hiểu từ
            máy chủ — giao diện phải NÓI THẲNG là "chỉ xem" ngay từ đầu, không để người dùng tự mò ra bằng lỗi.
         */
-        body.che-do-chi-xem input:not(#searchInput):not(#quickFilterKhuVuc):not(#filterKhuVuc):not(#filterDienNV):not(#filterGioiTinh):not(#filterNhomTuoi),
+        body.che-do-chi-xem input:not(#searchInput):not(#quickFilterKhuVuc):not(#filterKhuVuc):not(#quickFilterDienNV):not(#filterDienNV):not(#filterGioiTinh):not(#filterNhomTuoi),
         body.che-do-chi-xem textarea,
-        body.che-do-chi-xem select:not(#quickFilterKhuVuc):not(#filterKhuVuc):not(#filterDienNV):not(#filterGioiTinh):not(#filterNhomTuoi) {
+        body.che-do-chi-xem select:not(#quickFilterKhuVuc):not(#filterKhuVuc):not(#quickFilterDienNV):not(#filterDienNV):not(#filterGioiTinh):not(#filterNhomTuoi) {
             pointer-events: none !important;
             opacity: 0.6 !important;
             background: #1f2937 !important;
@@ -429,6 +429,13 @@
                 <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
                     <select id="quickFilterKhuVuc" onchange="dongBoQuickFilterKhuVuc(this.value)" class="bg-gray-900 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-white w-full sm:w-44">
                         <option value="">-- Tất cả Khu Vực --</option>
+                    </select>
+                    <select id="quickFilterDienNV" onchange="dongBoQuickFilterDienNV(this.value)" class="bg-gray-900 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-white w-full sm:w-40">
+                        <option value="">-- Tất cả Diện --</option>
+                        <option value="Thường trú">Thường trú</option>
+                        <option value="Tạm trú">Tạm trú</option>
+                        <option value="Lưu trú">Lưu trú</option>
+                        <option value="NOHN">NOHN</option>
                     </select>
                     <input type="text" id="searchInput" placeholder="Tìm tên chủ hộ, nhân khẩu, số nhà, hồ sơ, CCCD..." onkeyup="thucHienLocVaTimKiem()" class="bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-white w-full md:w-80 focus:outline-none focus:border-blue-500">
                 </div>
@@ -4190,7 +4197,7 @@
                     const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
                     const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
                     
-                    let mapCol = { hsct: -1, hoTen: -1, ngaySinh: -1, quanHe: -1, diaChi: -1, phuongXa: -1, chuHo: -1, cccd: -1, gioiTinh: -1, dienNV: -1, danToc: -1, tonGiao: -1, queQuan: -1, ngheNghiep: -1, sdt: -1, quocTich: -1, ngayHetHan: -1, noiThuongTruGoc: -1 };
+                    let mapCol = { hsct: -1, hoTen: -1, ngaySinh: -1, quanHe: -1, diaChi: -1, phuongXa: -1, chuHo: -1, cccd: -1, gioiTinh: -1, dienNV: -1, danToc: -1, tonGiao: -1, queQuan: -1, ngheNghiep: -1, sdt: -1, quocTich: -1, ngayHetHan: -1, noiThuongTruGoc: -1, noiOHienTai: -1 };
                     
                     for (let i = 0; i < Math.min(20, rows.length); i++) {
                         let r = rows[i] || [];
@@ -4208,6 +4215,13 @@
                             // thường trú (thường ở phường/tỉnh KHÁC) — khác hẳn cột "diện cư trú" (chỉ ghi 1 từ
                             // trạng thái). Trước đây khai báo biến nhưng CHƯA từng dò cột này, dữ liệu bị bỏ sót.
                             if (mapCol.noiThuongTruGoc === -1 && t.includes('nơi') && t.includes('thường') && t.includes('trú')) mapCol.noiThuongTruGoc = j;
+                            // MỚI THÊM THEO YÊU CẦU: cột "Nơi ở hiện tại" của TỪNG NGƯỜI — khác "Địa chỉ" (địa
+                            // chỉ đăng ký cư trú chung của cả hộ) và khác "Nơi thường trú gốc" (nơi đăng ký
+                            // thường trú ở phường/tỉnh KHÁC). Trước đây cột này hoàn toàn bị bỏ qua khi nhập —
+                            // không gây đếm sai khẩu (mỗi DÒNG luôn = đúng 1 người, không phụ thuộc số cột),
+                            // nhưng dữ liệu cán bộ đã nhập bị mất vì chưa có chỗ lưu. Từ khóa dò ưu tiên đủ cả
+                            // "nơi"+"hiện"+"tại" để không lẫn với "nơi thường trú" ở trên.
+                            if (mapCol.noiOHienTai === -1 && t.includes('nơi') && t.includes('hiện') && t.includes('tại')) mapCol.noiOHienTai = j;
                             if (mapCol.phuongXa === -1 && (t.includes('phường') || t.includes('xã'))) mapCol.phuongXa = j;
                             if (mapCol.chuHo === -1 && (t.includes('chủ') && t.includes('hộ')) && !(t.includes('quan') && t.includes('hệ'))) mapCol.chuHo = j;
                             if (mapCol.cccd === -1 && (t.includes('cccd') || (t.includes('định') && t.includes('danh')) || t.includes('cmnd') || t === 'đdcn')) mapCol.cccd = j;
@@ -4371,6 +4385,10 @@
                         let danTocVal = (mapCol.danToc !== -1 && mapCol.danToc !== undefined) ? String(r[mapCol.danToc] || 'Kinh').trim() : 'Kinh';
                         let tonGiaoVal = (mapCol.tonGiao !== -1 && mapCol.tonGiao !== undefined) ? String(r[mapCol.tonGiao] || 'Không').trim() : 'Không';
                         let quocTichVal = (mapCol.quocTich !== -1 && mapCol.quocTich !== undefined) ? String(r[mapCol.quocTich] || 'Việt Nam').trim() : 'Việt Nam';
+                        // MỚI THÊM: Nơi ở hiện tại CỦA TỪNG NGƯỜI (không phải của cả hộ) — VD người thường trú
+                        // tại hộ nhưng thực tế đang sinh sống/làm việc ở địa chỉ khác. Đọc riêng theo từng dòng,
+                        // không dùng chung 1 giá trị cho cả hộ như "Địa chỉ".
+                        let noiOHienTaiVal = (mapCol.noiOHienTai !== -1 && mapCol.noiOHienTai !== undefined) ? String(r[mapCol.noiOHienTai] || '').trim() : '';
 
                         mapHoMoi[key].thanhVien.push({ 
                             hoTen: hoTenVal, 
@@ -4383,7 +4401,8 @@
                             gioiTinh: gioiTinhVal,
                             danToc: danTocVal,
                             tonGiao: tonGiaoVal,
-                            quocTich: quocTichVal
+                            quocTich: quocTichVal,
+                            noiOHienTai: noiOHienTaiVal
                         });
                     }
 
@@ -4588,6 +4607,12 @@
             thucHienLocVaTimKiem();
         }
 
+        function dongBoQuickFilterDienNV(gia) {
+            const sel = document.getElementById('filterDienNV');
+            if (sel) sel.value = gia;
+            thucHienLocVaTimKiem();
+        }
+
         function capNhatNhanBoLocDangApDung() {
             const el = document.getElementById('nhanBoLocDangApDung');
             const elText = document.getElementById('nhanBoLocText');
@@ -4608,7 +4633,7 @@
         }
 
         function xoaTatCaBoLoc() {
-            ['filterKhuVuc', 'quickFilterKhuVuc', 'filterDienNV', 'filterGioiTinh', 'filterNhomTuoi'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            ['filterKhuVuc', 'quickFilterKhuVuc', 'filterDienNV', 'quickFilterDienNV', 'filterGioiTinh', 'filterNhomTuoi'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
             ['chkThieuCCCD', 'chkCoBienDong', 'chkNguoiNuocNgoai', 'chkGpsChuaXacNhan'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
             const search = document.getElementById('searchInput'); if (search) search.value = '';
             thucHienLocVaTimKiem();
@@ -4641,6 +4666,8 @@
             // cập nhật ô lọc nhanh để 2 nơi luôn khớp nhau, tránh gây hiểu lầm đang lọc khác nhau ở 2 chỗ.
             const selKv = document.getElementById('filterKhuVuc'), selKvNhanh = document.getElementById('quickFilterKhuVuc');
             if (selKv && selKvNhanh && selKvNhanh.value !== selKv.value) selKvNhanh.value = selKv.value;
+            const selDien = document.getElementById('filterDienNV'), selDienNhanh = document.getElementById('quickFilterDienNV');
+            if (selDien && selDienNhanh && selDienNhanh.value !== selDien.value) selDienNhanh.value = selDien.value;
             let kv = document.getElementById('filterKhuVuc').value.toLowerCase();
             let nv = document.getElementById('filterDienNV').value;
             let kw = document.getElementById('searchInput').value.toLowerCase();
@@ -5179,7 +5206,10 @@
                 ho.thanhVien.forEach((tv, i) => {
                     tbody.innerHTML += `<tr>
                         <td class="p-1.5 text-center text-gray-400">${i+1}</td>
-                        <td class="p-1.5"><input type="text" value="${tv.hoTen || ''}" onchange="capNhatTV(${i}, 'hoTen', this.value)" class="bg-transparent border-b border-gray-600 w-full text-white px-1"></td>
+                        <td class="p-1.5">
+                            <input type="text" value="${tv.hoTen || ''}" onchange="capNhatTV(${i}, 'hoTen', this.value)" class="bg-transparent border-b border-gray-600 w-full text-white px-1">
+                            <input type="text" placeholder="+ Nơi ở hiện tại (nếu khác nơi đăng ký)" value="${escHtml(tv.noiOHienTai || '')}" onchange="capNhatTV(${i}, 'noiOHienTai', this.value)" class="no-print bg-transparent text-[9px] text-cyan-300 placeholder-gray-600 w-full px-1 mt-0.5 border-none focus:outline-none focus:ring-0">
+                        </td>
                         <td class="p-1.5"><input type="text" value="${tv.quanHe || ''}" onchange="capNhatTV(${i}, 'quanHe', this.value)" class="bg-transparent border-b border-gray-600 w-full text-gray-300 px-1"></td>
                         <td class="p-1.5"><input type="text" value="${tv.ngaySinh || ''}" onchange="capNhatTV(${i}, 'ngaySinh', this.value)" class="bg-transparent border-b border-gray-600 w-full text-gray-400 px-1"></td>
                         <td class="p-1.5"><input type="text" value="${tv.cccd || ''}" onchange="capNhatTV(${i}, 'cccd', this.value)" class="bg-transparent border-b border-gray-600 w-full text-blue-300 font-mono px-1"></td>
@@ -6899,7 +6929,7 @@
                     <tr><td class="nhan">16. Địa chỉ cư trú tại nước ngoài (đối với người VN học tập/làm việc dài hạn, sinh sống, định cư ở nước ngoài)</td><td colspan="3"></td></tr>
                     <tr><td class="nhan">17. Nơi thường trú<sup>(5)</sup></td><td colspan="3">${escHtml((ho.dienNghiepVu === 'Thường trú' ? ho.diaChi : '') || '')}</td></tr>
                     <tr><td class="nhan">18. Nơi tạm trú<sup>(5)</sup></td><td colspan="3">${escHtml((ho.dienNghiepVu === 'Tạm trú' || ho.dienNghiepVu === 'Lưu trú' ? ho.diaChi : '') || '')}</td></tr>
-                    <tr><td class="nhan">19. Nơi ở hiện tại <i>(chỉ kê khai nếu khác nơi thường trú hoặc không có nơi thường trú, nơi tạm trú)</i><sup>(5)</sup></td><td colspan="3">${escHtml(ho.diaChi || '')}</td></tr>
+                    <tr><td class="nhan">19. Nơi ở hiện tại <i>(chỉ kê khai nếu khác nơi thường trú hoặc không có nơi thường trú, nơi tạm trú)</i><sup>(5)</sup></td><td colspan="3">${escHtml(tv.noiOHienTai || ho.diaChi || '')}</td></tr>
                     <tr><td class="nhan">20. Tình trạng hôn nhân</td><td colspan="3">☐ Chưa kết hôn &nbsp;&nbsp; ☐ Đang có vợ/chồng &nbsp;&nbsp; ☐ Đã ly hôn hoặc có vợ/chồng nhưng đã chết</td></tr>
                     <tr><td class="nhan">21. Mối quan hệ với chủ hộ</td><td colspan="3">${escHtml(tv.quanHe || '')}</td></tr>
                     <tr><td class="nhan">22. Số thuê bao di động</td><td>${escHtml(tv.sdt || '')}</td>
