@@ -225,7 +225,7 @@
                     <span>📂 Nhập Excel</span>
                     <input type="file" id="excelFile" accept=".xlsx, .xls" class="hidden" onchange="nhapFileExcel(event)">
                 </label>
-                <label id="btnNhapBoSungDanTocTonGiao" class="cursor-pointer bg-teal-700 hover:bg-teal-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow flex items-center gap-1" title="Chỉ cập nhật đúng 2 cột Dân tộc/Tôn giáo theo CCCD — KHÔNG đụng đến bất kỳ dữ liệu nào khác đã sửa tay trên phần mềm">
+                <label id="btnNhapBoSungDanTocTonGiao" class="cursor-pointer bg-teal-700 hover:bg-teal-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow flex items-center gap-1" title="Chỉ cập nhật đúng 2 cột Dân tộc/Tôn giáo — khớp theo CCCD nếu có, hoặc theo Số HSCT + Họ tên nếu file không có CCCD. KHÔNG đụng đến bất kỳ dữ liệu nào khác đã sửa tay trên phần mềm">
                     <span>🧬 Bổ Sung Dân Tộc/Tôn Giáo</span>
                     <input type="file" id="excelFileBoSung" accept=".xlsx, .xls" class="hidden" onchange="nhapBoSungDanTocTonGiao(event)">
                 </label>
@@ -4510,7 +4510,7 @@
                 alert("⛔ Tài khoản này chưa được cấp quyền cho " + khuVucHienTai + ".");
                 event.target.value = ""; return;
             }
-            if (!confirm(`🧬 SẮP BỔ SUNG Dân tộc/Tôn giáo từ file "${file.name}"\n\nChỉ ĐÚNG 2 cột Dân tộc và Tôn giáo sẽ được cập nhật, khớp theo Số CCCD/Định danh của từng người.\n\n✅ KHÔNG đụng đến bất kỳ dữ liệu nào khác (địa chỉ, trạng thái biến động, nghề nghiệp, ghi chú...) dù đã sửa tay trên phần mềm.\n⚠️ Bắt buộc file phải có cột CCCD để khớp đúng người — dòng nào thiếu CCCD sẽ bị bỏ qua và báo lại cuối cùng.\n\nTiếp tục?`)) {
+            if (!confirm(`🧬 SẮP BỔ SUNG Dân tộc/Tôn giáo từ file "${file.name}"\n\nChỉ ĐÚNG 2 cột Dân tộc và Tôn giáo sẽ được cập nhật.\nKhớp theo Số CCCD nếu file có; nếu file KHÔNG có CCCD (VD do không đưa vào vì bảo mật), sẽ khớp theo cặp Số HSCT + Họ tên.\n\n✅ KHÔNG đụng đến bất kỳ dữ liệu nào khác (địa chỉ, trạng thái biến động, nghề nghiệp, ghi chú...) dù đã sửa tay trên phần mềm.\n\nTiếp tục?`)) {
                 event.target.value = ""; return;
             }
 
@@ -4520,57 +4520,104 @@
                     const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
                     const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
 
-                    let mapCol = { cccd: -1, danToc: -1, tonGiao: -1, hoTen: -1 };
+                    let mapCol = { cccd: -1, hsct: -1, hoTen: -1, danToc: -1, tonGiao: -1 };
                     for (let i = 0; i < Math.min(20, rows.length); i++) {
                         (rows[i] || []).forEach((text, j) => {
                             let t = String(text).toLowerCase().replace(/\s+/g, '');
                             if (mapCol.cccd === -1 && (t.includes('cccd') || (t.includes('định') && t.includes('danh')) || t.includes('cmnd') || t === 'đdcn')) mapCol.cccd = j;
+                            if (mapCol.hsct === -1 && (t.includes('hsct') || (t.includes('hồ') && t.includes('sơ')))) mapCol.hsct = j;
+                            if (mapCol.hoTen === -1 && ((t.includes('họ') && t.includes('tên')) || t === 'tên' || t === 'hoten')) mapCol.hoTen = j;
                             if (mapCol.danToc === -1 && (t.includes('dân') && t.includes('tộc'))) mapCol.danToc = j;
                             if (mapCol.tonGiao === -1 && (t.includes('tôn') && t.includes('giáo'))) mapCol.tonGiao = j;
-                            if (mapCol.hoTen === -1 && ((t.includes('họ') && t.includes('tên')) || t === 'tên' || t === 'hoten')) mapCol.hoTen = j;
                         });
                     }
-                    if (mapCol.cccd === -1) { alert("❌ Không tìm thấy cột CCCD/Số định danh trong file — bắt buộc phải có cột này để khớp đúng người, không thể bổ sung an toàn."); event.target.value = ""; return; }
+                    // ĐÃ SỬA THEO YÊU CẦU: CCCD không còn BẮT BUỘC (nhiều nơi không đưa CCCD vào file vì lý do
+                    // bí mật nhà nước) — cho phép khớp thay thế bằng cặp "Số HSCT + Họ tên" (HSCT xác định
+                    // ĐÚNG HỘ, Họ tên xác định ĐÚNG NGƯỜI trong hộ đó). Vẫn ưu tiên CCCD khi có vì chính xác
+                    // tuyệt đối hơn (Họ tên có thể trùng giữa nhiều người, dù hiếm khi trùng trong CÙNG 1 hộ).
+                    const coTheKhopTheoCccd = mapCol.cccd !== -1;
+                    const coTheKhopTheoHsctTen = mapCol.hsct !== -1 && mapCol.hoTen !== -1;
+                    if (!coTheKhopTheoCccd && !coTheKhopTheoHsctTen) {
+                        alert("❌ File cần có CỘT CCCD, HOẶC ĐỦ CẢ 2 cột Số HSCT + Họ tên, để khớp đúng người — không thể bổ sung an toàn nếu thiếu cả hai.");
+                        event.target.value = ""; return;
+                    }
                     if (mapCol.danToc === -1 && mapCol.tonGiao === -1) { alert("❌ Không tìm thấy cột Dân tộc hoặc Tôn giáo nào trong file."); event.target.value = ""; return; }
 
-                    const capNhatTheoCccd = {};
-                    let dongThieuCccd = 0;
+                    const capNhatTheoCccd = {};       // cccd -> {danToc, tonGiao}
+                    const capNhatTheoHsctTen = {};    // hsct -> [{ tenChuan, danToc, tonGiao, tenGoc }]
+                    let dongThieuKhoa = 0;
                     for (let i = 1; i < rows.length; i++) {
                         const r = rows[i] || [];
-                        const cccd = String(r[mapCol.cccd] || '').trim();
-                        const coTen = mapCol.hoTen !== -1 && String(r[mapCol.hoTen] || '').trim();
-                        if (!cccd) { if (coTen) dongThieuCccd++; continue; }
+                        const cccd = mapCol.cccd !== -1 ? String(r[mapCol.cccd] || '').trim() : '';
+                        const hsct = mapCol.hsct !== -1 ? String(r[mapCol.hsct] || '').trim() : '';
+                        const tenGoc = mapCol.hoTen !== -1 ? String(r[mapCol.hoTen] || '').trim() : '';
                         const dt = mapCol.danToc !== -1 ? String(r[mapCol.danToc] || '').trim() : '';
                         const tg = mapCol.tonGiao !== -1 ? String(r[mapCol.tonGiao] || '').trim() : '';
                         if (!dt && !tg) continue;
-                        capNhatTheoCccd[cccd] = { danToc: dt, tonGiao: tg };
+                        if (cccd) {
+                            capNhatTheoCccd[cccd] = { danToc: dt, tonGiao: tg };
+                        } else if (hsct && tenGoc) {
+                            (capNhatTheoHsctTen[hsct] = capNhatTheoHsctTen[hsct] || []).push({ tenChuan: boDauTiengViet(tenGoc).toLowerCase().trim(), tenGoc, danToc: dt, tonGiao: tg });
+                        } else {
+                            dongThieuKhoa++;
+                        }
                     }
-                    const tongSoCccdTrongFile = Object.keys(capNhatTheoCccd).length;
-                    if (tongSoCccdTrongFile === 0) { alert("❌ Không đọc được dòng nào có đủ CCCD + (Dân tộc hoặc Tôn giáo) hợp lệ trong file."); event.target.value = ""; return; }
+                    if (Object.keys(capNhatTheoCccd).length === 0 && Object.keys(capNhatTheoHsctTen).length === 0) {
+                        alert("❌ Không đọc được dòng nào có đủ khóa khớp (CCCD, hoặc HSCT+Họ tên) cùng với Dân tộc/Tôn giáo hợp lệ trong file.");
+                        event.target.value = ""; return;
+                    }
 
-                    let soNguoiCapNhat = 0;
+                    let soNguoiCapNhat = 0, soMoHo = 0;
                     const hoBiThayDoi = [];
+                    const canhBaoTrungTen = []; // HSCT có 2+ người cùng tên trong 1 hộ -> không dám tự đoán, cần kiểm tay
                     danhSachHoGiaDinh.forEach(ho => {
                         let coThayDoi = false;
+
+                        // Cách 1: khớp theo CCCD (chính xác tuyệt đối, ưu tiên trước)
                         (ho.thanhVien || []).forEach(tv => {
                             const cccd = (tv.cccd || '').trim();
                             if (!cccd || !capNhatTheoCccd[cccd]) return;
                             const cap = capNhatTheoCccd[cccd];
-                            let khopNguoiNay = false;
-                            if (cap.danToc && tv.danToc !== cap.danToc) { tv.danToc = cap.danToc; coThayDoi = true; khopNguoiNay = true; }
-                            if (cap.tonGiao && tv.tonGiao !== cap.tonGiao) { tv.tonGiao = cap.tonGiao; coThayDoi = true; khopNguoiNay = true; }
-                            if (khopNguoiNay || cap.danToc || cap.tonGiao) { soNguoiCapNhat++; delete capNhatTheoCccd[cccd]; }
+                            let khop = false;
+                            if (cap.danToc && tv.danToc !== cap.danToc) { tv.danToc = cap.danToc; coThayDoi = true; khop = true; }
+                            if (cap.tonGiao && tv.tonGiao !== cap.tonGiao) { tv.tonGiao = cap.tonGiao; coThayDoi = true; khop = true; }
+                            if (khop || cap.danToc || cap.tonGiao) { soNguoiCapNhat++; delete capNhatTheoCccd[cccd]; }
                         });
+
+                        // Cách 2: khớp theo Số HSCT (đúng hộ) + Họ tên (đúng người trong hộ đó)
+                        const hsctHo = (ho.hsct || '').trim();
+                        if (hsctHo && capNhatTheoHsctTen[hsctHo]) {
+                            capNhatTheoHsctTen[hsctHo].forEach(muc => {
+                                const nguoiKhop = (ho.thanhVien || []).filter(tv => boDauTiengViet(tv.hoTen || '').toLowerCase().trim() === muc.tenChuan);
+                                if (nguoiKhop.length === 1) {
+                                    const tv = nguoiKhop[0];
+                                    let khop = false;
+                                    if (muc.danToc && tv.danToc !== muc.danToc) { tv.danToc = muc.danToc; coThayDoi = true; khop = true; }
+                                    if (muc.tonGiao && tv.tonGiao !== muc.tonGiao) { tv.tonGiao = muc.tonGiao; coThayDoi = true; khop = true; }
+                                    if (khop || muc.danToc || muc.tonGiao) soNguoiCapNhat++;
+                                } else if (nguoiKhop.length > 1) {
+                                    // 2+ người trùng họ tên trong CÙNG 1 hộ (VD sinh đôi cùng tên đệm) -> không tự
+                                    // đoán ai là ai, để tránh gán NHẦM dân tộc/tôn giáo cho sai người.
+                                    canhBaoTrungTen.push(`HSCT ${hsctHo} — "${muc.tenGoc}" (${nguoiKhop.length} người trùng tên trong hộ, bỏ qua)`);
+                                } else {
+                                    canhBaoTrungTen.push(`HSCT ${hsctHo} — "${muc.tenGoc}" (không tìm thấy tên này trong hộ)`);
+                                }
+                            });
+                            delete capNhatTheoHsctTen[hsctHo];
+                            soMoHo++;
+                        }
+
                         if (coThayDoi) hoBiThayDoi.push(ho);
                     });
 
                     if (hoBiThayDoi.length === 0) {
-                        alert(`ℹ️ Không có ai khớp Số CCCD trong phạm vi đang xem ("${khuVucHienTai}"). Có thể những người này thuộc phường/xã khác, hoặc CCCD trong file không khớp CCCD đã lưu trong hệ thống — không có gì bị thay đổi.`);
+                        alert(`ℹ️ Không có ai khớp được trong phạm vi đang xem ("${khuVucHienTai}"). Có thể những người này thuộc phường/xã khác, hoặc CCCD/HSCT trong file không khớp dữ liệu đã lưu — không có gì bị thay đổi.`);
                         event.target.value = ""; return;
                     }
-                    if (!confirm(`Đã khớp được ${soNguoiCapNhat} người trong ${hoBiThayDoi.length} hộ theo đúng CCCD — sẽ CHỈ cập nhật Dân tộc/Tôn giáo cho những người này, không đổi bất kỳ dữ liệu nào khác.\n\nXác nhận lưu?`)) {
-                        event.target.value = ""; return;
-                    }
+                    let xacNhan = `Đã khớp được ${soNguoiCapNhat} người trong ${hoBiThayDoi.length} hộ — sẽ CHỈ cập nhật Dân tộc/Tôn giáo cho những người này, không đổi bất kỳ dữ liệu nào khác.`;
+                    if (canhBaoTrungTen.length > 0) xacNhan += `\n\n⚠️ ${canhBaoTrungTen.length} trường hợp KHÔNG tự khớp được (trùng tên trong hộ hoặc không tìm thấy tên) — sẽ báo chi tiết sau khi lưu để kiểm tra tay.`;
+                    xacNhan += `\n\nXác nhận lưu?`;
+                    if (!confirm(xacNhan)) { event.target.value = ""; return; }
 
                     let daLuu = 0, loiLuu = 0;
                     for (const ho of hoBiThayDoi) {
@@ -4582,11 +4629,14 @@
                     if (!CHE_DO_FIREBASE) localStorage.setItem("danhSachHoGiaDinhCacheGIS_V5", JSON.stringify(danhSachHoGiaDinh));
 
                     const soCccdKhongKhop = Object.keys(capNhatTheoCccd).length;
+                    const soHsctKhongKhop = Object.keys(capNhatTheoHsctTen).length;
                     ghiNhatKy('Bổ sung Dân tộc/Tôn giáo qua Excel (không ghi đè)', `${soNguoiCapNhat} người trong ${hoBiThayDoi.length} hộ - file: ${file.name}`);
                     let baoCao = `✅ Đã cập nhật Dân tộc/Tôn giáo cho ${soNguoiCapNhat} người trong ${daLuu} hộ — mọi dữ liệu khác giữ nguyên.`;
                     if (loiLuu > 0) baoCao += `\n⚠️ ${loiLuu} hộ lưu lỗi (kiểm tra lại kết nối mạng, thử lại sau).`;
-                    if (soCccdKhongKhop > 0) baoCao += `\n⚠️ ${soCccdKhongKhop} số CCCD trong file KHÔNG khớp được ai trong dữ liệu đang xem — có thể sai CCCD, hoặc người đó thuộc phường/khu vực đang không hiển thị. Cần kiểm tra tay.`;
-                    if (dongThieuCccd > 0) baoCao += `\nℹ️ ${dongThieuCccd} dòng có tên nhưng thiếu CCCD trong file — bị bỏ qua, chưa cập nhật được.`;
+                    if (soCccdKhongKhop > 0) baoCao += `\n⚠️ ${soCccdKhongKhop} số CCCD trong file KHÔNG khớp được ai đang hiển thị.`;
+                    if (soHsctKhongKhop > 0) baoCao += `\n⚠️ ${soHsctKhongKhop} Số HSCT trong file KHÔNG khớp được hộ nào đang hiển thị — có thể thuộc phường/khu vực khác.`;
+                    if (canhBaoTrungTen.length > 0) baoCao += `\n\n⚠️ CẦN KIỂM TRA TAY (${canhBaoTrungTen.length} trường hợp):\n` + canhBaoTrungTen.slice(0, 15).join('\n') + (canhBaoTrungTen.length > 15 ? `\n... và ${canhBaoTrungTen.length - 15} trường hợp khác` : '');
+                    if (dongThieuKhoa > 0) baoCao += `\nℹ️ ${dongThieuKhoa} dòng thiếu cả CCCD lẫn (HSCT+Họ tên) — bị bỏ qua.`;
                     alert(baoCao);
                     capNhatGiaoDienSauKhiTai();
                 } catch (err) {
