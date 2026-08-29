@@ -1031,7 +1031,15 @@
                     </select>
                 </div>
                 <div><label class="text-gray-400 block mb-0.5">Số hồ sơ (nếu có)</label><input id="dt_soHoSo" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
-                <div></div>
+                <div class="flex items-end gap-2">
+                    <img id="dt_anhXemTruoc" class="hidden w-14 h-14 object-cover rounded border border-gray-700" alt="Ảnh đối tượng">
+                    <label class="cursor-pointer bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded px-2 py-1.5 text-[11px] text-gray-300">
+                        📷 Ảnh đối tượng (nếu có)
+                        <input type="file" id="dt_anhInput" accept="image/*" capture="environment" class="hidden" onchange="xuLyChonAnhDoiTuong(event)">
+                    </label>
+                    <button type="button" id="dt_xoaAnhBtn" onclick="xoaAnhDoiTuong()" class="hidden text-[11px] text-rose-400 hover:text-rose-300">Xóa ảnh</button>
+                    <input type="hidden" id="dt_anhBase64" value="">
+                </div>
             </div>
 
             <div class="border-t border-gray-800 pt-2 grid grid-cols-2 gap-2">
@@ -4013,6 +4021,14 @@
             return loaiHinhTuTenDonVi(tenPhuongXa) === 'xa' ? 'Ấp 1' : 'Khu Vực 1';
         }
 
+        // Nhãn HIỂN THỊ dùng cho nhãn/placeholder trên giao diện (khác donViMacDinhTheoLoaiHinh — hàm đó trả
+        // về 1 giá trị MẶC ĐỊNH cụ thể như "Khu Vực 1"/"Ấp 1"; hàm này chỉ trả DANH TỪ CHUNG để ghép câu, VD
+        // "Tất cả Khu Vực"/"Tất cả Ấp/Khóm/Thôn"). Áp dụng dần vào các nhãn hay dùng nhất trước — chưa phủ hết
+        // toàn bộ 14+ chỗ còn viết cứng "Khu Vực" trong giao diện (việc còn lại, làm dần khi mở rộng thêm xã).
+        function nhanDonViCoSo(tenPhuongXa) {
+            return loaiHinhTuTenDonVi(tenPhuongXa || khuVucHienTai) === 'xa' ? 'Ấp/Khóm/Thôn' : 'Khu Vực';
+        }
+
         function layNhanKhuVucTuDiaChi(diaChi, tenPhuongGoiY) {
             // Thay dấu gạch dưới/gạch ngang/chấm bằng khoảng trắng trước khi so khớp, vì \b coi "_" là ký tự chữ
             // nên "Thuong_tru_KV_7.xlsx" trước đây KHÔNG khớp được mẫu "kv" (gây lỗi tự đổi thành Khu Vực 1).
@@ -4521,12 +4537,13 @@
                     const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
 
                     let mapCol = { cccd: -1, hsct: -1, hoTen: -1, danToc: -1, tonGiao: -1 };
+                    let dongTieuDeCccd = -1, dongTieuDeHsct = -1, dongTieuDeHoTen = -1;
                     for (let i = 0; i < Math.min(20, rows.length); i++) {
                         (rows[i] || []).forEach((text, j) => {
                             let t = String(text).toLowerCase().replace(/\s+/g, '');
-                            if (mapCol.cccd === -1 && (t.includes('cccd') || (t.includes('định') && t.includes('danh')) || t.includes('cmnd') || t === 'đdcn')) mapCol.cccd = j;
-                            if (mapCol.hsct === -1 && (t.includes('hsct') || (t.includes('hồ') && t.includes('sơ')))) mapCol.hsct = j;
-                            if (mapCol.hoTen === -1 && ((t.includes('họ') && t.includes('tên')) || t === 'tên' || t === 'hoten')) mapCol.hoTen = j;
+                            if (mapCol.cccd === -1 && (t.includes('cccd') || (t.includes('định') && t.includes('danh')) || t.includes('cmnd') || t === 'đdcn')) { mapCol.cccd = j; dongTieuDeCccd = i; }
+                            if (mapCol.hsct === -1 && (t.includes('hsct') || (t.includes('hồ') && t.includes('sơ')) || (t.includes('sổ') && t.includes('hộ') && t.includes('khẩu')))) { mapCol.hsct = j; dongTieuDeHsct = i; }
+                            if (mapCol.hoTen === -1 && ((t.includes('họ') && t.includes('tên')) || t.includes('hovaten') || t === 'tên' || t === 'hoten' || t === 'ten')) { mapCol.hoTen = j; dongTieuDeHoTen = i; }
                             if (mapCol.danToc === -1 && (t.includes('dân') && t.includes('tộc'))) mapCol.danToc = j;
                             if (mapCol.tonGiao === -1 && (t.includes('tôn') && t.includes('giáo'))) mapCol.tonGiao = j;
                         });
@@ -4537,8 +4554,35 @@
                     // tuyệt đối hơn (Họ tên có thể trùng giữa nhiều người, dù hiếm khi trùng trong CÙNG 1 hộ).
                     const coTheKhopTheoCccd = mapCol.cccd !== -1;
                     const coTheKhopTheoHsctTen = mapCol.hsct !== -1 && mapCol.hoTen !== -1;
+
+                    // ================== DÒ THEO VỊ TRÍ CỘT KHI FILE KHÔNG CÓ DÒNG TIÊU ĐỀ ==================
+                    // PHÁT HIỆN TỪ FILE THẬT ANH GỬI: 1 dạng file dữ liệu bắt đầu ngay dòng 1 (không có tên
+                    // cột) theo đúng thứ tự cố định STT-HSCT-CCCD-HọTên-NgàySinh-QuanHệ-GiớiTính-ĐịaChỉ-SĐT-
+                    // ChủHộ-DânTộc-TônGiáo. KHÔNG tự áp dụng ngầm (rủi ro gán nhầm dữ liệu nếu đoán sai cấu
+                    // trúc) — chỉ đề xuất và bắt buộc xác nhận bằng mắt qua vài dòng xem trước trước khi dùng.
+                    let dungViTriCoDinh = false;
                     if (!coTheKhopTheoCccd && !coTheKhopTheoHsctTen) {
-                        alert("❌ File cần có CỘT CCCD, HOẶC ĐỦ CẢ 2 cột Số HSCT + Họ tên, để khớp đúng người — không thể bổ sung an toàn nếu thiếu cả hai.");
+                        const mauDong = rows.slice(0, Math.min(5, rows.length));
+                        const hopLeHSCT = mauDong.every(r => /^\d{4,6}-\d{5,8}$/.test(String((r || [])[1] || '').trim()));
+                        const hopLeTen = mauDong.every(r => /^[A-ZÀ-Ỹ\s]{3,}$/.test(String((r || [])[3] || '').trim()));
+                        if (hopLeHSCT && hopLeTen) {
+                            const xemTruoc = mauDong.map(r => `HSCT "${(r || [])[1]}" — ${(r || [])[3]} — Dân tộc:"${(r || [])[10] || ''}" — Tôn giáo:"${(r || [])[11] || ''}"`).join('\n');
+                            if (confirm(`ℹ️ File này KHÔNG có dòng tiêu đề, nhưng dữ liệu đúng đúng thứ tự cột quen thuộc của hệ thống:\nCột 2 = Số HSCT, Cột 3 = CCCD, Cột 4 = Họ tên, Cột 11 = Dân tộc, Cột 12 = Tôn giáo.\n\nXem thử 5 dòng đầu:\n${xemTruoc}\n\nĐÚNG với dữ liệu thật trong file → bấm OK để dùng cách đọc này.\nSAI → bấm Hủy, không có gì bị thay đổi.`)) {
+                                mapCol = { cccd: 2, hsct: 1, hoTen: 3, danToc: 10, tonGiao: 11 };
+                                dungViTriCoDinh = true;
+                            }
+                        }
+                    }
+                    const coTheKhopTheoCccd2 = dungViTriCoDinh || mapCol.cccd !== -1;
+                    const coTheKhopTheoHsctTen2 = dungViTriCoDinh || (mapCol.hsct !== -1 && mapCol.hoTen !== -1);
+                    if (!coTheKhopTheoCccd2 && !coTheKhopTheoHsctTen2) {
+                        // SỬA THEO PHẢN HỒI THỰC TẾ: trước đây báo lỗi trơn "thiếu cột", không cho biết máy ĐÃ
+                        // ĐỌC ĐƯỢC những cột nào — người dùng phải đoán mò lý do. Giờ hiện thẳng dòng tiêu đề
+                        // đầu tiên trong file (dòng thường chứa tên cột) để đối chiếu ngay xem đúng là thiếu cột
+                        // hay do cách đặt tên cột chưa khớp với từ khóa dò tìm của phần mềm.
+                        const dongDauTien = (rows[0] || []).map((c, idx) => (idx + 1) + ".\"" + String(c || '(trống)').trim() + "\"").join('  |  ');
+                        let chiTietDaDoc = `Đã đọc được: Cột CCCD ${mapCol.cccd !== -1 ? '✅ (cột ' + (mapCol.cccd + 1) + ')' : '❌ KHÔNG thấy'} — Cột Số HSCT ${mapCol.hsct !== -1 ? '✅ (cột ' + (mapCol.hsct + 1) + ')' : '❌ KHÔNG thấy'} — Cột Họ tên ${mapCol.hoTen !== -1 ? '✅ (cột ' + (mapCol.hoTen + 1) + ')' : '❌ KHÔNG thấy'}.`;
+                        alert("❌ File cần có CỘT CCCD, HOẶC ĐỦ CẢ 2 cột Số HSCT + Họ tên, để khớp đúng người.\n\n" + chiTietDaDoc + "\n\nDòng tiêu đề (dòng 1) máy đọc được từ file:\n" + dongDauTien + "\n\nNếu tên cột trong file khác cách gọi phần mềm đang dò (VD \"Mã hồ sơ\" thay vì \"Số HSCT\"), hãy đổi lại đúng tên cột như trên rồi nhập lại — hoặc gửi lại tên cột thật để được hỗ trợ.");
                         event.target.value = ""; return;
                     }
                     if (mapCol.danToc === -1 && mapCol.tonGiao === -1) { alert("❌ Không tìm thấy cột Dân tộc hoặc Tôn giáo nào trong file."); event.target.value = ""; return; }
@@ -4546,9 +4590,14 @@
                     const capNhatTheoCccd = {};       // cccd -> {danToc, tonGiao}
                     const capNhatTheoHsctTen = {};    // hsct -> [{ tenChuan, danToc, tonGiao, tenGoc }]
                     let dongThieuKhoa = 0;
-                    for (let i = 1; i < rows.length; i++) {
+                    for (let i = dungViTriCoDinh ? 0 : 1; i < rows.length; i++) {
                         const r = rows[i] || [];
-                        const cccd = mapCol.cccd !== -1 ? String(r[mapCol.cccd] || '').trim() : '';
+                        // CHUẨN HÓA CCCD: sửa lỗi mất số 0 ở đầu khi Excel lưu CCCD dưới dạng SỐ có định dạng
+                        // hiển thị "000000000000" (12 số) — đọc thô sẽ mất số 0 đầu (VD 92226005303 thay vì
+                        // đúng phải là 092226005303), khiến KHÔNG BAO GIỜ khớp được với CCCD 12 số đã lưu đúng
+                        // trong hệ thống. Tự vá lại bằng cách đệm số 0 ở đầu cho đủ 12 chữ số nếu là số thuần.
+                        let cccd = mapCol.cccd !== -1 ? String(r[mapCol.cccd] || '').trim() : '';
+                        if (cccd && /^\d{6,11}$/.test(cccd)) cccd = cccd.padStart(12, '0');
                         const hsct = mapCol.hsct !== -1 ? String(r[mapCol.hsct] || '').trim() : '';
                         const tenGoc = mapCol.hoTen !== -1 ? String(r[mapCol.hoTen] || '').trim() : '';
                         const dt = mapCol.danToc !== -1 ? String(r[mapCol.danToc] || '').trim() : '';
@@ -4575,7 +4624,8 @@
 
                         // Cách 1: khớp theo CCCD (chính xác tuyệt đối, ưu tiên trước)
                         (ho.thanhVien || []).forEach(tv => {
-                            const cccd = (tv.cccd || '').trim();
+                            let cccd = (tv.cccd || '').trim();
+                            if (cccd && /^\d{6,11}$/.test(cccd)) cccd = cccd.padStart(12, '0'); // đề phòng dữ liệu cũ trong hệ thống cũng từng bị mất số 0 đầu do nhập trước đây
                             if (!cccd || !capNhatTheoCccd[cccd]) return;
                             const cap = capNhatTheoCccd[cccd];
                             let khop = false;
@@ -4704,7 +4754,7 @@
                 if (selKvNhanh) selKvNhanh.innerHTML = selKv.innerHTML;
                 return;
             }
-            const dsOption = '<option value="">-- Tất cả Khu Vực --</option>' + Array.from(setKhuVuc).sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }))
+            const dsOption = `<option value="">-- Tất cả ${nhanDonViCoSo()} --</option>` + Array.from(setKhuVuc).sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }))
                 .map(kv => `<option value="${kv}">${kv}</option>`).join('');
             selKv.innerHTML = dsOption;
             if (selKvNhanh) { const giaDangChon = selKvNhanh.value; selKvNhanh.innerHTML = dsOption; selKvNhanh.value = giaDangChon; }
@@ -6640,13 +6690,14 @@
             if (ds.length === 0) { el.innerHTML = '<p class="text-gray-500 p-3">Chưa có đối tượng nào trong danh sách.</p>'; return; }
             el.innerHTML = `<table class="w-full text-left border-collapse">
                 <thead><tr class="text-gray-400 border-b border-gray-700">
-                    <th class="p-1.5">TT</th><th class="p-1.5">Họ và tên đối tượng</th><th class="p-1.5">Diện đối tượng</th>
+                    <th class="p-1.5">TT</th><th class="p-1.5"></th><th class="p-1.5">Họ và tên đối tượng</th><th class="p-1.5">Diện đối tượng</th>
                     <th class="p-1.5">Nơi ở hiện tại</th><th class="p-1.5">Cán bộ quản lý hiện tại</th><th class="p-1.5"></th>
                 </tr></thead>
                 <tbody>${ds.map((d, i) => {
                     const cbHienTai = (d.canBoQuanLy && d.canBoQuanLy.length) ? d.canBoQuanLy[d.canBoQuanLy.length - 1].hoTen : '—';
                     return `<tr class="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer" onclick="moFormDoiTuong('${d.id}')">
                         <td class="p-1.5">${i + 1}</td>
+                        <td class="p-1.5">${d.anhBase64 ? `<img src="${d.anhBase64}" class="w-8 h-8 rounded object-cover border border-gray-700">` : `<div class="w-8 h-8 rounded bg-gray-800 flex items-center justify-center text-gray-600 text-[10px]">—</div>`}</td>
                         <td class="p-1.5 text-white font-medium">${escHtml(d.hoTen || '')}</td>
                         <td class="p-1.5 text-rose-300">${escHtml(d.dienDoiTuong || '')}</td>
                         <td class="p-1.5">${escHtml(d.noiOHienTai || '')}</td>
@@ -6654,6 +6705,50 @@
                         <td class="p-1.5 text-right"><button onclick="event.stopPropagation(); moFormDoiTuong('${d.id}')" class="text-rose-400 hover:text-rose-300">Chi tiết ▸</button></td>
                     </tr>`;
                 }).join('')}</tbody></table>`;
+        }
+
+        // ================== ẢNH ĐỐI TƯỢNG KV3 (mới thêm) ==================
+        // Lưu trực tiếp trong Firestore dưới dạng chuỗi base64 (không dùng Firebase Storage — dự án hiện chỉ
+        // cấu hình Firestore, thêm Storage cần bật dịch vụ riêng trên Firebase Console, chưa chắc mọi nơi đã
+        // bật). Firestore giới hạn 1 tài liệu ≤ 1MB, nên BẮT BUỘC nén nhỏ ảnh qua canvas trước khi lưu — resize
+        // về tối đa 480px cạnh dài + nén JPEG chất lượng 0.6, thường chỉ còn 30-80KB/ảnh, an toàn với giới hạn.
+        function xuLyChonAnhDoiTuong(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) { alert("Vui lòng chọn đúng file ảnh."); event.target.value = ''; return; }
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.onload = function () {
+                    const CANH_TOI_DA = 480;
+                    let w = img.width, h = img.height;
+                    if (w > h && w > CANH_TOI_DA) { h = Math.round(h * CANH_TOI_DA / w); w = CANH_TOI_DA; }
+                    else if (h > CANH_TOI_DA) { w = Math.round(w * CANH_TOI_DA / h); h = CANH_TOI_DA; }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    const base64Nen = canvas.toDataURL('image/jpeg', 0.6);
+                    if (base64Nen.length > 900000) { // ~900KB chuỗi base64, chừa dư địa cho các trường khác trong cùng tài liệu
+                        alert("⚠️ Ảnh sau khi nén vẫn còn khá lớn, có thể vượt giới hạn lưu trữ. Vui lòng chọn ảnh khác nhỏ hơn hoặc chụp lại với độ phân giải thấp hơn.");
+                        return;
+                    }
+                    document.getElementById('dt_anhBase64').value = base64Nen;
+                    const elAnh = document.getElementById('dt_anhXemTruoc');
+                    elAnh.src = base64Nen; elAnh.classList.remove('hidden');
+                    document.getElementById('dt_xoaAnhBtn').classList.remove('hidden');
+                };
+                img.onerror = () => alert("Không đọc được ảnh này, vui lòng thử ảnh khác.");
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function xoaAnhDoiTuong() {
+            document.getElementById('dt_anhBase64').value = '';
+            document.getElementById('dt_anhInput').value = '';
+            const elAnh = document.getElementById('dt_anhXemTruoc');
+            elAnh.classList.add('hidden'); elAnh.src = '';
+            document.getElementById('dt_xoaAnhBtn').classList.add('hidden');
         }
 
         function moFormDoiTuong(id) {
@@ -6671,6 +6766,12 @@
                 if (elInput) elInput.value = d ? (d[t] || (t === 'quocTich' && !d.id ? 'Việt Nam' : '')) : (t === 'quocTich' ? 'Việt Nam' : '');
             });
             document.getElementById('dt_gioiTinh').value = d ? (d.gioiTinh || 'Nam') : 'Nam';
+            // Nạp lại ảnh đã lưu (nếu có) khi mở hồ sơ cũ; xóa sạch khi thêm mới
+            document.getElementById('dt_anhBase64').value = (d && d.anhBase64) ? d.anhBase64 : '';
+            const elAnh = document.getElementById('dt_anhXemTruoc');
+            if (d && d.anhBase64) { elAnh.src = d.anhBase64; elAnh.classList.remove('hidden'); document.getElementById('dt_xoaAnhBtn').classList.remove('hidden'); }
+            else { elAnh.classList.add('hidden'); elAnh.src = ''; document.getElementById('dt_xoaAnhBtn').classList.add('hidden'); }
+            document.getElementById('dt_anhInput').value = '';
             dtCanBoQuanLyTam = d && d.canBoQuanLy ? JSON.parse(JSON.stringify(d.canBoQuanLy)) : [];
             renderCanBoQuanLyTam();
             document.getElementById('dtBtnXoa').classList.toggle('hidden', !d);
@@ -6720,6 +6821,7 @@
             const dtNoiO = document.getElementById('dt_noiOHienTai') ? document.getElementById('dt_noiOHienTai').value : '';
             duLieu.khuVuc = layNhanKhuVucTuDiaChi(dtNoiO, khuVucHienTai) || donViMacDinhTheoLoaiHinh(khuVucHienTai);
             truong.forEach(t => { const elInput = document.getElementById('dt_' + t); if (elInput) duLieu[t] = elInput.value.trim ? elInput.value.trim() : elInput.value; });
+            duLieu.anhBase64 = document.getElementById('dt_anhBase64').value || '';
             try {
                 const id = document.getElementById('dtId').value;
                 if (id) { await dbFirestore.collection('doi_tuong_quan_ly').doc(id).set(duLieu, { merge: true }); }
