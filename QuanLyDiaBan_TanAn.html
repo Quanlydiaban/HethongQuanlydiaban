@@ -537,12 +537,13 @@
                             <span id="trangThaiGpsHo" class="text-[10px] font-bold px-2 py-0.5 rounded"></span>
                         </div>
                         <div id="mapContainer"></div>
-                        <input type="text" id="editGps" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-gray-400 w-full font-mono text-[10px]" onchange="capNhatBanDoLeaflet()">
+                        <input type="text" id="editGps" placeholder="VD: 10.025800, 105.760000 (dán trực tiếp từ Google Maps trên điện thoại nếu có)" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-gray-300 w-full font-mono text-[10px]" onchange="capNhatBanDoLeaflet()">
                         <div class="flex gap-1.5">
+                            <button type="button" onclick="layViTriHienTaiChoHo(this)" class="flex-1 bg-emerald-700 hover:bg-emerald-600 rounded px-2 py-1.5 text-[11px] font-medium">📍 Lấy Vị Trí Hiện Tại Của Tôi</button>
                             <button type="button" onclick="xacDinhToaDoChinhXac(this)" class="flex-1 bg-cyan-700 hover:bg-cyan-600 rounded px-2 py-1.5 text-[11px] font-medium">🔍 Tìm Gần Đúng Trên Bản Đồ</button>
                             <button type="button" onclick="chiDuongDenHo()" class="flex-1 bg-blue-700 hover:bg-blue-600 rounded px-2 py-1.5 text-[11px] font-medium">🧭 Chỉ Đường Đến Đây</button>
                         </div>
-                        <p class="text-[9px] text-gray-500">"🔍 Tìm Gần Đúng" chỉ đưa bản đồ đến ĐÚNG KHU VỰC theo địa chỉ (không tự đặt ghim) — sau đó BẤM TRỰC TIẾP lên bản đồ đúng vị trí nhà để xác nhận. "🧭 Chỉ Đường" chỉ dùng được SAU KHI đã chấm tay + Lưu Hồ Sơ.</p>
+                        <p class="text-[9px] text-gray-500">✅ Chính xác nhất: đang đứng ngay tại nhà (mở trang này bằng điện thoại) → bấm "📍 Lấy Vị Trí Hiện Tại Của Tôi" → điện thoại tự lấy đúng toạ độ GPS thật, không cần chuyển qua app khác. Cách 2: dán tay tọa độ copy sẵn từ Google Maps vào ô phía trên. Cách 3 (kém chính xác hơn): "🔍 Tìm Gần Đúng" đưa bản đồ đến ĐÚNG KHU VỰC theo địa chỉ (không tự đặt ghim) rồi BẤM TRỰC TIẾP lên bản đồ đúng vị trí nhà. "🧭 Chỉ Đường" chỉ dùng được SAU KHI đã có toạ độ xác nhận + Lưu Hồ Sơ.</p>
                     </div>
 
                     <!-- Ảnh chụp nhà -->
@@ -5407,30 +5408,79 @@
             L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png').addTo(mapInstance);
             
             markerInstance = L.marker(coords, { draggable: true }).addTo(mapInstance);
-            const capNhatBadgeDaXacNhan = () => {
-                gpsHoHienTaiLaThat = true; // Cán bộ tự tay chấm/kéo ghim -> coi là toạ độ thật, đáng tin để dẫn đường
-                const elTT = document.getElementById('trangThaiGpsHo');
-                if (elTT) { elTT.innerText = '✅ Vừa chấm — nhớ bấm Lưu Hồ Sơ'; elTT.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-900 text-emerald-300'; }
-            };
             markerInstance.on('dragend', function() {
                 let pos = markerInstance.getLatLng();
                 document.getElementById('editGps').value = `${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`;
-                capNhatBadgeDaXacNhan();
+                capNhatBadgeDaXacNhan('chấm');
             });
             mapInstance.on('click', function(e) {
                 markerInstance.setLatLng(e.latlng);
                 document.getElementById('editGps').value = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
-                capNhatBadgeDaXacNhan();
+                capNhatBadgeDaXacNhan('chấm');
             });
+        }
+
+        // TÁCH RIÊNG (trước đây nằm lồng trong khoiTaoBanDoLeaflet, chỉ gọi được từ chấm/kéo bản đồ) — giờ
+        // dùng chung được cho CẢ trường hợp dán tay số GPS thật (VD cán bộ đứng ngay tại nhà, mở Google Maps
+        // trên điện thoại lấy đúng toạ độ vệ tinh của máy — CHÍNH XÁC HƠN hẳn việc chấm ước lượng bằng mắt
+        // trên bản đồ máy tính). "rà trên bản đồ" trước đây là đường DUY NHẤT được công nhận là "đã xác nhận"
+        // — đây chính là nguyên nhân gốc của phản ánh "không check trực tiếp được".
+        function capNhatBadgeDaXacNhan(cachXacNhan) {
+            gpsHoHienTaiLaThat = true;
+            const elTT = document.getElementById('trangThaiGpsHo');
+            if (elTT) {
+                const nhan = { dan: '✅ Đã dán toạ độ thật', thiet_bi: '✅ Đã lấy vị trí thiết bị (GPS thật)' }[cachXacNhan] || '✅ Vừa chấm';
+                elTT.innerText = nhan + ' — nhớ bấm Lưu Hồ Sơ';
+                elTT.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-900 text-emerald-300';
+            }
+        }
+
+        // "Lấy vị trí hiện tại của tôi" — dùng ĐÚNG định vị GPS thật của thiết bị (điện thoại) khi cán bộ
+        // đang đứng ngay tại nhà — chính xác nhất trong 3 cách hiện có (hơn cả chấm tay trên bản đồ, hơn cả
+        // dán tay từ app khác vì không phải chuyển qua lại giữa 2 ứng dụng, không sợ gõ/dán nhầm số).
+        // enableHighAccuracy:true bắt buộc dùng GPS vệ tinh thật thay vì định vị theo Wifi/mạng (kém chính
+        // xác hơn nhiều, thường lệch hàng chục-hàng trăm mét).
+        function layViTriHienTaiChoHo(btn) {
+            if (!navigator.geolocation) return alert("Trình duyệt này không hỗ trợ định vị vị trí hiện tại.");
+            const chuVanBanCu = btn.innerText;
+            btn.disabled = true; btn.innerText = "Đang định vị...";
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    const lat = pos.coords.latitude, lon = pos.coords.longitude, doChinhXac = pos.coords.accuracy;
+                    document.getElementById('editGps').value = `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+                    if (mapInstance && markerInstance) {
+                        const ll = [lat, lon];
+                        markerInstance.setLatLng(ll); mapInstance.setView(ll, 18); mapInstance.invalidateSize();
+                    }
+                    capNhatBadgeDaXacNhan('thiet_bi');
+                    btn.disabled = false; btn.innerText = chuVanBanCu;
+                    if (doChinhXac > 50) {
+                        alert(`⚠️ Đã lấy được vị trí, nhưng độ chính xác chỉ khoảng ${Math.round(doChinhXac)}m (hơi thấp — có thể do đang ở trong nhà/che khuất tín hiệu vệ tinh). Nếu thấy ghim lệch trên bản đồ, ra ngoài trời trống rồi thử lại, hoặc chấm tay sửa lại cho đúng.`);
+                    }
+                },
+                err => {
+                    btn.disabled = false; btn.innerText = chuVanBanCu;
+                    let ly = "Không lấy được vị trí hiện tại.";
+                    if (err.code === err.PERMISSION_DENIED) ly = "Trình duyệt/điện thoại đang CHẶN quyền định vị — vào Cài đặt cho phép trang này truy cập vị trí rồi thử lại.";
+                    else if (err.code === err.TIMEOUT) ly = "Định vị quá lâu không có kết quả — thử lại ở nơi thoáng, ít bị che khuất.";
+                    alert("❌ " + ly);
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
         }
 
         function capNhatBanDoLeaflet() {
             let gpsVal = document.getElementById('editGps').value.trim();
             if (gpsVal.includes(',') && mapInstance) {
                 let lat = parseFloat(gpsVal.split(',')[0]), lon = parseFloat(gpsVal.split(',')[1]);
-                if (!isNaN(lat) && !isNaN(lon)) {
+                if (!isNaN(lat) && !isNaN(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
                     let ll = [lat, lon]; markerInstance.setLatLng(ll); mapInstance.setView(ll, 18);
                     mapInstance.invalidateSize();
+                    // SỬA THEO PHẢN HỒI THỰC TẾ: "vị trí hộ không check trực tiếp được, phải rà bản đồ, không
+                    // chính xác" — đúng là lỗi thật. Dán tay số GPS hợp lệ (VD copy từ app Google Maps trên
+                    // điện thoại lúc đứng tại nhà) giờ ĐƯỢC CÔNG NHẬN là đã xác nhận, y như chấm tay trên bản
+                    // đồ — không còn bị âm thầm từ chối khi lưu nữa.
+                    capNhatBadgeDaXacNhan('dan');
                 }
             }
         }
