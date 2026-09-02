@@ -311,6 +311,15 @@
                     </div>
                 </div>
 
+                <!-- MỚI THÊM: trước đây Dashboard hoàn toàn không có gì về KV3 — Chỉ huy phải mở riêng module
+                     Quản Lý Đối Tượng mới biết có bao nhiêu đối tượng, theo diện gì. -->
+                <div class="glass-card p-3 rounded-xl shadow space-y-2 text-[11px] cursor-pointer hover:bg-gray-800/40" onclick="moModalDoiTuong()" title="Bấm để mở Quản Lý Đối Tượng (KV3)">
+                    <p class="font-semibold text-xs text-gray-200">🎯 Đối Tượng Quản Lý (KV3)</p>
+                    <div id="dashboardKV3Box" class="space-y-1">
+                        <p class="text-gray-500">Đang tải...</p>
+                    </div>
+                </div>
+
                 
                 <div class="glass-card p-3 rounded-xl shadow space-y-2">
                     <p class="text-gray-400 text-xs font-semibold">🔍 Bộ Lọc Nâng Cao</p>
@@ -1104,6 +1113,7 @@
 
             <div class="flex gap-2 pt-2">
                 <button onclick="luuDoiTuong()" class="flex-1 bg-rose-600 hover:bg-rose-700 rounded px-3 py-2 font-bold">💾 Lưu Hồ Sơ Đối Tượng</button>
+                <button id="dtBtnIn" onclick="inHoSoDoiTuong()" class="hidden bg-indigo-700 hover:bg-indigo-600 rounded px-3 py-2 font-medium">🖨️ In Hồ Sơ (kèm ảnh)</button>
                 <button id="dtBtnXoa" onclick="xoaDoiTuong()" class="hidden bg-red-800 hover:bg-red-700 rounded px-3 py-2 font-bold">🗑️ Xóa</button>
             </div>
         </div>
@@ -6700,27 +6710,49 @@
         let huyLangNgheDoiTuong = null;
         let dtCanBoQuanLyTam = []; // danh sách bàn giao đang soạn trong form (chưa lưu)
 
+        // Tách phần truy vấn ra dùng chung — vừa cho modal KV3, vừa cho ô thống kê nhỏ trên Dashboard, để
+        // Dashboard KHÔNG còn "mù" về KV3 như trước (phải mở riêng module mới biết có bao nhiêu đối tượng).
+        // LUÔN hủy listener cũ trước khi đăng ký lại — bắt buộc, vì nếu đổi phường/khu vực đang xem
+        // (khuVucHienTai thay đổi) mà không làm mới, listener cũ vẫn giữ nguyên phạm vi CŨ mãi mãi.
+        function dangKyLangNgheDoiTuongNenTang() {
+            if (!CHE_DO_FIREBASE) return;
+            if (huyLangNgheDoiTuong) { huyLangNgheDoiTuong(); huyLangNgheDoiTuong = null; }
+            const laCanBoKhuVuc = currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length > 0;
+            let truyVan = dbFirestore.collection('doi_tuong_quan_ly').where('phuong', '==', khuVucHienTai);
+            if (laCanBoKhuVuc) truyVan = truyVan.where('khuVuc', 'in', currentUser.khuVucPhuTrach.slice(0, 10));
+            huyLangNgheDoiTuong = truyVan.onSnapshot(snap => {
+                danhSachDoiTuong = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+                danhSachDoiTuong.sort((a, b) => (a.hoTen || '').localeCompare(b.hoTen || ''));
+                capNhatBoLocDienDoiTuong();
+                renderDanhSachDoiTuong();
+                renderDashboardKV3Box();
+            }, err => {
+                const elModal = document.getElementById('noiDungDanhSachDoiTuong');
+                if (elModal) elModal.innerHTML = '<p class="text-rose-400 p-3">❌ Lỗi tải danh sách đối tượng: ' + escHtml(err.message) + '</p>';
+                const elDash = document.getElementById('dashboardKV3Box');
+                if (elDash) elDash.innerHTML = '<p class="text-rose-400">Lỗi tải dữ liệu KV3.</p>';
+            });
+        }
+
+        function renderDashboardKV3Box() {
+            const el = document.getElementById('dashboardKV3Box');
+            if (!el) return;
+            if (danhSachDoiTuong.length === 0) { el.innerHTML = '<p class="text-gray-500">Chưa có đối tượng nào trong phạm vi đang xem.</p>'; return; }
+            const theoDien = {};
+            danhSachDoiTuong.forEach(d => { const k = d.dienDoiTuong || 'Chưa phân loại'; theoDien[k] = (theoDien[k] || 0) + 1; });
+            const dsDien = Object.entries(theoDien).sort((a, b) => b[1] - a[1]);
+            el.innerHTML = `<div class="flex justify-between font-semibold text-gray-300 border-b border-gray-700 pb-1 mb-1">
+                    <span>Tổng số đối tượng:</span><span class="text-rose-300">${danhSachDoiTuong.length.toLocaleString('vi-VN')}</span>
+                </div>` + dsDien.map(([dien, sl]) => `<div class="flex justify-between text-gray-400"><span>${escHtml(dien)}</span><span class="text-white">${sl}</span></div>`).join('');
+        }
+
         function moModalDoiTuong() {
             if (!CHE_DO_FIREBASE) return alert("Quản lý đối tượng chỉ khả dụng khi đã kết nối máy chủ.");
             document.getElementById('dtTenPhuongHienTai').innerText = khuVucHienTai;
             document.getElementById('doiTuongModal').classList.remove('hidden');
-            if (huyLangNgheDoiTuong) huyLangNgheDoiTuong();
-            // SỬA LỖ HỔNG: CSKV (can_bo) giờ CHỈ được truy vấn đúng khu vực mình phụ trách — bắt buộc phải lọc
-            // NGAY TỪ CÂU TRUY VẤN (where), không thể chỉ lọc ở giao diện sau khi tải về, vì Security Rules
-            // mới đã yêu cầu đúng phạm vi này; nếu không thêm where() ở đây, Firestore sẽ từ chối toàn bộ
-            // truy vấn (không tự "ẩn bớt" kết quả). Chỉ huy/Cán bộ dữ liệu/Admin vẫn xem toàn phường như cũ.
-            const laCanBoKhuVuc = currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length > 0;
-            let truyVan = dbFirestore.collection('doi_tuong_quan_ly').where('phuong', '==', khuVucHienTai);
-            if (laCanBoKhuVuc) truyVan = truyVan.where('khuVuc', 'in', currentUser.khuVucPhuTrach.slice(0, 10));
-            huyLangNgheDoiTuong = truyVan
-                .onSnapshot(snap => {
-                    danhSachDoiTuong = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
-                    danhSachDoiTuong.sort((a, b) => (a.hoTen || '').localeCompare(b.hoTen || ''));
-                    capNhatBoLocDienDoiTuong();
-                    renderDanhSachDoiTuong();
-                }, err => {
-                    document.getElementById('noiDungDanhSachDoiTuong').innerHTML = '<p class="text-rose-400 p-3">❌ Lỗi tải danh sách đối tượng: ' + escHtml(err.message) + '</p>';
-                });
+            // Nếu Dashboard đã đăng ký sẵn ĐÚNG phạm vi (cùng khuVucHienTai) thì dữ liệu đã có, không cần đăng
+            // ký lại — chỉ khi phạm vi CÓ THỂ đã đổi (VD chuyển phường) mới bắt buộc đăng ký lại từ đầu.
+            dangKyLangNgheDoiTuongNenTang();
         }
 
         function capNhatBoLocDienDoiTuong() {
@@ -6825,7 +6857,64 @@
             dtCanBoQuanLyTam = d && d.canBoQuanLy ? JSON.parse(JSON.stringify(d.canBoQuanLy)) : [];
             renderCanBoQuanLyTam();
             document.getElementById('dtBtnXoa').classList.toggle('hidden', !d);
+            document.getElementById('dtBtnIn').classList.toggle('hidden', !d);
             form.classList.remove('hidden');
+        }
+
+        // ================== IN HỒ SƠ ĐỐI TƯỢNG (KV3) — CÓ KÈM ẢNH ==================
+        // KHOẢNG TRỐNG ĐÃ TỰ PHÁT HIỆN: ảnh đối tượng (thêm gần đây) trước đó KHÔNG xuất hiện ở BẤT KỲ đâu
+        // khi xuất/in — Excel Mục Lục KV3 chỉ có dữ liệu chữ, và KV3 chưa từng có chức năng in hồ sơ giấy như
+        // hộ khẩu (CT01/DC01). Dùng lại đúng khung in sẵn có (moCuaSoInBieuMau) để đồng bộ giao diện in.
+        function inHoSoDoiTuong() {
+            const id = document.getElementById('dtId').value;
+            const d = danhSachDoiTuong.find(x => x.id === id);
+            if (!d) return alert("Vui lòng lưu hồ sơ trước khi in.");
+            const cbHienTai = (d.canBoQuanLy && d.canBoQuanLy.length) ? d.canBoQuanLy[d.canBoQuanLy.length - 1] : null;
+            const dong = (nhan, giaTri) => `<tr><td class="nhan" style="width:26%">${nhan}</td><td colspan="3">${escHtml(giaTri || '')}</td></tr>`;
+            const dong2 = (n1, g1, n2, g2) => `<tr><td class="nhan" style="width:26%">${n1}</td><td style="width:24%">${escHtml(g1 || '')}</td><td class="nhan" style="width:26%">${n2}</td><td>${escHtml(g2 || '')}</td></tr>`;
+            const html = `
+                <h1>Hồ sơ đối tượng quản lý (KV3)</h1>
+                <div class="ma-mau">Công an ${escHtml(khuVucHienTai)}</div>
+                <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:8px;">
+                    <div style="flex:1;">
+                        <table>
+                            ${dong2("Họ và tên", d.hoTen, "Giới tính", d.gioiTinh)}
+                            ${dong2("Diện đối tượng", d.dienDoiTuong, "Số hồ sơ", d.soHoSo)}
+                            ${dong2("Sinh ngày", d.sinhNgay, "Số ĐDCN/CCCD", d.soDinhDanh)}
+                        </table>
+                    </div>
+                    ${d.anhBase64 ? `<img src="${d.anhBase64}" style="width:110px;height:140px;object-fit:cover;border:1px solid #111;">` : `<div style="width:110px;height:140px;border:1px dashed #999;display:flex;align-items:center;justify-content:center;font-size:10px;color:#999;">Chưa có ảnh</div>`}
+                </div>
+                <table>
+                    ${dong2("Tên gọi khác", d.tenGoiKhac, "Quốc tịch", d.quocTich)}
+                    ${dong2("Ngày cấp CCCD", d.ngayCap, "Nơi cấp", d.noiCap)}
+                    ${dong2("Dân tộc", d.danToc, "Tôn giáo", d.tonGiao)}
+                    ${dong("Quê quán", d.queQuan)}
+                    ${dong("Nơi thường trú", d.noiThuongTru)}
+                    ${dong("Nơi ở hiện tại", d.noiOHienTai)}
+                    ${dong2("Số điện thoại", d.soDienThoai, "Trình độ học vấn", d.trinhDoHocVan)}
+                    ${dong("Nghề nghiệp/nơi làm việc", d.ngheNghiep)}
+                </table>
+                <table>
+                    <tr><th colspan="4">Thân nhân</th></tr>
+                    ${dong2("Họ tên cha", d.hoTenCha, "Giấy tờ/ĐT cha", d.giayToCha)}
+                    ${dong2("Họ tên mẹ", d.hoTenMe, "Giấy tờ/ĐT mẹ", d.giayToMe)}
+                    ${dong2("Người giám hộ", d.nguoiGiamHo, "Giấy tờ/ĐT giám hộ", d.giayToGiamHo)}
+                    ${dong2("Vợ/chồng", d["vợChong"], "Giấy tờ/ĐT vợ chồng", d.giayToVoChong)}
+                </table>
+                <table>
+                    <tr><th colspan="4">Đặc điểm quản lý, giáo dục</th></tr>
+                    ${dong("Tiền án, tiền sự", d.tienAnTienSu)}
+                    ${dong("Biểu hiện hoạt động", d.bieuHienHoatDong)}
+                    ${dong("Đặc điểm/mối quan hệ cần chú ý", d.dacDiemMoiQuanHe)}
+                    ${dong("Các thay đổi khác", d.thayDoiKhac)}
+                    ${dong("Cán bộ quản lý hiện tại", cbHienTai ? cbHienTai.hoTen : '')}
+                </table>
+                <div class="ky-ten" style="margin-top:24px;">
+                    <div><div class="ngay">......., ngày ...... tháng ...... năm ..........</div><b>CÁN BỘ LẬP HỒ SƠ</b><br>(Ký, ghi rõ họ tên)</div>
+                    <div><div class="ngay">&nbsp;</div><b>TRƯỞNG CÔNG AN CẤP XÃ</b><br>(Ký, ghi rõ họ tên và đóng dấu)</div>
+                </div>`;
+            moCuaSoInBieuMau("Hồ sơ KV3 - " + (d.hoTen || ''), html);
         }
 
         function renderCanBoQuanLyTam() {
@@ -7313,6 +7402,7 @@
             const el = document.getElementById('noiDungDashboard');
             el.innerHTML = '<p class="text-gray-500 p-6 text-center">⏳ Đang tổng hợp dữ liệu...</p>';
             huyBieuDoDashboard();
+            dangKyLangNgheDoiTuongNenTang(); // Nạp/làm mới thống kê KV3 hiển thị trên Dashboard (mới thêm)
 
             // SỬA LỖI QUAN TRỌNG: trước đây Dashboard luôn lấy TOÀN BỘ dữ liệu của phường đang chọn cho MỌI
             // vai trò — kể cả CSKV chỉ được phân công 1 khu vực cũng thấy số liệu của CẢ phường. Giờ áp dụng
