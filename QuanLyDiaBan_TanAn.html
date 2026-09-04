@@ -66,6 +66,18 @@
         .hide-scroll::-webkit-scrollbar-track { background: #1f2937; }
         .hide-scroll::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
 
+        /* CHẾ ĐỘ NGOÀI TRỜI (mới thêm) — cân nhắc kỹ trước khi làm: 1 chế độ SÁNG (light mode) THẬT SỰ đòi
+           hỏi định nghĩa lại màu cho HÀNG NGHÌN chỗ dùng class Tailwind tối màu (bg-gray-900, text-white...)
+           rải khắp file gần 9000 dòng — rủi ro làm vỡ giao diện ở đâu đó mà không cách nào tự nhìn thấy hết
+           để kiểm chứng trước khi giao. Thay vào đó, dùng CSS filter tăng độ sáng/tương phản toàn trang — rủi
+           ro thấp hơn nhiều (chỉ 1 dòng CSS), vẫn giải quyết đúng vấn đề thực tế: khó đọc màn hình tối dưới
+           nắng gắt ngoài trời khi CSKV đi thực địa.
+        */
+        body.che-do-ngoai-troi { filter: invert(1) hue-rotate(180deg) contrast(0.92); }
+        /* Ảnh chụp (ảnh KV3, sau này có thể thêm ảnh hộ khẩu...) cần giữ màu THẬT, không bị đảo theo trang —
+           đảo ngược lại đúng 1 lần nữa cho riêng thẻ ảnh (đảo 2 lần = về màu gốc). */
+        body.che-do-ngoai-troi img { filter: invert(1) hue-rotate(180deg); }
+
         @media print {
             body * { visibility: hidden; }
             #printArea, #printArea * { visibility: visible; }
@@ -231,11 +243,13 @@
                 </label>
                 <button id="btnHoanTacNhap" onclick="hoanTacLanNhapExcelGanNhat()" class="bg-orange-700 hover:bg-orange-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow" title="Chỉ xóa đúng những hộ CHÍNH BẠN vừa nhập gần nhất — không đụng đến dữ liệu người khác">↩️ Hoàn Tác Lần Nhập Của Tôi</button>
                 <button onclick="moModalHuongDanExcel()" class="bg-gray-700 hover:bg-gray-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">❓ Hướng Dẫn Mẫu Excel</button>
+                <button id="btnCheDoNgoaiTroi" onclick="doiCheDoNgoaiTroi()" class="bg-gray-700 hover:bg-gray-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow" title="Tăng độ sáng/tương phản màn hình — dễ đọc hơn khi làm việc ngoài trời nắng gắt">☀️ Chế Độ Ngoài Trời</button>
+                <button onclick="moModalNguonNVQS()" class="bg-emerald-800 hover:bg-emerald-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow" title="Danh sách nam trong độ tuổi thực hiện NVQS/NVCA">🎖️ Nguồn NVQS/NVCA</button>
                 <button onclick="xuatBaoCaoExcelKV1()" class="bg-purple-600 hover:bg-purple-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📋 Xuất Mẫu KV1</button>
                 <button onclick="xuatBaoCaoExcelKV2()" class="bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📊 Xuất Mẫu KV2</button>
                 <button onclick="moModalChonKyBaoCao()" class="bg-cyan-600 hover:bg-cyan-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📈 Báo Cáo Thống Kê</button>
                 <button onclick="moModalNhacCCCD()" class="bg-orange-600 hover:bg-orange-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔔 Nhắc Mốc CCCD</button>
-                <button onclick="moModalNhacHanTamTru()" class="bg-yellow-700 hover:bg-yellow-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🏠 Nhắc Hạn Tạm Trú</button>
+                <button onclick="moModalNhacHanTamTru()" class="relative bg-yellow-700 hover:bg-yellow-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🏠 Nhắc Hạn Tạm Trú<span id="badgeSoTamTruSapHet" class="hidden absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span></button>
                 <button onclick="moModalLichKiemTraDinhKy()" class="bg-lime-700 hover:bg-lime-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🗓️ Lịch Kiểm Tra Định Kỳ</button>
                 <button onclick="moModalNhatKyDiaBan()" class="bg-indigo-700 hover:bg-indigo-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📋 Nhật Ký Địa Bàn</button>
                 <button onclick="moModalDoiTuong()" class="bg-rose-700 hover:bg-rose-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🗂️ Quản Lý Đối Tượng (KV3)</button>
@@ -453,6 +467,7 @@
                 <span id="nhanBoLocText"></span>
                 <button onclick="xoaTatCaBoLoc()" class="flex-shrink-0 bg-amber-700 hover:bg-amber-600 text-white px-2 py-0.5 rounded text-[10px] font-medium">✖ Xóa Lọc</button>
             </div>
+            <div id="banerVieCanLamHomNay" class="hidden mb-2 text-[11px] text-white bg-gradient-to-r from-indigo-900/70 to-indigo-950/70 border border-indigo-700 rounded-lg px-3 py-2"></div>
             <div id="banerLoiDuLieuTuDong" class="hidden mb-2 text-[11px] text-rose-200 bg-rose-950/50 border border-rose-700 rounded px-2.5 py-1.5 flex justify-between items-center gap-2"></div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs">
@@ -496,6 +511,17 @@
                             <label class="text-gray-400 block mb-0.5">Địa chỉ thực tế:</label>
                             <input type="text" id="editDiaChi" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white w-full">
                         </div>
+                        <div class="bg-amber-950/20 border border-amber-800/40 rounded px-2 py-1.5">
+                            <p class="text-amber-300 font-medium text-[11px] mb-1">🏷️ Nhãn đặc biệt của hộ (chọn tất cả nhãn đúng thực tế, có thể chọn nhiều)</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                                <label class="flex items-center gap-1.5 cursor-pointer text-[11px]"><input type="checkbox" id="editNhan_luu_tru" class="accent-amber-500"><span>🏨 Cơ sở lưu trú (nhà trọ/mini hotel/khách sạn/nhà nghỉ)</span></label>
+                                <label class="flex items-center gap-1.5 cursor-pointer text-[11px]"><input type="checkbox" id="editNhan_kd_dieu_kien_antt" class="accent-amber-500"><span>🔒 Cơ sở kinh doanh có điều kiện về ANTT</span></label>
+                                <label class="flex items-center gap-1.5 cursor-pointer text-[11px]"><input type="checkbox" id="editNhan_ho_kinh_doanh" class="accent-amber-500"><span>🏪 Hộ kinh doanh (tạp hóa/quán ăn/quán nhậu...)</span></label>
+                                <label class="flex items-center gap-1.5 cursor-pointer text-[11px]"><input type="checkbox" id="editNhan_co_so_tho_tu" class="accent-amber-500"><span>🛕 Cơ sở thờ tự</span></label>
+                                <label class="flex items-center gap-1.5 cursor-pointer text-[11px]"><input type="checkbox" id="editNhan_trong_ho" class="accent-rose-500"><span class="text-rose-300">🎖️ Trọng hộ (Mẹ VNAH / gia đình liệt sĩ)</span></label>
+                            </div>
+                            <p class="text-[9px] text-gray-500 mt-1">Cơ sở lưu trú/kinh doanh có điều kiện ANTT có nghĩa vụ thông báo lưu trú/tuân thủ quy định riêng theo Luật Cư trú và quy định ANTT — khác đăng ký cư trú thông thường. "Trọng hộ" giúp CSKV ưu tiên thăm hỏi, chăm lo đúng đối tượng chính sách.</p>
+                        </div>
                         <div>
                             <label class="text-gray-400 block mb-0.5 font-semibold text-blue-300">Diện Cư Trú:</label>
                             <select id="editDienNV" onchange="doiDienNVTrongForm()" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white w-full mb-2">
@@ -526,8 +552,11 @@
                                 <input type="text" id="editDiaChiThuongTruGoc" placeholder="VD: Ấp 2, xã Hòa An, huyện Phụng Hiệp, Hậu Giang" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white w-full">
                             </div>
 
-                            <label class="text-gray-400 block mb-0.5">Ghi chú:</label>
-                            <textarea id="editGhiChu" rows="2" placeholder="Ghi chú tay..." class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white w-full"></textarea>
+                            <label class="text-gray-400 flex items-center justify-between mb-0.5">
+                                <span>Ghi chú:</span>
+                                <button type="button" onclick="ghiAmVaoOChu('editGhiChu', this)" class="no-print bg-gray-700 hover:bg-gray-600 text-white text-[10px] px-2 py-0.5 rounded-full">🎤 Nói để ghi chú</button>
+                            </label>
+                            <textarea id="editGhiChu" rows="2" placeholder="Ghi chú tay... (hoặc bấm 🎤 để nói)" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white w-full"></textarea>
 
                             <div class="flex items-center justify-between bg-gray-800 rounded px-2 py-1.5 mt-1">
                                 <span class="text-gray-400">🗓️ Kiểm tra định kỳ gần nhất: <span id="hienThiNgayKiemTra" class="text-white font-medium">Chưa từng</span></span>
@@ -928,6 +957,27 @@
         </div>
     </div>
 
+    <div id="nguonNVQSModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+        <div class="glass-card w-full max-w-3xl rounded-xl shadow-2xl p-4 space-y-3 border border-emerald-700 text-xs max-h-[88vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-emerald-400">🎖️ Nguồn Nghĩa Vụ Quân Sự / Nghĩa Vụ Công An</h3>
+                <button onclick="document.getElementById('nguonNVQSModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <div class="bg-emerald-950/30 border border-emerald-800/50 rounded p-2 text-[11px] text-gray-300">
+                Danh sách nam công dân trong độ tuổi thực hiện NVQS/NVCA (đủ 18 đến hết 27 tuổi — theo Luật NVQS 2015, độ tuổi gọi nhập ngũ cơ bản là 18-25, kéo dài đến hết 27 với người được tạm hoãn do đang học đại học/cao đẳng). Phần mềm liệt kê rộng theo tuổi để không bỏ sót — cần đối chiếu thêm tình trạng học tập/sức khỏe/diện tạm hoãn khác ngoài hệ thống.
+            </div>
+            <div class="flex gap-2 items-center">
+                <label class="text-gray-400">Khoảng tuổi:</label>
+                <input type="number" id="nvqsTuoiTu" value="18" min="16" max="30" class="w-16 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white">
+                <span class="text-gray-500">đến</span>
+                <input type="number" id="nvqsTuoiDen" value="27" min="16" max="30" class="w-16 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white">
+                <button onclick="renderNguonNVQS()" class="bg-emerald-700 hover:bg-emerald-600 px-2.5 py-1 rounded font-medium">🔍 Lọc lại</button>
+                <button onclick="xuatNguonNVQSExcel()" class="bg-blue-700 hover:bg-blue-600 px-2.5 py-1 rounded font-medium ml-auto">📥 Xuất Excel</button>
+            </div>
+            <div id="noiDungNguonNVQS" class="overflow-x-auto"></div>
+        </div>
+    </div>
+
     <div id="nhacHanTamTruModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
         <div class="glass-card w-full max-w-2xl rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[85vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
@@ -1018,7 +1068,12 @@
                     <select id="dt_dienDoiTuong" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
                         <option value="">-- Chọn diện đối tượng --</option>
                         <optgroup label="Quản lý theo quy định pháp luật">
-                            <option>Cấm đi khỏi nơi cư trú / Tạm hoãn xuất cảnh / Bảo lĩnh / Đặt tiền bảo đảm</option>
+                            <option>Cấm đi khỏi nơi cư trú</option>
+                            <option>Tạm giữ</option>
+                            <option>Tạm giam (thân nhân/hộ khai báo thay)</option>
+                            <option>Tạm hoãn xuất cảnh</option>
+                            <option>Bảo lĩnh</option>
+                            <option>Đặt tiền bảo đảm</option>
                             <option>Kết án phạt tù đang tại ngoại</option>
                             <option>Hoãn/tạm đình chỉ chấp hành án phạt tù</option>
                             <option>Án treo (trong thời gian thử thách)</option>
@@ -1304,6 +1359,7 @@
                 </div>
                 <button onclick="document.getElementById('dashboardModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
             </div>
+            <div id="soSanhXuHuongBox" class="hidden bg-gray-900/70 border border-gray-800 rounded-lg p-2.5 text-[11px] space-y-0.5"></div>
             <div id="noiDungDashboard">Đang tải...</div>
         </div>
     </div>
@@ -1639,6 +1695,19 @@
         function layDuLieuThuocPhuongHienTai() {
             if (!coQuyenXemPhuong(khuVucHienTai)) return [];
             return danhSachHoGiaDinh.filter(ho => (ho.phuong || "Phường Tân An") === khuVucHienTai);
+        }
+
+        // HÀM DÙNG CHUNG MỚI THÊM (sau khi phát hiện nhiều nơi quên áp dụng): layDuLieuThuocPhuongHienTai()
+        // CHỈ lọc theo PHƯỜNG — với CSKV (vaiTro 'can_bo', chỉ được giao 1 khu vực), bắt buộc phải lọc thêm 1
+        // lớp theo khu vực nữa mới đúng phạm vi thật. Trước đây mỗi nơi cần dùng lại tự viết lại logic này,
+        // dẫn đến RẤT DỄ QUÊN — thực tế đã quên ở "Bộ Lọc Nâng Cao", "Nhắc Hạn Tạm Trú", "Nhắc Đổi CCCD",
+        // khiến CSKV thấy tên/địa chỉ hộ của KHU VỰC KHÁC. Từ nay MỌI nơi cần đúng phạm vi CSKV phải gọi hàm
+        // này thay vì layDuLieuThuocPhuongHienTai() trực tiếp.
+        function layDuLieuTrongPhamViDuocGiao() {
+            const ds = layDuLieuThuocPhuongHienTai();
+            if (currentUser.role !== 'can_bo' || !currentUser.khuVucPhuTrach || currentUser.khuVucPhuTrach.length === 0) return ds;
+            const phamViKV = currentUser.khuVucPhuTrach.map(k => k.toLowerCase());
+            return ds.filter(h => phamViKV.includes((layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || "Khu Vực 1").toLowerCase()));
         }
         let currentSelectedHoIndex = null;
         let currentUser = { email: "", role: "can_bo", scope: "Khu Vực" };
@@ -2993,7 +3062,7 @@
             if (!email) return alert("Vui lòng nhập Email tài khoản.");
             const khongCanPhuong = (vaiTro === 'chi_huy_tp' || vaiTro === 'can_bo_du_lieu_tp');
             if (!khongCanPhuong && !phuong) return alert("Vui lòng chọn Phường phụ trách.");
-            if (vaiTro === 'can_bo' && !khuVucRaw) return alert("Vui lòng nhập Khu vực phụ trách cho Cảnh sát khu vực (cách nhau bằng dấu phẩy nếu nhiều khu vực).");
+            if (vaiTro === 'can_bo' && !khuVucRaw) return alert(`Vui lòng nhập ${nhanDonViCoSo(phuong)} phụ trách cho Cảnh sát khu vực (cách nhau bằng dấu phẩy nếu nhiều đơn vị).`);
             const khuVuc = vaiTro === 'can_bo' ? khuVucRaw.split(',').map(s => chuanHoaNhanKhuVuc(s)).filter(Boolean) : [];
             const loaiHinhDonVi = document.getElementById('inputLoaiHinhDonViCSKV') ? document.getElementById('inputLoaiHinhDonViCSKV').value : '';
             // trangThai: 'da_duyet' — đánh dấu KHÔNG còn nằm trong danh sách "chờ duyệt" nữa (dùng để lọc
@@ -3840,7 +3909,7 @@
             if (!mainMiniMapInstance) return;
             if (lopBanDoNhiet) { mainMiniMapInstance.removeLayer(lopBanDoNhiet); lopBanDoNhiet = null; }
             if (!bat) return;
-            const diem = layDuLieuThuocPhuongHienTai().map(ho => {
+            const diem = layDuLieuTrongPhamViDuocGiao().map(ho => {
                 let toa = DEFAULT_CENTER;
                 if (ho.gps && ho.gps.includes(',')) {
                     const p = ho.gps.split(',').map(s => parseFloat(s.trim()));
@@ -4056,7 +4125,8 @@
                 { re: /khu\s*pho\s*0*(\d+)/, nhan: 'Khu Phố' },
                 { re: /(?:^|\s)ap\s*0*(\d+)/, nhan: 'Ấp' },           // "Ấp 3", "Ap3" — có \b để tránh khớp nhầm vào giữa từ khác (VD "Tháp" -> "Thap" chứa "ap")
                 { re: /khom\s*0*(\d+)/, nhan: 'Khóm' },
-                { re: /thon\s*0*(\d+)/, nhan: 'Thôn' }
+                { re: /thon\s*0*(\d+)/, nhan: 'Thôn' },
+                { re: /(?:^|\s)ban\s*0*(\d+)/, nhan: 'Bản' }          // MỚI THÊM: "Bản" — dùng ở vùng núi phía Bắc (Tây Bắc/Đông Bắc), thường là xã có đông đồng bào dân tộc thiểu số. Có \b tránh khớp nhầm "Ban" trong từ khác.
             ];
             let khop = null;
             for (const mau of cacMauKhop) {
@@ -4751,8 +4821,12 @@
         }
 
         function phanTichDuLieuPhanCap() {
+            // SỬA LỖI PHÁT HIỆN TỪ PHẢN HỒI THỰC TẾ: CSKV chỉ được giao đúng 1 khu vực (VD Khu Vực 7) nhưng ô
+            // "Bộ Lọc Nâng Cao" vẫn liệt kê CẢ các khu vực khác (10, 100, 101...) — vì hàm này trước đây lấy
+            // TOÀN BỘ hộ trong CẢ PHƯỜNG để dò ra danh sách khu vực, không áp dụng đúng giới hạn khu vực của
+            // CSKV như bảng danh sách hộ chính đã làm đúng từ trước. Giờ dùng chung layDuLieuTrongPhamViDuocGiao().
             let setKhuVuc = new Set();
-            layDuLieuThuocPhuongHienTai().forEach(ho => {
+            layDuLieuTrongPhamViDuocGiao().forEach(ho => {
                 let nhan = layNhanKhuVucTuDiaChi(ho.diaChi, ho.phuong);
                 setKhuVuc.add(nhan || "Khu Vực 1");
             });
@@ -4997,6 +5071,67 @@
             capNhatBieuDoTonGiao(theoTonGiao);
             capNhatBieuDoKhuVuc(theoKhuVuc);
             thucHienLocVaTimKiem();
+
+            // TỰ ĐỘNG HOÁ MỚI: trước đây phải NHỚ bấm "Nhắc Hạn Tạm Trú" mới biết có hộ nào sắp hết hạn —
+            // giờ tự tính ngay mỗi khi tải/làm mới dữ liệu, hiện số đỏ trên nút như thông báo chưa đọc, không
+            // cần chờ ai nhớ bấm kiểm tra. Dùng đúng phạm vi khu vực CSKV (không lộ số liệu khu vực khác).
+            let soSapHet = 0, soCanDoiCCCD = 0, soQuaHanKiemTra = 0, soLoiHSCT = 0;
+            try {
+                const homNay = new Date(); homNay.setHours(0, 0, 0, 0);
+                const nguong30 = new Date(homNay); nguong30.setDate(nguong30.getDate() + 30);
+                const phamVi = layDuLieuTrongPhamViDuocGiao();
+
+                soSapHet = phamVi.filter(ho => {
+                    if (!(ho.dienNghiepVu === 'Tạm trú' || ho.dienNghiepVu === 'Lưu trú') || !ho.ngayHetHan) return false;
+                    return new Date(ho.ngayHetHan) <= nguong30; // gồm cả đã quá hạn lẫn sắp hết hạn trong 30 ngày tới
+                }).length;
+                const elBadge = document.getElementById('badgeSoTamTruSapHet');
+                if (elBadge) {
+                    if (soSapHet > 0) { elBadge.innerText = soSapHet > 99 ? '99+' : soSapHet; elBadge.classList.remove('hidden'); }
+                    else elBadge.classList.add('hidden');
+                }
+
+                // ĐỀ XUẤT MỚI (vai trò chuyên gia quản lý địa bàn): trước đây CSKV phải mở TỪNG modal riêng
+                // (Nhắc CCCD, Lịch kiểm tra, Nhắc tạm trú, Rà soát lỗi) mới biết hôm nay cần làm gì — không
+                // phải chuyển đổi số thực chất, chỉ là số hóa từng mảnh rời rạc. Giờ tổng hợp TẤT CẢ đầu việc
+                // vào 1 băng thông báo duy nhất, hiện NGAY khi mở app, bấm thẳng vào từng mục là mở đúng modal
+                // liên quan — không cần nhớ bấm lần lượt từng nút để kiểm tra.
+                const namNay = new Date().getFullYear();
+                soCanDoiCCCD = 0;
+                phamVi.forEach(ho => (ho.thanhVien || []).forEach(tv => {
+                    if (!tv.ngaySinh) return;
+                    const m = String(tv.ngaySinh).match(/(\d{4})(?!.*\d{4})/);
+                    if (m && [14, 25, 40, 60].includes(namNay - parseInt(m[1]))) soCanDoiCCCD++;
+                }));
+
+                const nguong30Ngay = new Date(homNay); nguong30Ngay.setDate(nguong30Ngay.getDate() - 30);
+                soQuaHanKiemTra = phamVi.filter(ho => !ho.ngayKiemTraGanNhat || new Date(ho.ngayKiemTraGanNhat).getTime() < nguong30Ngay.getTime()).length;
+
+                const loiHsctDiaChi = phamVi.filter(ho => ho.hsct && ho.hsct.length > 25 && /(đường|khu vực|khu pho|\bkv\s*\d|\btổ\s*\d|phường|xã\b)/i.test(boDauTiengViet(ho.hsct)));
+                const loiHsctSaiDien = phamVi.filter(ho => ho.hsct && ho.dienNghiepVu !== 'Thường trú' && !loiHsctDiaChi.includes(ho));
+                soLoiHSCT = loiHsctDiaChi.length + loiHsctSaiDien.length;
+
+                const elViec = document.getElementById('banerVieCanLamHomNay');
+                const tongViec = soSapHet + soCanDoiCCCD + soQuaHanKiemTra + soLoiHSCT;
+                if (elViec) {
+                    if (tongViec === 0) {
+                        elViec.classList.add('hidden');
+                    } else {
+                        elViec.classList.remove('hidden');
+                        const muc = (dem, nhan, onclickHandler) => dem > 0 ? `<button onclick="${onclickHandler}" class="bg-indigo-800/70 hover:bg-indigo-700 px-2 py-1 rounded-full transition text-left">🔸 <b>${dem}</b> ${nhan}</button>` : '';
+                        elViec.innerHTML = `<div class="flex items-center justify-between mb-1.5">
+                                <span class="font-bold">✅ Việc Cần Làm Hôm Nay (${tongViec})</span>
+                                <span class="text-indigo-300 text-[10px]">Phạm vi: ${escHtml(khuVucHienTai)}${currentUser.khuVucPhuTrach ? ' — ' + escHtml(currentUser.khuVucPhuTrach.join(', ')) : ''}</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5">
+                                ${muc(soSapHet, 'hộ Tạm/Lưu trú sắp hoặc đã hết hạn', "moModalNhacHanTamTru()")}
+                                ${muc(soCanDoiCCCD, 'người đến mốc tuổi cần đổi CCCD (14/25/40/60)', "moModalNhacCCCD()")}
+                                ${muc(soQuaHanKiemTra, 'hộ chưa kiểm tra định kỳ trong 30 ngày', "moModalLichKiemTraDinhKy()")}
+                                ${muc(soLoiHSCT, 'hộ có lỗi Số HSCT cần sửa', "moModalRaSoatLoi()")}
+                            </div>`;
+                    }
+                }
+            } catch (e) { console.warn('Không tính được "Việc Cần Làm Hôm Nay":', e.message); }
         }
 
         // Render bảng "Chi Tiết Theo Diện Cư Trú" ở sidebar — mỗi diện 1 khối riêng, đầy đủ hộ/nhân khẩu/
@@ -5193,6 +5328,23 @@
                 .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         }
 
+        // Dựng huy hiệu nhãn đặc biệt của hộ (đa nhãn) — dùng chung cho bảng danh sách + tương lai có thể tái
+        // dùng ở hồ sơ chi tiết/xuất báo cáo. Tương thích ngược với dữ liệu CŨ chỉ có "laCoSoLuuTru" (boolean).
+        const DINH_NGHIA_NHAN_DAC_BIET = {
+            luu_tru: { icon: '🏨', nhan: 'CSLT', mau: 'bg-amber-900/60 text-amber-300 border-amber-700', mota: 'Cơ sở lưu trú (nhà trọ/mini hotel/khách sạn/nhà nghỉ)' },
+            kd_dieu_kien_antt: { icon: '🔒', nhan: 'ANTT', mau: 'bg-orange-900/60 text-orange-300 border-orange-700', mota: 'Cơ sở kinh doanh có điều kiện về An ninh trật tự' },
+            ho_kinh_doanh: { icon: '🏪', nhan: 'HKD', mau: 'bg-sky-900/60 text-sky-300 border-sky-700', mota: 'Hộ kinh doanh (tạp hóa/quán ăn/quán nhậu...)' },
+            co_so_tho_tu: { icon: '🛕', nhan: 'CSTT', mau: 'bg-purple-900/60 text-purple-300 border-purple-700', mota: 'Cơ sở thờ tự' },
+            trong_ho: { icon: '🎖️', nhan: 'Trọng hộ', mau: 'bg-rose-900/60 text-rose-300 border-rose-700', mota: 'Trọng hộ — Mẹ Việt Nam Anh hùng / gia đình liệt sĩ' },
+        };
+        function vietHuyHieuNhanDacBiet(ho) {
+            const ds = ho.nhanDacBiet || (ho.laCoSoLuuTru ? ['luu_tru'] : []);
+            return ds.filter(n => DINH_NGHIA_NHAN_DAC_BIET[n]).map(n => {
+                const d = DINH_NGHIA_NHAN_DAC_BIET[n];
+                return ` <span class="inline-block ${d.mau} text-[9px] px-1 py-0.5 rounded border" title="${escHtml(d.mota)}">${d.icon} ${d.nhan}</span>`;
+            }).join('');
+        }
+
         function renderBangHo(data) {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
@@ -5221,7 +5373,7 @@
                     <td class="p-2 text-blue-300 font-mono">${ho.hsct ? escHtml(ho.hsct) : '<span class="text-gray-500 italic">— (không áp dụng)</span>'}</td>
                     <td class="p-2 text-cyan-300 font-mono">${escHtml(cccdChuHo)}</td>
                     <td class="p-2 font-semibold text-white">${escHtml(ho.chuHo)}</td>
-                    <td class="p-2 text-gray-300">${escHtml(ho.diaChi)}</td>
+                    <td class="p-2 text-gray-300">${escHtml(ho.diaChi)}${vietHuyHieuNhanDacBiet(ho)}</td>
                     <td class="p-2"><span class="px-2 py-0.5 rounded text-[10px] border ${styleNV}">${dien}</span></td>
                     <td class="p-2 text-center"><span class="bg-blue-900/60 text-blue-300 px-2 rounded-full font-bold">${ho.thanhVien ? ho.thanhVien.length : 0}</span></td>
                     <td class="p-2 text-center"><button onclick="xemChiTiet(${originalIndex})" class="bg-blue-600 hover:bg-blue-700 px-2.5 py-1 rounded text-[11px] shadow">Chi tiết</button> <button onclick="chiDuongNhanhDenHo(${originalIndex})" title="Chỉ đường nhanh đến hộ này (cần xác nhận toạ độ trước)" class="bg-teal-700 hover:bg-teal-600 px-2 py-1 rounded text-[11px] shadow">🧭</button></td>
@@ -5279,6 +5431,14 @@
             document.getElementById('modalHsct').innerText = ho.hsct;
             document.getElementById('editChuHo').value = ho.chuHo;
             document.getElementById('editDiaChi').value = ho.diaChi;
+            // NÂNG CẤP THEO YÊU CẦU: từ 1 ô tích "cơ sở lưu trú" duy nhất -> hệ thống đa nhãn đầy đủ hơn theo
+            // đúng thực tế địa bàn. Giữ tương thích dữ liệu CŨ: nếu hộ đã có "laCoSoLuuTru=true" từ trước (khi
+            // chỉ có 1 nhãn), tự động coi như đã chọn sẵn nhãn "luu_tru" trong mảng mới.
+            const nhanDaCo = ho.nhanDacBiet || (ho.laCoSoLuuTru ? ['luu_tru'] : []);
+            ['luu_tru', 'kd_dieu_kien_antt', 'ho_kinh_doanh', 'co_so_tho_tu', 'trong_ho'].forEach(nhan => {
+                const el = document.getElementById('editNhan_' + nhan);
+                if (el) el.checked = nhanDaCo.includes(nhan);
+            });
             document.getElementById('editGhiChu').value = ho.ghiChu || '';
             document.getElementById('editGps').value = ho.gps || `${DEFAULT_CENTER[0]}, ${DEFAULT_CENTER[1]}`;
             // SỬA LỖI QUAN TRỌNG: trước đây coi là "đã xác nhận" chỉ vì Ô TOẠ ĐỘ CÓ GIÁ TRỊ — kể cả dữ liệu CŨ
@@ -5415,7 +5575,14 @@
             
             if (mapInstance) { mapInstance.remove(); mapInstance = null; }
             mapInstance = L.map('mapContainer', { center: coords, zoom: 18, minZoom: 12 });
-            L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png').addTo(mapInstance);
+            // BỔ SUNG: trước đây bản đồ nhỏ này (nơi chấm/xác nhận GPS của TỪNG HỘ — chỗ CẦN vệ tinh nhất để
+            // nhìn rõ nóc nhà, sân, hẻm) chỉ có duy nhất lớp đường phố OSM, không có lớp vệ tinh như bản đồ
+            // chính đã có từ trước. Giờ thêm đủ 2 lớp + nút chuyển đổi, mặc định vệ tinh (hữu ích hơn hẳn
+            // đường phố trơn khi cần xác định CHÍNH XÁC vị trí 1 căn nhà cụ thể).
+            let lopDuong = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap France' });
+            let lopVeTinh = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Esri Satellite' });
+            lopVeTinh.addTo(mapInstance);
+            L.control.layers({ '🛰️ Vệ tinh': lopVeTinh, '🗺️ Đường phố': lopDuong }, null, { position: 'topright', collapsed: false }).addTo(mapInstance);
             
             markerInstance = L.marker(coords, { draggable: true }).addTo(mapInstance);
             markerInstance.on('dragend', function() {
@@ -5450,6 +5617,55 @@
         // dán tay từ app khác vì không phải chuyển qua lại giữa 2 ứng dụng, không sợ gõ/dán nhầm số).
         // enableHighAccuracy:true bắt buộc dùng GPS vệ tinh thật thay vì định vị theo Wifi/mạng (kém chính
         // xác hơn nhiều, thường lệch hàng chục-hàng trăm mét).
+        // ================== NHẬP LIỆU BẰNG GIỌNG NÓI — Web Speech API, MIỄN PHÍ, có sẵn trong Chrome ==================
+        // TÍNH NĂNG MỚI: CSKV đứng thực địa gõ chữ trên điện thoại chậm/bất tiện — giờ có thể NÓI thay vì
+        // gõ cho các ô ghi chú. Dùng đúng công nghệ nhận dạng giọng nói CÓ SẴN MIỄN PHÍ trong trình duyệt
+        // Chrome (không cần gọi API trả phí nào) — chỉ hoạt động trên Chrome/trình duyệt hỗ trợ, tự báo rõ
+        // nếu máy không hỗ trợ thay vì im lặng không làm gì. Dùng chung được cho BẤT KỲ ô nhập nào (truyền
+        // đúng id ô + nút bấm), không chỉ riêng ô ghi chú hộ khẩu.
+        // Bật/tắt "Chế Độ Ngoài Trời" — tăng sáng/tương phản để dễ đọc màn hình dưới nắng gắt khi đi thực địa.
+        // Nhớ lựa chọn qua localStorage — không cần bật lại mỗi lần mở app.
+        function doiCheDoNgoaiTroi() {
+            const bat = !document.body.classList.contains('che-do-ngoai-troi');
+            document.body.classList.toggle('che-do-ngoai-troi', bat);
+            localStorage.setItem('cheDoNgoaiTroi', bat ? '1' : '0');
+            const btn = document.getElementById('btnCheDoNgoaiTroi');
+            if (btn) btn.classList.toggle('bg-amber-600', bat);
+        }
+        if (localStorage.getItem('cheDoNgoaiTroi') === '1') {
+            document.addEventListener('DOMContentLoaded', () => {
+                document.body.classList.add('che-do-ngoai-troi');
+                const btn = document.getElementById('btnCheDoNgoaiTroi');
+                if (btn) btn.classList.add('bg-amber-600');
+            });
+        }
+
+        function ghiAmVaoOChu(idOChu, btn) {
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRec) return alert("Trình duyệt này không hỗ trợ nhận dạng giọng nói (tính năng cần Chrome trên điện thoại/máy tính).");
+            const oChu = document.getElementById(idOChu);
+            if (!oChu) return;
+            const nhan = new SpeechRec();
+            nhan.lang = 'vi-VN';
+            nhan.interimResults = false;
+            nhan.maxAlternatives = 1;
+            const chuGoc = btn.innerText;
+            btn.innerText = '🔴 Đang nghe... (bấm lại để dừng)';
+            btn.disabled = false; // vẫn cho bấm lại để CHỦ ĐỘNG dừng sớm nếu cần
+            const dungSom = () => { try { nhan.stop(); } catch (e) { } };
+            btn.onclick = dungSom;
+            nhan.onresult = (e) => {
+                const ketQua = e.results[0][0].transcript;
+                // Nối thêm vào cuối (không xoá nội dung cũ) — phòng trường hợp CSKV đã gõ tay 1 phần trước đó.
+                oChu.value = (oChu.value.trim() ? oChu.value.trim() + ' ' : '') + ketQua;
+            };
+            nhan.onerror = (e) => {
+                if (e.error !== 'aborted' && e.error !== 'no-speech') alert("Không nhận dạng được giọng nói: " + e.error + ". Vui lòng thử lại ở nơi ít ồn hơn.");
+            };
+            nhan.onend = () => { btn.innerText = chuGoc; btn.onclick = () => ghiAmVaoOChu(idOChu, btn); };
+            nhan.start();
+        }
+
         function layViTriHienTaiChoHo(btn) {
             if (!navigator.geolocation) return alert("Trình duyệt này không hỗ trợ định vị vị trí hiện tại.");
             const chuVanBanCu = btn.innerText;
@@ -6075,6 +6291,9 @@
             
             ho.chuHo = document.getElementById('editChuHo').value;
             ho.diaChi = document.getElementById('editDiaChi').value;
+            ho.nhanDacBiet = ['luu_tru', 'kd_dieu_kien_antt', 'ho_kinh_doanh', 'co_so_tho_tu', 'trong_ho']
+                .filter(nhan => { const el = document.getElementById('editNhan_' + nhan); return el && el.checked; });
+            delete ho.laCoSoLuuTru; // chuyển hẳn sang mảng nhãn, không giữ trường boolean cũ song song gây lệch dữ liệu
             ho.ghiChu = document.getElementById('editGhiChu').value;
 
             // SỬA LỖI GỐC: trước đây lưu THẲNG bất kỳ giá trị nào đang có trong ô toạ độ, kể cả khi đó là kết
@@ -6152,16 +6371,19 @@
                         ? '<span class="text-amber-400">Chỉ huy phường (xem toàn bộ dữ liệu 1 phường)</span>'
                         : isCanBoDuLieu
                             ? '<span class="text-fuchsia-400">Cán bộ dữ liệu (xem/sửa toàn bộ dữ liệu 1 phường, không có quyền xóa/quản trị)</span>'
-                            : currentUser.role === 'can_bo'
+                            : currentUser.role === 'can_bo_du_lieu_tp'
+                                ? '<span class="text-cyan-400">👁️ Cán bộ dữ liệu PC06 (chỉ xem toàn bộ 103 phường/xã, không sửa/xóa được gì)</span>'
+                                : currentUser.role === 'can_bo'
                                 ? '<span class="text-blue-400">Cảnh sát khu vực (CSKV)</span>'
                                 : '<span class="text-rose-400">⚠️ CHƯA ĐƯỢC CẤP QUYỀN — không xem được dữ liệu nào</span>';
             const elKV = document.getElementById('rbacKhuVucCuaToi');
-            if (isAdmin || isChiHuyTp) {
+            if (isAdmin || isChiHuyTp || currentUser.role === 'can_bo_du_lieu_tp') {
                 elKV.innerHTML = '';
             } else if (isChiHuy || isCanBoDuLieu) {
                 elKV.innerHTML = 'Phường phụ trách: <span class="text-emerald-400 font-semibold">' + (currentUser.phuongPhuTrach ? currentUser.phuongPhuTrach.join(', ') : '(chưa gán)') + '</span>';
             } else if (currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length > 0) {
-                elKV.innerHTML = 'Phường: <span class="text-emerald-400 font-semibold">' + (currentUser.phuongPhuTrach ? currentUser.phuongPhuTrach.join(', ') : '?') + '</span> — Khu vực: <span class="text-emerald-400 font-semibold">' + currentUser.khuVucPhuTrach.join(', ') + '</span>';
+                const tenPX = currentUser.phuongPhuTrach ? currentUser.phuongPhuTrach[0] : '';
+                elKV.innerHTML = (loaiHinhTuTenDonVi(tenPX) === 'xa' ? 'Xã: ' : 'Phường: ') + '<span class="text-emerald-400 font-semibold">' + (currentUser.phuongPhuTrach ? currentUser.phuongPhuTrach.join(', ') : '?') + '</span> — ' + nhanDonViCoSo(tenPX) + ': <span class="text-emerald-400 font-semibold">' + currentUser.khuVucPhuTrach.join(', ') + '</span>';
             } else {
                 elKV.innerHTML = '<span class="text-amber-400">⚠️ Chưa được Admin phân phường/khu vực phụ trách. Liên hệ Admin để được cấp quyền.</span>';
             }
@@ -6186,12 +6408,74 @@
 
         function moModalHuongDanExcel() { document.getElementById('huongDanExcelModal').classList.remove('hidden'); }
 
+        // ================== NGUỒN NVQS/NVCA (mới thêm theo yêu cầu thực tế) ==================
+        function moModalNguonNVQS() {
+            document.getElementById('nguonNVQSModal').classList.remove('hidden');
+            renderNguonNVQS();
+        }
+        function danhSachNguonNVQS() {
+            const tuoiTu = parseInt(document.getElementById('nvqsTuoiTu').value) || 18;
+            const tuoiDen = parseInt(document.getElementById('nvqsTuoiDen').value) || 27;
+            const namNay = new Date().getFullYear();
+            let danhSach = [];
+            layDuLieuTrongPhamViDuocGiao().forEach(ho => {
+                (ho.thanhVien || []).forEach(tv => {
+                    if ((tv.gioiTinh || '').toLowerCase() !== 'nam') return;
+                    if (!tv.ngaySinh) return;
+                    const m = String(tv.ngaySinh).match(/(\d{4})(?!.*\d{4})/);
+                    if (!m) return;
+                    const tuoi = namNay - parseInt(m[1]);
+                    if (tuoi < tuoiTu || tuoi > tuoiDen) return;
+                    if (tv.trangThaiBienDong && tv.trangThaiBienDong !== 'Đang cư trú') return; // đã chuyển đi/chết/ở nước ngoài thì không còn thuộc diện quản lý tại địa bàn
+                    danhSach.push({ hoTen: tv.hoTen, tuoi, ngaySinh: tv.ngaySinh, cccd: tv.cccd || '(chưa có)', diaChi: ho.diaChi, chuHo: ho.chuHo, sdt: tv.sdt || '', dienNV: ho.dienNghiepVu || '' });
+                });
+            });
+            danhSach.sort((a, b) => a.tuoi - b.tuoi);
+            return danhSach;
+        }
+        function renderNguonNVQS() {
+            const ds = danhSachNguonNVQS();
+            const el = document.getElementById('noiDungNguonNVQS');
+            if (ds.length === 0) {
+                el.innerHTML = '<p class="text-gray-400 p-3">Không có nam công dân nào trong khoảng tuổi đã chọn theo dữ liệu hiện có.</p>';
+                return;
+            }
+            el.innerHTML = `<p class="text-emerald-300 mb-1.5">Tìm được <b>${ds.length}</b> người.</p>
+                <table class="w-full text-[11px]">
+                    <thead class="bg-gray-800 text-gray-300 sticky top-0"><tr>
+                        <th class="p-1.5 text-left">Họ Tên</th><th class="p-1.5 text-center">Tuổi</th><th class="p-1.5 text-left">CCCD</th>
+                        <th class="p-1.5 text-left">Diện</th><th class="p-1.5 text-left">Chủ hộ</th><th class="p-1.5 text-left">Địa chỉ</th><th class="p-1.5 text-left">SĐT</th>
+                    </tr></thead>
+                    <tbody>${ds.map(d => `<tr class="border-b border-gray-800">
+                        <td class="p-1.5 text-white font-medium">${escHtml(d.hoTen)}</td>
+                        <td class="p-1.5 text-center text-emerald-300 font-bold">${d.tuoi}</td>
+                        <td class="p-1.5 font-mono">${escHtml(d.cccd)}</td>
+                        <td class="p-1.5">${escHtml(d.dienNV)}</td>
+                        <td class="p-1.5">${escHtml(d.chuHo)}</td>
+                        <td class="p-1.5">${escHtml(d.diaChi)}</td>
+                        <td class="p-1.5">${escHtml(d.sdt)}</td>
+                    </tr>`).join('')}</tbody>
+                </table>`;
+        }
+        async function xuatNguonNVQSExcel() {
+            const ds = danhSachNguonNVQS();
+            if (ds.length === 0) return alert("Không có dữ liệu để xuất.");
+            const wb = new ExcelJS.Workbook();
+            const ws = wb.addWorksheet("Nguon_NVQS_NVCA");
+            let d1 = dungSheetBieuMauChuan(ws, { soCot: 7, tieuDe: "DANH SÁCH NGUỒN NGHĨA VỤ QUÂN SỰ / NGHĨA VỤ CÔNG AN", donVi: "Công an " + khuVucHienTai });
+            veBangDuLieuCoKhung(ws, d1, [
+                { tieuDe: "Họ và tên", rong: 26 }, { tieuDe: "Tuổi", rong: 8, canGiua: true }, { tieuDe: "Ngày sinh", rong: 14 },
+                { tieuDe: "Số CCCD", rong: 18 }, { tieuDe: "Diện cư trú", rong: 16 }, { tieuDe: "Chủ hộ", rong: 22 }, { tieuDe: "Địa chỉ", rong: 36 }
+            ], ds.map(d => [d.hoTen, d.tuoi, d.ngaySinh, d.cccd, d.dienNV, d.chuHo, d.diaChi]));
+            await taiXuongWorkbookExcelJS(wb, "Nguon_NVQS_NVCA_" + khuVucHienTai.replace(/\s/g, '_') + ".xlsx");
+        }
+
         function moModalNhacCCCD() {
             const namNay = new Date().getFullYear();
             const mocTuoi = [14, 25, 40, 60];
             let danhSach = [];
 
-            layDuLieuThuocPhuongHienTai().forEach(ho => {
+            layDuLieuTrongPhamViDuocGiao().forEach(ho => {
                 (ho.thanhVien || []).forEach(tv => {
                     if (!tv.ngaySinh) return;
                     const m = String(tv.ngaySinh).match(/(\d{4})(?!.*\d{4})/);
@@ -6231,7 +6515,7 @@
             const homNay = new Date(); homNay.setHours(0,0,0,0);
             const nguong = new Date(homNay); nguong.setDate(nguong.getDate() + 30);
 
-            let danhSach = layDuLieuThuocPhuongHienTai()
+            let danhSach = layDuLieuTrongPhamViDuocGiao()
                 .filter(ho => (ho.dienNghiepVu === 'Tạm trú' || ho.dienNghiepVu === 'Lưu trú') && ho.ngayHetHan)
                 .map(ho => {
                     const ngayHH = new Date(ho.ngayHetHan + 'T00:00:00');
@@ -7343,10 +7627,10 @@
                     </div>
                 </div>
                 <div class="bg-gray-950/60 rounded-lg p-2.5 overflow-x-auto">
-                    <p class="text-gray-400 text-[11px] mb-2">📋 Bảng chi tiết từng khu vực — ${escHtml(tenPhuong)}</p>
+                    <p class="text-gray-400 text-[11px] mb-2">📋 Bảng chi tiết từng ${nhanDonViCoSo(tenPhuong).toLowerCase()} — ${escHtml(tenPhuong)}</p>
                     <table class="w-full text-left border-collapse text-[11px]">
                         <thead><tr class="text-gray-400 border-b border-gray-700">
-                            <th class="p-1.5">Khu vực</th><th class="p-1.5 text-right">Hộ</th><th class="p-1.5 text-right">Nhân khẩu</th>
+                            <th class="p-1.5">${nhanDonViCoSo(tenPhuong)}</th><th class="p-1.5 text-right">Hộ</th><th class="p-1.5 text-right">Nhân khẩu</th>
                             <th class="p-1.5 text-right">Th.trú</th><th class="p-1.5 text-right">Tạm/Lưu</th><th class="p-1.5 text-right">NOHN</th>
                             <th class="p-1.5 text-right">Nam</th><th class="p-1.5 text-right">Nữ</th>
                             <th class="p-1.5 text-right">&lt;16</th><th class="p-1.5 text-right">16-60</th><th class="p-1.5 text-right">&gt;60</th>
@@ -7390,10 +7674,77 @@
         }
 
         function theKPI(icon, soLieu, nhan, mauNen, mauChu) {
-            return `<div class="rounded-xl p-3 flex items-center gap-3" style="background:${mauNen}">
-                <div class="text-2xl">${icon}</div>
-                <div><p class="text-xl font-bold" style="color:${mauChu}">${soLieu}</p><p class="text-[10px] text-gray-300">${nhan}</p></div>
+            const soHienThi = (typeof soLieu === 'number') ? soLieu.toLocaleString('vi-VN') : soLieu;
+            return `<div class="rounded-xl p-3 flex items-center gap-3 border border-white/5 shadow-lg transition hover:scale-[1.02]" style="background:${mauNen}">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-shrink-0" style="background:rgba(255,255,255,0.12)">${icon}</div>
+                <div class="min-w-0"><p class="text-xl font-extrabold leading-tight" style="color:${mauChu}">${soHienThi}</p><p class="text-[10px] text-gray-300 leading-tight truncate">${nhan}</p></div>
             </div>`;
+        }
+
+        // ================== SO SÁNH XU HƯỚNG THEO THỜI GIAN (mới thêm theo yêu cầu) ==================
+        // KHÔNG lưu "ảnh chụp" hình ảnh — chỉ lưu lại ĐÚNG các con số tổng hợp (tổng hộ/nhân khẩu/diện cư
+        // trú) mỗi ngày, để về sau so sánh được "tháng này so tháng trước/quý trước/năm trước tăng hay giảm
+        // bao nhiêu" — phục vụ báo cáo và phân tích xu hướng, đúng việc 1 người quản lý địa bàn lâu năm cần.
+        // CHỈ áp dụng cho vai trò xem TOÀN PHƯỜNG (Chỉ huy/Cán bộ dữ liệu/Admin/PC06) — CSKV chỉ xem 1 khu
+        // vực, phạm vi quá hẹp để so sánh xu hướng có ý nghĩa, nên KHÔNG ghi/hiện phần này cho CSKV.
+        async function tuDongGhiSnapshotThongKe(soHo, soKhau, soThuongTru, soTamTru, soNohn) {
+            if (!CHE_DO_FIREBASE) return;
+            const xemToanPhuong = ['admin', 'chi_huy', 'can_bo_du_lieu', 'chi_huy_tp', 'can_bo_du_lieu_tp'].includes(currentUser.role);
+            if (!xemToanPhuong) return;
+            try {
+                const homNay = new Date();
+                const ngayGhi = homNay.toISOString().slice(0, 10); // YYYY-MM-DD
+                const docId = khuVucHienTai.replace(/[^a-zA-Z0-9À-ỹ]/g, '_') + '_' + ngayGhi;
+                const ref = dbFirestore.collection('snapshot_thong_ke_phuong').doc(docId);
+                const daCo = await ref.get();
+                if (daCo.exists) return; // đã có bản ghi hôm nay cho phường này, không ghi lại (1 lần/ngày là đủ)
+                await ref.set({
+                    phuong: khuVucHienTai, ngayGhi, thang: homNay.getMonth() + 1, quy: Math.ceil((homNay.getMonth() + 1) / 3), nam: homNay.getFullYear(),
+                    soHo, soKhau, soThuongTru, soTamTru, soNohn, ghiBoi: currentUser.email, ghiLuc: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (err) { console.warn('Không ghi được snapshot thống kê (không ảnh hưởng Dashboard chính):', err.message); }
+        }
+
+        async function renderSoSanhXuHuong(soHoHienTai, soKhauHienTai) {
+            const el = document.getElementById('soSanhXuHuongBox');
+            if (!el) return;
+            const xemToanPhuong = ['admin', 'chi_huy', 'can_bo_du_lieu', 'chi_huy_tp', 'can_bo_du_lieu_tp'].includes(currentUser.role);
+            if (!xemToanPhuong || !CHE_DO_FIREBASE) { el.classList.add('hidden'); return; }
+            try {
+                const homNay = new Date();
+                const layMocGanNhat = async (soThangLui) => {
+                    const moc = new Date(homNay); moc.setMonth(moc.getMonth() - soThangLui);
+                    const tuNgay = new Date(moc); tuNgay.setDate(tuNgay.getDate() - 10); // dò trong khoảng ±10 ngày quanh mốc, phòng khi đúng ngày đó không ai mở Dashboard
+                    const denNgay = new Date(moc); denNgay.setDate(denNgay.getDate() + 10);
+                    const snap = await dbFirestore.collection('snapshot_thong_ke_phuong')
+                        .where('phuong', '==', khuVucHienTai)
+                        .where('ngayGhi', '>=', tuNgay.toISOString().slice(0, 10))
+                        .where('ngayGhi', '<=', denNgay.toISOString().slice(0, 10))
+                        .orderBy('ngayGhi', 'desc').limit(1).get();
+                    return snap.empty ? null : snap.docs[0].data();
+                };
+                const [thangTruoc, quyTruoc, namTruoc] = await Promise.all([layMocGanNhat(1), layMocGanNhat(3), layMocGanNhat(12)]);
+                const dong = (nhan, cu) => {
+                    if (!cu) return `<div class="text-gray-500">${nhan}: <i>chưa có dữ liệu để so sánh</i></div>`;
+                    const chenhHo = soHoHienTai - cu.soHo;
+                    const dauHo = chenhHo > 0 ? '📈 +' : (chenhHo < 0 ? '📉 ' : '➖ ');
+                    const mauHo = chenhHo > 0 ? 'text-emerald-400' : (chenhHo < 0 ? 'text-rose-400' : 'text-gray-400');
+                    const chenhKhau = soKhauHienTai - cu.soKhau;
+                    const dauKhau = chenhKhau > 0 ? '📈 +' : (chenhKhau < 0 ? '📉 ' : '➖ ');
+                    const mauKhau = chenhKhau > 0 ? 'text-emerald-400' : (chenhKhau < 0 ? 'text-rose-400' : 'text-gray-400');
+                    return `<div>${nhan} (${cu.ngayGhi}): Hộ <span class="${mauHo} font-bold">${dauHo}${chenhHo}</span> — Nhân khẩu <span class="${mauKhau} font-bold">${dauKhau}${chenhKhau}</span></div>`;
+                };
+                if (!thangTruoc && !quyTruoc && !namTruoc) {
+                    el.classList.remove('hidden');
+                    el.innerHTML = `<p class="text-gray-500">📊 Chưa đủ dữ liệu lịch sử để so sánh xu hướng — hệ thống đã bắt đầu ghi nhận từ hôm nay, quay lại xem sau khoảng 1 tháng.</p>`;
+                    return;
+                }
+                el.classList.remove('hidden');
+                el.innerHTML = `<p class="font-semibold text-gray-200 mb-1">📊 So Sánh Xu Hướng</p>` + dong('So với tháng trước', thangTruoc) + dong('So với quý trước', quyTruoc) + dong('So với năm trước', namTruoc);
+            } catch (err) {
+                el.classList.remove('hidden');
+                el.innerHTML = `<p class="text-gray-500">Không tải được dữ liệu so sánh: ${escHtml(err.message)}</p>`;
+            }
         }
 
         async function moDashboard() {
@@ -7420,6 +7771,12 @@
             const soThuongTru = dsPhuongNay.filter(h => (h.dienNghiepVu || 'Thường trú') === 'Thường trú').length;
             const soTamTru = dsPhuongNay.filter(h => h.dienNghiepVu === 'Tạm trú' || h.dienNghiepVu === 'Lưu trú').length;
             const soKhac = dsPhuongNay.length - soThuongTru - soTamTru;
+            // SỬA LỖI PHÁT HIỆN: dòng gọi hàm "luuAnhChupThongKeHomNay" trước đó KHÔNG hề có hàm định nghĩa
+            // tương ứng (gọi hàm không tồn tại — sẽ làm crash Dashboard nếu không phát hiện kịp). Thay đúng
+            // bằng 2 hàm mới: tự ghi số liệu hôm nay (nếu đủ quyền xem toàn phường) + hiện bảng so sánh xu
+            // hướng ngay sau khi Dashboard đã tính xong soHo/soKhau/soThuongTru/soTamTru/soKhac ở trên.
+            tuDongGhiSnapshotThongKe(dsPhuongNay.length, soKhau, soThuongTru, soTamTru, soKhac);
+            renderSoSanhXuHuong(dsPhuongNay.length, soKhau);
             let soNam = 0, soNu = 0, soTreEm = 0, soLaoDong = 0, soCaoTuoi = 0, soBienDong = 0;
             // Tách riêng chi tiết nam/nữ/độ tuổi theo TỪNG DIỆN cư trú (không gộp chung) — dùng cho bảng
             // "Chi Tiết Theo Diện Cư Trú" bên dưới, phục vụ báo cáo nhanh theo từng diện riêng biệt.
@@ -8082,10 +8439,10 @@
             const kqTong = gomNhomThongKe(dsHo);
 
             el.innerHTML = `<div class="bg-fuchsia-950/20 border border-fuchsia-800/50 rounded-lg p-2.5 overflow-x-auto">
-                <p class="text-fuchsia-300 font-semibold mb-2 text-[12px]">📍 Chi Tiết Theo Khu Vực — ${escHtml(tenPhuong)} (${dsHo.length} hộ, ${kqTong.nk} nhân khẩu, ${tenKV.length} khu vực)</p>
+                <p class="text-fuchsia-300 font-semibold mb-2 text-[12px]">📍 Chi Tiết Theo ${nhanDonViCoSo(tenPhuong)} — ${escHtml(tenPhuong)} (${dsHo.length} hộ, ${kqTong.nk} nhân khẩu, ${tenKV.length} ${nhanDonViCoSo(tenPhuong).toLowerCase()})</p>
                 <table class="w-full text-left border-collapse text-[11px]">
                     <thead><tr class="text-gray-400 border-b border-gray-700">
-                        <th class="p-1.5">Khu vực</th><th class="p-1.5 text-right">Hộ</th><th class="p-1.5 text-right">Nhân khẩu</th>
+                        <th class="p-1.5">${nhanDonViCoSo(tenPhuong)}</th><th class="p-1.5 text-right">Hộ</th><th class="p-1.5 text-right">Nhân khẩu</th>
                         <th class="p-1.5 text-right">Th.trú</th><th class="p-1.5 text-right">Tạm/Lưu</th><th class="p-1.5 text-right">NOHN</th>
                         <th class="p-1.5 text-right">Nam</th><th class="p-1.5 text-right">Nữ</th>
                         <th class="p-1.5 text-right">&lt;16</th><th class="p-1.5 text-right">16-60</th><th class="p-1.5 text-right">&gt;60</th>
@@ -8177,13 +8534,18 @@
                 }
             }
 
+            const coQuyenXemToanTP = (currentUser.role === 'admin' || currentUser.role === 'chi_huy_tp' || currentUser.role === 'can_bo_du_lieu_tp');
             let htmlKV = `
-                <div class="bg-teal-950/30 border border-teal-800/50 rounded-lg p-2.5 mb-3 text-[11px]">
+                <div class="sticky top-0 z-10 -mx-4 -mt-1 px-4 py-2 mb-3 bg-gray-900/95 backdrop-blur border-b border-gray-700 flex gap-2 flex-wrap">
+                    <button onclick="document.getElementById('ptSecTongQuan').scrollIntoView({behavior:'smooth',block:'start'})" class="bg-teal-700 hover:bg-teal-600 px-2.5 py-1 rounded text-[10px] font-medium">🏘️ Theo ${nhanDonViCoSo()}</button>
+                    ${coQuyenXemToanTP ? `<button onclick="document.getElementById('phanTichThanhPho').scrollIntoView({behavior:'smooth',block:'start'})" class="bg-indigo-700 hover:bg-indigo-600 px-2.5 py-1 rounded text-[10px] font-medium">🏙️ Toàn Thành Phố</button>` : ''}
+                </div>
+                <div id="ptSecTongQuan" class="bg-teal-950/30 border border-teal-800/50 rounded-lg p-2.5 mb-3 text-[11px]">
                     <p class="text-teal-300 font-semibold mb-1">🔎 Các cột dữ liệu dùng để phân tích</p>
                     <p class="text-gray-400">Cấp <b>hộ</b>: diện cư trú, loại hình nơi ở, khu vực. Cấp <b>nhân khẩu</b>: giới tính, ngày sinh (→ nhóm tuổi), tình trạng biến động. Trục phân tích: <b>Bao nhiêu</b> (hộ/khẩu) — <b>Ai</b> (giới tính/tuổi/diện) — <b>Ở đâu</b> (khu vực/phường).</p>
                 </div>
                 <div class="mb-3">
-                    <p class="font-bold text-gray-100 text-sm mb-2">🏘️ Theo Khu Vực — ${escHtml(khuVucHienTai)}</p>
+                    <p class="font-bold text-gray-100 text-sm mb-2">🏘️ Theo ${nhanDonViCoSo()} — ${escHtml(khuVucHienTai)}</p>
                     <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
                         ${theKPI('🏠', kqTongPhuong.ho, 'Tổng số hộ', 'linear-gradient(135deg,#1e3a8a,#1e40af)', '#93c5fd')}
                         ${theKPI('👥', kqTongPhuong.nk, 'Tổng nhân khẩu', 'linear-gradient(135deg,#065f46,#047857)', '#6ee7b7')}
@@ -8193,19 +8555,19 @@
                     </div>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-3">
                         <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
-                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">Số hộ & nhân khẩu theo khu vực</p>
+                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">Số hộ & nhân khẩu theo ${nhanDonViCoSo().toLowerCase()}</p>
                             <div style="height:220px;"><canvas id="ptChartKhuVuc"></canvas></div>
                         </div>
                         <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
-                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">Cơ cấu diện cư trú theo khu vực (%)</p>
+                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">Cơ cấu diện cư trú theo ${nhanDonViCoSo().toLowerCase()} (%)</p>
                             <div style="height:220px;"><canvas id="ptChartDienKV"></canvas></div>
                         </div>
                     </div>
                     <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5 overflow-x-auto mb-2">
-                        <p class="text-gray-300 font-semibold mb-2 text-[11px]">📋 Bảng tóm tắt theo khu vực</p>
+                        <p class="text-gray-300 font-semibold mb-2 text-[11px]">📋 Bảng tóm tắt theo ${nhanDonViCoSo().toLowerCase()}</p>
                         <table class="w-full text-left border-collapse text-[11px]">
                             <thead><tr class="text-gray-400 border-b border-gray-700">
-                                <th class="p-1.5">Khu vực</th><th class="p-1.5 text-right">Hộ</th><th class="p-1.5 text-right">Nhân khẩu</th>
+                                <th class="p-1.5">${nhanDonViCoSo()}</th><th class="p-1.5 text-right">Hộ</th><th class="p-1.5 text-right">Nhân khẩu</th>
                                 <th class="p-1.5 text-right">Th.trú</th><th class="p-1.5 text-right">Tạm/Lưu</th><th class="p-1.5 text-right">NOHN</th>
                                 <th class="p-1.5 text-right">Nam</th><th class="p-1.5 text-right">Nữ</th>
                                 <th class="p-1.5 text-right">&lt;16</th><th class="p-1.5 text-right">16-60</th><th class="p-1.5 text-right">&gt;60</th>
