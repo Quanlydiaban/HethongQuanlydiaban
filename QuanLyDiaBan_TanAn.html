@@ -514,13 +514,14 @@
                         <div class="bg-amber-950/20 border border-amber-800/40 rounded px-2 py-1.5">
                             <p class="text-amber-300 font-medium text-[11px] mb-1">🏷️ Nhãn đặc biệt của hộ (chọn tất cả nhãn đúng thực tế, có thể chọn nhiều)</p>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-1">
-                                <label class="flex items-center gap-1.5 cursor-pointer text-[11px]"><input type="checkbox" id="editNhan_luu_tru" class="accent-amber-500"><span>🏨 Cơ sở lưu trú (nhà trọ/mini hotel/khách sạn/nhà nghỉ)</span></label>
+                                <label class="flex items-center gap-1.5 cursor-pointer text-[11px]"><input type="checkbox" id="editNhan_luu_tru" onchange="document.getElementById('btnMoNA17').classList.toggle('hidden', !this.checked)" class="accent-amber-500"><span>🏨 Cơ sở lưu trú (nhà trọ/mini hotel/khách sạn/nhà nghỉ)</span></label>
                                 <label class="flex items-center gap-1.5 cursor-pointer text-[11px]"><input type="checkbox" id="editNhan_kd_dieu_kien_antt" class="accent-amber-500"><span>🔒 Cơ sở kinh doanh có điều kiện về ANTT</span></label>
                                 <label class="flex items-center gap-1.5 cursor-pointer text-[11px]"><input type="checkbox" id="editNhan_ho_kinh_doanh" class="accent-amber-500"><span>🏪 Hộ kinh doanh (tạp hóa/quán ăn/quán nhậu...)</span></label>
                                 <label class="flex items-center gap-1.5 cursor-pointer text-[11px]"><input type="checkbox" id="editNhan_co_so_tho_tu" class="accent-amber-500"><span>🛕 Cơ sở thờ tự</span></label>
                                 <label class="flex items-center gap-1.5 cursor-pointer text-[11px]"><input type="checkbox" id="editNhan_trong_ho" class="accent-rose-500"><span class="text-rose-300">🎖️ Trọng hộ (Mẹ VNAH / gia đình liệt sĩ)</span></label>
                             </div>
                             <p class="text-[9px] text-gray-500 mt-1">Cơ sở lưu trú/kinh doanh có điều kiện ANTT có nghĩa vụ thông báo lưu trú/tuân thủ quy định riêng theo Luật Cư trú và quy định ANTT — khác đăng ký cư trú thông thường. "Trọng hộ" giúp CSKV ưu tiên thăm hỏi, chăm lo đúng đối tượng chính sách.</p>
+                            <button type="button" id="btnMoNA17" onclick="moModalNA17()" class="hidden mt-1.5 w-full bg-blue-700 hover:bg-blue-600 rounded px-2 py-1.5 text-[11px] font-medium">📋 Khai Báo Tạm Trú Người Nước Ngoài (NA17)</button>
                         </div>
                         <div>
                             <label class="text-gray-400 block mb-0.5 font-semibold text-blue-300">Diện Cư Trú:</label>
@@ -849,10 +850,10 @@
                     </select>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-1.5">
-                    <input type="text" id="inputHoTenCSKV" placeholder="Họ tên cán bộ" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
-                    <input type="text" id="inputDonViCSKV" placeholder="Đơn vị công tác (VD: CA Phường Tân An)" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
-                    <input type="text" id="inputChucVuCSKV" placeholder="Chức vụ (VD: CSKV, Trưởng CA phường...)" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
-                    <input type="tel" id="inputSdtCSKV" placeholder="SĐT liên lạc (chỉ để tiện liên hệ, không dùng gửi OTP)" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <input type="text" id="inputHoTenCSKV" required placeholder="* Họ tên cán bộ (bắt buộc)" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <input type="text" id="inputDonViCSKV" required placeholder="* Đơn vị công tác (bắt buộc, VD: CA Phường Tân An)" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <input type="text" id="inputChucVuCSKV" required placeholder="* Chức vụ (bắt buộc, VD: CSKV, Trưởng CA phường...)" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <input type="tel" id="inputSdtCSKV" required placeholder="* SĐT liên lạc (bắt buộc, VD: 0912345678)" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                     <select id="inputPhuongCSKV" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></select>
@@ -958,6 +959,22 @@
             </div>
             <p class="text-gray-400">Theo quy định, công dân phải đổi thẻ CCCD/Căn cước khi đủ <b>14, 25, 40 và 60 tuổi</b>. Danh sách dưới đây liệt kê nhân khẩu <b>đủ mốc tuổi trong năm nay</b> (dựa vào năm sinh trong hồ sơ) để anh/chị chủ động nhắc công dân đi làm thủ tục.</p>
             <div id="noiDungNhacCCCD" class="overflow-x-auto"></div>
+        </div>
+    </div>
+
+    <div id="na17Modal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+        <div class="glass-card w-full max-w-4xl rounded-xl shadow-2xl p-4 space-y-3 border border-blue-700 text-xs max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold text-blue-400">📋 Khai Báo Tạm Trú Người Nước Ngoài (Mẫu NA17)</h3>
+                <button onclick="document.getElementById('na17Modal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <p class="text-gray-400">Theo Luật Nhập cảnh, xuất cảnh, quá cảnh, cư trú của người nước ngoài tại Việt Nam — cơ sở lưu trú có khách nước ngoài phải khai báo tạm trú qua đúng Mẫu NA17 (khác CT01 dành cho công dân Việt Nam).</p>
+            <div id="na17DanhSachKhach" class="space-y-2"></div>
+            <button onclick="themDongKhachNA17()" class="w-full bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded px-2 py-1.5 text-[11px]">+ Thêm khách nước ngoài</button>
+            <div class="flex gap-2 pt-1">
+                <button onclick="luuKhachNA17()" class="flex-1 bg-emerald-700 hover:bg-emerald-600 rounded px-3 py-2 font-bold">💾 Lưu Danh Sách</button>
+                <button onclick="inNA17()" class="flex-1 bg-blue-700 hover:bg-blue-600 rounded px-3 py-2 font-bold">🖨️ In Phiếu NA17</button>
+            </div>
         </div>
     </div>
 
@@ -3069,6 +3086,15 @@
             const phuong = document.getElementById('inputPhuongCSKV').value;
             const khuVucRaw = document.getElementById('inputKhuVucCSKV').value.trim();
             if (!email) return alert("Vui lòng nhập Email tài khoản.");
+            // THEO YÊU CẦU: bắt buộc đầy đủ thông tin như 1 Form đúng nghĩa — tránh tái diễn tình trạng có
+            // tài khoản được cấp quyền mà không rõ là ai/đơn vị nào (đã xảy ra thực tế, phải rà soát xóa sau).
+            const thieuTruong = [];
+            if (!hoTen) thieuTruong.push("Họ tên");
+            if (!donVi) thieuTruong.push("Đơn vị");
+            if (!chucVu) thieuTruong.push("Chức vụ");
+            if (!sdt) thieuTruong.push("Số điện thoại");
+            else if (!/^0\d{9,10}$/.test(sdt.replace(/[\s.-]/g, ''))) thieuTruong.push("Số điện thoại (chưa đúng định dạng — VD: 0912345678)");
+            if (thieuTruong.length > 0) return alert("⛔ Vui lòng nhập đủ thông tin trước khi cấp quyền — còn thiếu: " + thieuTruong.join(", ") + ".\n\nBắt buộc đầy đủ để tránh tình trạng có tài khoản không rõ là ai/đơn vị nào.");
             const khongCanPhuong = (vaiTro === 'chi_huy_tp' || vaiTro === 'can_bo_du_lieu_tp');
             if (!khongCanPhuong && !phuong) return alert("Vui lòng chọn Phường phụ trách.");
             if (vaiTro === 'can_bo' && !khuVucRaw) return alert(`Vui lòng nhập ${nhanDonViCoSo(phuong)} phụ trách cho Cảnh sát khu vực (cách nhau bằng dấu phẩy nếu nhiều đơn vị).`);
@@ -3228,19 +3254,46 @@
         // Lấy danh sách email đã từng đăng nhập thành công (từ nhật ký hoạt động) để gợi ý cho Admin khi
         // phân quyền — vì trình duyệt không thể tự liệt kê toàn bộ tài khoản đã đăng ký (giới hạn của
         // Firebase phía client, cần Admin SDK phía máy chủ mới làm được điều đó).
+        // SỬA THEO PHẢN HỒI THỰC TẾ: trước đây liệt kê PHẲNG mọi email đã đăng nhập, không phân biệt được
+        // "đã từng khai báo/được biết đến" với "chỉ đăng nhập rồi bỏ đó, không dùng" — Admin phải tự đoán.
+        // Giờ tách 2 nhóm rõ ràng + cho phép ẨN VĨNH VIỄN (lưu tại máy, riêng từng Admin) email xác định là
+        // rác/không dùng, để lần sau không còn thấy lại, đỡ rối danh sách.
         async function napGoiYEmailDaDangNhap() {
             if (!CHE_DO_FIREBASE) return;
             const oGoiY = document.getElementById('rbacGoiYEmail');
             const oDatalist = document.getElementById('dsGoiYEmailDangNhap');
             try {
                 const snap = await dbFirestore.collection('activity_log').where('hanhDong', '==', 'Đăng nhập').limit(500).get();
-                const emails = [...new Set(snap.docs.map(d => d.data().email).filter(Boolean))].sort();
-                if (emails.length === 0) return;
+                let emails = [...new Set(snap.docs.map(d => d.data().email).filter(Boolean))].sort();
+                if (emails.length === 0) { oGoiY.classList.add('hidden'); return; }
+
+                const emailBiAn = JSON.parse(localStorage.getItem('rbacEmailDaAnKhoiGoiY') || '[]');
+                emails = emails.filter(e => !emailBiAn.includes(e));
+                if (emails.length === 0) { oGoiY.classList.add('hidden'); return; }
+
                 oDatalist.innerHTML = emails.map(e => `<option value="${escHtml(e)}">`).join('');
+                const emailDaKhaiBao = new Set(danhSachPhanQuyen.map(r => r.email));
+                const nhomDaKhaiBao = emails.filter(e => emailDaKhaiBao.has(e));
+                const nhomChuaKhaiBao = emails.filter(e => !emailDaKhaiBao.has(e));
+
+                const nutEmail = (e) => `<span class="inline-flex items-center gap-0.5 mr-1 mb-1">
+                    <button type="button" onclick="document.getElementById('inputEmailCSKV').value='${escHtml(e)}'" class="underline hover:text-blue-400">${escHtml(e)}</button>
+                    <button type="button" onclick="anEmailKhoiGoiY('${escHtml(e)}')" title="Ẩn email này khỏi gợi ý (nếu chắc chắn không dùng/không cần theo dõi nữa)" class="text-rose-500 hover:text-rose-400 text-[10px] px-0.5">✕</button>
+                </span>`;
+
                 oGoiY.classList.remove('hidden');
-                oGoiY.innerHTML = '📌 Đã từng đăng nhập (' + emails.length + ' tài khoản, gõ vài ký tự vào ô Email để xem gợi ý): ' +
-                    emails.map(e => `<button type="button" onclick="document.getElementById('inputEmailCSKV').value='${escHtml(e)}'" class="underline hover:text-blue-400 mr-1">${escHtml(e)}</button>`).join('');
+                oGoiY.innerHTML = `
+                    ${nhomChuaKhaiBao.length > 0 ? `<div class="mb-1"><b class="text-amber-400">⚠️ ${nhomChuaKhaiBao.length} email đã đăng nhập nhưng CHƯA TỪNG khai báo/được cấp quyền gì</b> (khả năng cao là rác, nhầm, hoặc không dùng nữa — bấm ✕ để ẩn khỏi danh sách này):<br>${nhomChuaKhaiBao.map(nutEmail).join('')}</div>` : ''}
+                    ${nhomDaKhaiBao.length > 0 ? `<div><b class="text-emerald-400">✅ ${nhomDaKhaiBao.length} email đã từng khai báo/được cấp quyền</b> (gõ vài ký tự vào ô Email để xem gợi ý):<br>${nhomDaKhaiBao.map(nutEmail).join('')}</div>` : ''}`;
             } catch (err) { console.warn("Không tải được danh sách email gợi ý:", err.message); }
+        }
+
+        function anEmailKhoiGoiY(email) {
+            if (!confirm(`Ẩn "${email}" khỏi danh sách gợi ý này (chỉ trên máy này)?\n\nKHÔNG xóa gì trên máy chủ — nếu người này đăng nhập lại, họ vẫn dùng được bình thường, chỉ là Admin không còn thấy gợi ý này nữa.`)) return;
+            const emailBiAn = JSON.parse(localStorage.getItem('rbacEmailDaAnKhoiGoiY') || '[]');
+            if (!emailBiAn.includes(email)) emailBiAn.push(email);
+            localStorage.setItem('rbacEmailDaAnKhoiGoiY', JSON.stringify(emailBiAn));
+            napGoiYEmailDaDangNhap();
         }
 
         function xuatDanhSachPhanQuyen() {
@@ -5127,8 +5180,24 @@
                 const loiHsctSaiDien = phamVi.filter(ho => ho.hsct && ho.dienNghiepVu !== 'Thường trú' && !loiHsctDiaChi.includes(ho));
                 soLoiHSCT = loiHsctDiaChi.length + loiHsctSaiDien.length;
 
+                // MỚI THEO ĐÚNG QUY ĐỊNH PHÁP LUẬT: theo Luật Thi hành án hình sự 2019, các diện Án treo/Cải
+                // tạo không giam giữ/Quản chế/Tha tù trước hạn có điều kiện BẮT BUỘC phải được CSKV theo dõi,
+                // nhận xét/báo cáo UBND cấp xã ĐỊNH KỲ HÀNG THÁNG — không phải tùy chọn. Trước đây phần mềm
+                // không nhắc gì về nghĩa vụ này, dễ bị trễ hạn báo cáo do quên. Dùng "capNhatLuc" (lần cuối
+                // ai đó cập nhật hồ sơ) làm mốc — quá 30 ngày chưa ai đụng vào thì coi như CHƯA theo dõi/báo
+                // cáo tháng này.
+                const DIEN_BAT_BUOC_BAO_CAO_HANG_THANG = ['Án treo (trong thời gian thử thách)', 'Cải tạo không giam giữ / Cấm cư trú / Quản chế', 'Tha tù trước thời hạn có điều kiện (thời gian thử thách)', 'Giáo dục tại xã, phường, đặc khu'];
+                let soKV3CanBaoCao = 0;
+                try {
+                    soKV3CanBaoCao = danhSachDoiTuong.filter(d => {
+                        if (!DIEN_BAT_BUOC_BAO_CAO_HANG_THANG.includes(d.dienDoiTuong)) return false;
+                        const lanCuoi = d.capNhatLuc && d.capNhatLuc.toDate ? d.capNhatLuc.toDate() : null;
+                        return !lanCuoi || lanCuoi.getTime() < nguong30Ngay.getTime();
+                    }).length;
+                } catch (e) { /* danhSachDoiTuong có thể chưa kịp tải, bỏ qua không chặn phần còn lại */ }
+
                 const elViec = document.getElementById('banerVieCanLamHomNay');
-                const tongViec = soSapHet + soCanDoiCCCD + soQuaHanKiemTra + soLoiHSCT;
+                const tongViec = soSapHet + soCanDoiCCCD + soQuaHanKiemTra + soLoiHSCT + soKV3CanBaoCao;
                 if (elViec) {
                     if (tongViec === 0) {
                         elViec.classList.add('hidden');
@@ -5144,6 +5213,7 @@
                                 ${muc(soCanDoiCCCD, 'người đến mốc tuổi cần đổi CCCD (14/25/40/60)', "moModalNhacCCCD()")}
                                 ${muc(soQuaHanKiemTra, 'hộ chưa kiểm tra định kỳ trong 30 ngày', "moModalLichKiemTraDinhKy()")}
                                 ${muc(soLoiHSCT, 'hộ có lỗi Số HSCT cần sửa', "moModalRaSoatLoi()")}
+                                ${muc(soKV3CanBaoCao, 'đối tượng án treo/cải tạo/quản chế CẦN theo dõi, báo cáo tháng này (theo luật)', "moModalDoiTuong()")}
                             </div>`;
                     }
                 }
@@ -5455,6 +5525,7 @@
                 const el = document.getElementById('editNhan_' + nhan);
                 if (el) el.checked = nhanDaCo.includes(nhan);
             });
+            document.getElementById('btnMoNA17').classList.toggle('hidden', !nhanDaCo.includes('luu_tru'));
             document.getElementById('editGhiChu').value = ho.ghiChu || '';
             document.getElementById('editGps').value = ho.gps || `${DEFAULT_CENTER[0]}, ${DEFAULT_CENTER[1]}`;
             // SỬA LỖI QUAN TRỌNG: trước đây coi là "đã xác nhận" chỉ vì Ô TOẠ ĐỘ CÓ GIÁ TRỊ — kể cả dữ liệu CŨ
@@ -6425,6 +6496,106 @@
         function moModalHuongDanExcel() { document.getElementById('huongDanExcelModal').classList.remove('hidden'); }
 
         // ================== NGUỒN NVQS/NVCA (mới thêm theo yêu cầu thực tế) ==================
+        // ================== KHAI BÁO TẠM TRÚ NGƯỜI NƯỚC NGOÀI (MẪU NA17) ==================
+        // Dữ liệu khách nước ngoài LƯU RIÊNG trên hộ (ho.khachNuocNgoaiTamTru), KHÔNG gộp vào mảng thanhVien
+        // — vì đây là NGƯỜI TẠM TRÚ TẠI CƠ SỞ LƯU TRÚ (khách thuê phòng), không phải nhân khẩu thuộc hộ.
+        let na17DongDangSua = [];
+        function moModalNA17() {
+            const ho = danhSachHoGiaDinh[currentSelectedHoIndex];
+            na17DongDangSua = JSON.parse(JSON.stringify(ho.khachNuocNgoaiTamTru || []));
+            document.getElementById('na17Modal').classList.remove('hidden');
+            renderDanhSachKhachNA17();
+        }
+        function themDongKhachNA17() {
+            na17DongDangSua.push({ hoTen: '', gioiTinh: 'Nam', ngaySinh: '', quocTich: '', loaiHoChieu: '', soHoChieu: '', thiThuc: '', ngayNhapCanh: '', cuaKhau: '', mucDich: '', tuNgay: '', denNgay: '', ghiChu: '' });
+            renderDanhSachKhachNA17();
+        }
+        function xoaDongKhachNA17(i) { na17DongDangSua.splice(i, 1); renderDanhSachKhachNA17(); }
+        function capNhatDongKhachNA17(i, truong, giaTri) { na17DongDangSua[i][truong] = giaTri; }
+        function renderDanhSachKhachNA17() {
+            const el = document.getElementById('na17DanhSachKhach');
+            if (na17DongDangSua.length === 0) { el.innerHTML = '<p class="text-gray-500 text-center py-3">Chưa có khách nước ngoài nào — bấm "+ Thêm khách nước ngoài" bên dưới.</p>'; return; }
+            const o = (i, truong, placeholder, w = '') => `<input value="${escHtml(na17DongDangSua[i][truong] || '')}" oninput="capNhatDongKhachNA17(${i},'${truong}',this.value)" placeholder="${placeholder}" class="${w} bg-gray-900 border border-gray-700 rounded px-1.5 py-1 text-white text-[11px]">`;
+            el.innerHTML = na17DongDangSua.map((k, i) => `
+                <div class="bg-gray-900/60 border border-gray-800 rounded-lg p-2 grid grid-cols-2 sm:grid-cols-4 gap-1.5 relative">
+                    <button onclick="xoaDongKhachNA17(${i})" class="absolute -top-1.5 -right-1.5 bg-rose-700 hover:bg-rose-600 w-5 h-5 rounded-full text-[10px] flex items-center justify-center">✕</button>
+                    ${o(i, 'hoTen', 'Họ và tên')}
+                    <select onchange="capNhatDongKhachNA17(${i},'gioiTinh',this.value)" class="bg-gray-900 border border-gray-700 rounded px-1.5 py-1 text-white text-[11px]"><option ${k.gioiTinh === 'Nam' ? 'selected' : ''}>Nam</option><option ${k.gioiTinh === 'Nữ' ? 'selected' : ''}>Nữ</option></select>
+                    ${o(i, 'ngaySinh', 'Sinh ngày/tháng/năm')}
+                    ${o(i, 'quocTich', 'Quốc tịch')}
+                    ${o(i, 'loaiHoChieu', 'Loại hộ chiếu')}
+                    ${o(i, 'soHoChieu', 'Số hộ chiếu')}
+                    ${o(i, 'thiThuc', 'Loại/thời hạn/số/ngày cấp/cơ quan cấp thị thực')}
+                    ${o(i, 'ngayNhapCanh', 'Ngày nhập cảnh')}
+                    ${o(i, 'cuaKhau', 'Cửa khẩu nhập cảnh')}
+                    ${o(i, 'mucDich', 'Mục đích nhập cảnh')}
+                    ${o(i, 'tuNgay', 'Tạm trú từ ngày')}
+                    ${o(i, 'denNgay', 'Đến ngày')}
+                    ${o(i, 'ghiChu', 'Ghi chú (quan hệ với người cho tạm trú)', 'col-span-2 sm:col-span-4')}
+                </div>`).join('');
+        }
+        async function luuKhachNA17() {
+            const ho = danhSachHoGiaDinh[currentSelectedHoIndex];
+            ho.khachNuocNgoaiTamTru = na17DongDangSua.filter(k => k.hoTen.trim());
+            try {
+                if (CHE_DO_FIREBASE && ho.id) await dbFirestore.collection('households').doc(ho.id).update({ khachNuocNgoaiTamTru: ho.khachNuocNgoaiTamTru });
+                else if (!CHE_DO_FIREBASE) localStorage.setItem("danhSachHoGiaDinhCacheGIS_V5", JSON.stringify(danhSachHoGiaDinh));
+                alert("✅ Đã lưu danh sách khách nước ngoài tạm trú.");
+                ghiSoGiaoNhanHoSo('NA17 - Khai báo tạm trú người nước ngoài', ho.chuHo || '', ho.id || '');
+            } catch (err) { alert("❌ Lỗi lưu: " + err.message); }
+        }
+        // In đúng theo bố cục file mẫu THẬT đã đối chiếu: "Mẫu (Form) NA17" ở GÓC TRÊN PHẢI (không phải giữa
+        // trang như CT01/DC01), khối trái là thông tin cơ sở lưu trú, khối phải là Quốc hiệu + ngày tháng,
+        // bảng có "Giới tính" tách 2 cột con Nam/Nữ lồng trong tiêu đề (rowspan/colspan).
+        function inNA17() {
+            const ho = danhSachHoGiaDinh[currentSelectedHoIndex];
+            const ds = na17DongDangSua.filter(k => k.hoTen.trim());
+            const soDong = Math.max(ds.length, 5); // luôn có tối thiểu 5 dòng như bản mẫu thật, kể cả khi trống
+            const o = (v) => escHtml(v || '');
+            const khoiTieuDeTrai = `<div><b>Tên cơ sở (chủ hộ) lưu trú:</b> ${o(ho.chuHo)}</div>
+                <div style="font-size:10.5px;">Photo kèm theo CCCD/CMND đại diện cơ sở lưu trú</div>
+                <div><b>Địa chỉ:</b> ${o(ho.diaChi)}</div>
+                <div><b>SĐT:</b> ${o((ho.thanhVien && ho.thanhVien[0] && ho.thanhVien[0].sdt) || '')}</div>`;
+            const html = `
+                <h1>Phiếu khai báo tạm trú cho người nước ngoài</h1>
+                <p style="text-align:center;">Kính gửi: Công an ${escHtml(khuVucHienTai)}, thành phố Cần Thơ</p>
+                <table>
+                    <tr>
+                        <th rowspan="2">TT</th><th rowspan="2">Họ và tên</th><th colspan="2">Giới tính</th><th rowspan="2">Sinh ngày,<br>tháng, năm</th>
+                        <th rowspan="2">Quốc tịch</th><th rowspan="2">Loại, Hộ chiếu<br>Số hộ chiếu</th><th rowspan="2">Loại, thời hạn, số, ngày cấp, cơ quan cấp thị thực</th>
+                        <th rowspan="2">Ngày nhập cảnh, cửa khẩu nhập cảnh</th><th rowspan="2">Mục đích nhập cảnh</th>
+                        <th rowspan="2">Tạm trú (từ ngày đến ngày)</th><th rowspan="2">Ghi chú (Mối quan hệ với người cho tạm trú)</th>
+                    </tr>
+                    <tr><th>Nam</th><th>Nữ</th></tr>
+                    ${Array.from({ length: soDong }).map((_, i) => {
+                const k = ds[i];
+                if (!k) return `<tr>${Array.from({ length: 12 }).map(() => '<td>&nbsp;</td>').join('')}</tr>`;
+                return `<tr>
+                            <td>${i + 1}</td><td>${o(k.hoTen)}</td><td>${k.gioiTinh === 'Nam' ? 'x' : ''}</td><td>${k.gioiTinh === 'Nữ' ? 'x' : ''}</td>
+                            <td>${o(k.ngaySinh)}</td><td>${o(k.quocTich)}</td><td>${o(k.loaiHoChieu)} ${o(k.soHoChieu)}</td><td>${o(k.thiThuc)}</td>
+                            <td>${o(k.ngayNhapCanh)}${k.cuaKhau ? ', ' + o(k.cuaKhau) : ''}</td><td>${o(k.mucDich)}</td>
+                            <td>${o(k.tuNgay)} - ${o(k.denNgay)}</td><td>${o(k.ghiChu)}</td>
+                        </tr>`;
+            }).join('')}
+                </table>
+                <table style="border:none;margin-top:20px;">
+                    <tr>
+                        <td style="border:none;width:60%;">
+                            <b>Xác nhận</b> (của đơn vị tiếp nhận): Tiếp nhận lúc: ......... ngày ..................<br>
+                            <i>Số NNN khai báo: ......... (bằng chữ: .........................)</i>
+                        </td>
+                        <td style="border:none;width:40%;text-align:center;">
+                            <b>Đại diện cơ sở lưu trú</b><br><i>(Ký, ghi rõ họ tên)</i>
+                        </td>
+                    </tr>
+                </table>`;
+            moCuaSoInBieuMau("NA17 - " + (ho.chuHo || ''), html, {
+                khoiTieuDeTrai,
+                dongTrenQuocHieu: `<span style="display:block;text-align:right;">Mẫu (Form) NA17</span>`,
+                dongNgayThangBenPhai: `${escHtml(khuVucHienTai.replace(/^(Phường|Xã)\s*/i, ''))}, ngày ..... tháng ..... năm ${new Date().getFullYear()}`
+            });
+        }
+
         function moModalNguonNVQS() {
             document.getElementById('nguonNVQSModal').classList.remove('hidden');
             renderNguonNVQS();
@@ -7372,6 +7543,7 @@
                        <td style="border:none;width:50%;vertical-align:top;padding:0;">
                            <div class="quoc-hieu">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
                            <div class="tieu-ngu">Độc lập - Tự do - Hạnh phúc</div>
+                           ${opts.dongNgayThangBenPhai ? `<div style="text-align:center;font-style:italic;margin-top:4px;">${opts.dongNgayThangBenPhai}</div>` : ''}
                        </td>
                    </tr></table>`
                 : `<div class="quoc-hieu">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
