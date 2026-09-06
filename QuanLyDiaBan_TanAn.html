@@ -861,6 +861,10 @@
                 <input type="hidden" id="inputLoaiHinhDonViCSKV" value="">
                 <button onclick="themPhanQuyenCSKV()" class="w-full bg-emerald-600 hover:bg-emerald-700 rounded px-2 py-1.5 font-bold">+ Thêm / Cập nhật tài khoản này</button>
                 <input type="text" id="timKiemPhanQuyen" oninput="renderDanhSachCSKV()" placeholder="🔍 Tìm theo tên, email, đơn vị, phường..." class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                <label class="flex items-center gap-1.5 text-[11px] text-amber-300 cursor-pointer select-none">
+                    <input type="checkbox" id="chkChiHienThieuThongTin" onchange="renderDanhSachCSKV()" class="accent-amber-500">
+                    <span>⚠️ Chỉ hiện tài khoản THIẾU thông tin (chưa rõ họ tên hoặc đơn vị) — dễ dò để xử lý/gỡ hàng loạt</span>
+                </label>
                 <p class="text-[10px] text-gray-500">Tài khoản tô cam bên dưới = đã tự khai báo, đang chờ duyệt — bấm "Cấp quyền" để tự điền lại đúng thông tin họ đã khai báo vào form phía trên.</p>
                 <div id="rbacDanhSachCSKV" class="max-h-52 overflow-y-auto divide-y divide-gray-800 border border-gray-800 rounded-lg"></div>
                 <button onclick="xuatDanhBaCanBo()" class="w-full bg-teal-600 hover:bg-teal-700 rounded px-2 py-1.5 font-medium">📇 Xuất Danh Bạ Cán Bộ (.xlsx)</button>
@@ -3154,9 +3158,16 @@
 
             let danhSachHien = danhSachPhanQuyen;
             if (tuKhoa) {
-                danhSachHien = danhSachPhanQuyen.filter(r =>
+                danhSachHien = danhSachHien.filter(r =>
                     [r.email, r.hoTen, r.donVi, r.chucVu, r.sdt, r.phuong].some(t => t && boDauTiengViet(t).includes(tuKhoa))
                 );
+            }
+            // MỚI THEO YÊU CẦU: sau thời gian dùng thử, cần dò ra tài khoản KHÔNG RÕ danh tính (thường do
+            // được cấp quyền TRƯỚC KHI có cổng khai báo bắt buộc, hoặc cán bộ tự khai báo bỏ trống) để xử lý/
+            // gỡ hàng loạt — trước đây phải cuộn tay tìm từng dòng ghi "(chưa rõ tên)" giữa danh sách dài.
+            const chiHienThieuTT = document.getElementById('chkChiHienThieuThongTin');
+            if (chiHienThieuTT && chiHienThieuTT.checked) {
+                danhSachHien = danhSachHien.filter(r => !r.hoTen || !r.donVi);
             }
 
             if (danhSachPhanQuyen.length === 0) {
@@ -8865,15 +8876,26 @@
                 return hoIdKhacNhau.size > 1;
             });
 
-            // Lỗi 5: Hộ có ĐỊA CHỈ ghi rõ tỉnh/thành phố KHÁC (VD "Hà Nội", "Hà Giang"...) nhưng lại đang bị
-            // gắn vào phường/xã hiện tại — thường do lỗi nhập liệu/import cũ (cột Phường/Xã đọc sai, tự động
-            // rơi về phường đang chọn trên màn hình lúc nhập). KHÔNG phải lỗi của bộ lọc khu vực — dữ liệu bị
-            // sai NGAY TỪ TRƯỜNG "phuong" lưu trong hồ sơ, bộ lọc chỉ đang hiển thị đúng những gì đã lưu sai.
-            const DANH_SACH_TINH_THANH_KHAC = ['hà nội', 'hải phòng', 'đà nẵng', 'hồ chí minh', 'huế', 'hà giang', 'cao bằng', 'lạng sơn', 'lai châu', 'điện biên', 'sơn la', 'thanh hóa', 'nghệ an', 'hà tĩnh', 'quảng trị', 'quảng ngãi', 'gia lai', 'khánh hòa', 'lâm đồng', 'đắk lắk', 'tây ninh', 'đồng nai', 'phú thọ', 'bắc ninh', 'hưng yên', 'ninh bình', 'quảng ninh', 'cà mau', 'vĩnh long', 'đồng tháp', 'an giang', 'tuyên quang', 'lào cai', 'thái nguyên'];
+            // Lỗi 5 (ĐÃ SỬA TỔNG QUÁT HƠN): trước đây chỉ dò được hộ có địa chỉ ghi tỉnh/thành phố KHÁC Cần
+            // Thơ (dựa vào danh sách liệt kê cứng tên tỉnh) — nhưng thực tế phát hiện thêm trường hợp NGHIÊM
+            // TRỌNG HƠN: hộ có địa chỉ ghi RÕ "Phường Tân An" nhưng trường "Phường" lưu trong hồ sơ lại là
+            // "Phường Hưng Phú" — TRONG CÙNG Cần Thơ, danh sách tỉnh khác không bắt được trường hợp này. Giờ
+            // đổi cách làm: trích THẲNG tên "phường/xã" ghi trong chính địa chỉ (không cần biết trước tên
+            // phường nào), so sánh với trường "Phường" đã lưu — lệch là báo, không phụ thuộc danh sách liệt
+            // kê tỉnh/thành nào cả, bắt được MỌI trường hợp lệch (cùng tỉnh lẫn khác tỉnh).
+            function trichPhuongXaTuDiaChi(diaChi) {
+                if (!diaChi) return null;
+                const khop = [...diaChi.matchAll(/(phường|xã)\s+([^,]+)/gi)];
+                if (khop.length === 0) return null;
+                const cuoiCung = khop[khop.length - 1]; // lấy cụm GẦN CUỐI địa chỉ — thường đúng vị trí thật của phường/xã (trước tỉnh/thành phố)
+                return (/^phường/i.test(cuoiCung[1]) ? 'Phường ' : 'Xã ') + cuoiCung[2].trim();
+            }
+            const chuanTenDV = (s) => boDauTiengViet(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
             const loiSaiTinhThanh = ds.filter(ho => {
-                const diaChiChuan = boDauTiengViet(ho.diaChi || '').toLowerCase();
-                return DANH_SACH_TINH_THANH_KHAC.some(t => diaChiChuan.includes(boDauTiengViet(t)));
-            });
+                const phuongTrichRa = trichPhuongXaTuDiaChi(ho.diaChi);
+                if (!phuongTrichRa) return false;
+                return chuanTenDV(phuongTrichRa) !== chuanTenDV(ho.phuong);
+            }).map(ho => ({ ho, phuongTrichRa: trichPhuongXaTuDiaChi(ho.diaChi) }));
 
             if (loiHsct.length === 0 && loiHsctSaiDien.length === 0 && loiChuHo.length === 0 && loiThieuCCCDToanBo.length === 0 && loiTrungCCCD.length === 0 && loiSaiTinhThanh.length === 0) {
                 el.innerHTML = '<p class="text-emerald-400 p-3">✅ Không phát hiện lỗi nào trong phạm vi dữ liệu của "' + escHtml(khuVucHienTai) + '" (' + ds.length + ' hộ đã quét).</p>';
@@ -8884,13 +8906,13 @@
 
             if (loiSaiTinhThanh.length > 0) {
                 html += `<div class="bg-orange-950/30 border border-orange-700/50 rounded-lg p-2.5 mb-2">
-                    <p class="text-orange-300 font-semibold mb-1">🟠 ${loiSaiTinhThanh.length} hộ có địa chỉ ghi rõ TỈNH/THÀNH PHỐ KHÁC nhưng đang bị gắn vào "${escHtml(khuVucHienTai)}"</p>
+                    <p class="text-orange-300 font-semibold mb-1">🟠 ${loiSaiTinhThanh.length} hộ có địa chỉ ghi PHƯỜNG/XÃ KHÁC với trường "Phường" đang lưu trong hồ sơ (kể cả lệch trong cùng Cần Thơ)</p>
                     <div class="max-h-40 overflow-y-auto text-[11px] space-y-1 mb-2">
-                        ${loiSaiTinhThanh.map(ho => `<div class="text-gray-300 border-b border-gray-800 pb-1">
-                            • <button onclick="moModalChiTietHoTheoId('${ho.id}')" class="text-blue-400 hover:text-blue-300 underline">${escHtml(ho.chuHo || '(hộ)')} ▸</button> — ${escHtml(ho.diaChi || '')}
+                        ${loiSaiTinhThanh.map(({ ho, phuongTrichRa }) => `<div class="text-gray-300 border-b border-gray-800 pb-1">
+                            • <button onclick="moModalChiTietHoTheoId('${ho.id}')" class="text-blue-400 hover:text-blue-300 underline">${escHtml(ho.chuHo || '(hộ)')} ▸</button> — đang lưu "<b class="text-rose-300">${escHtml(ho.phuong)}</b>" nhưng địa chỉ ghi "<b class="text-emerald-300">${escHtml(phuongTrichRa)}</b>": ${escHtml(ho.diaChi || '')}
                         </div>`).join('')}
                     </div>
-                    <p class="text-gray-500">Không phải lỗi bộ lọc — trường "Phường/Xã" lưu trong hồ sơ đang SAI (thường do lỗi nhập/import trước đây). Cần sửa lại đúng phường thật (dùng "🔀 Chuyển Hộ Sang Phường Khác" nếu đúng là hộ thuộc phường khác trong Cần Thơ), hoặc XÓA nếu là dữ liệu thử nghiệm/không có thật.</p>
+                    <p class="text-gray-500">Không phải lỗi bộ lọc — trường "Phường/Xã" lưu trong hồ sơ đang SAI (thường do lỗi nhập/import trước đây). Cần sửa lại đúng phường thật (dùng "🔀 Chuyển Hộ Sang Phường Khác"), hoặc XÓA nếu là dữ liệu thử nghiệm/không có thật.</p>
                 </div>`;
             }
 
