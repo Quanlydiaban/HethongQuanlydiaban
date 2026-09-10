@@ -1644,6 +1644,7 @@
         });
 
         let khuVucHienTai = "Phường Tân An";
+        let chiTietTheoDienGlobal = null; // Lưu lại chi tiết theo từng diện (giới tính/tuổi/dân tộc/tôn giáo) để Dashboard dùng khi chuyển đổi nút lọc, khỏi tính lại
         const DEFAULT_CENTER = DANH_MUC_HANH_CHINH[khuVucHienTai].center; 
 
         // ================== DANH MỤC ĐỔI TÊN KHU VỰC DO TRÙNG TÊN SAU SÁP NHẬP ==================
@@ -3461,11 +3462,31 @@
                 if (daLuu) { try { ranhGioiChinh = JSON.parse(daLuu); } catch (e) {} }
             }
 
-            // Vẽ các ranh giới PHỤ (KDC, tổ dân phố...) — màu cam, có tên riêng trong popup + nút xoá
+            // SỬA LỖI PHÁT HIỆN TỪ PHẢN HỒI THỰC TẾ: trước đây MỌI ranh giới phụ (của MỌI khu vực khác nhau,
+            // do các cán bộ khác nhau tự vẽ) đều dùng CHUNG đúng 1 màu cam duy nhất — khi nhiều khu vực cùng
+            // có ranh giới phụ hiển thị lúc xem toàn phường, không cán bộ nào phân biệt được đâu là ranh giới
+            // CỦA MÌNH giữa các ranh giới cùng màu cam của khu vực khác. Giờ gán màu RIÊNG cho từng TÊN ranh
+            // giới phụ (băm tên -> chọn từ bảng màu đa dạng, KHÔNG gồm xanh lá #22c55e đã dùng cho ranh giới
+            // chính, để không bao giờ trùng cả với ranh giới chính lẫn giữa các ranh giới phụ khác tên nhau).
+            const BANG_MAU_RANH_GIOI_PHU = ["#f97316", "#3b82f6", "#a855f7", "#ec4899", "#eab308", "#06b6d4", "#f43f5e", "#84cc16", "#8b5cf6", "#0ea5e9", "#d946ef", "#f59e0b"];
+            // SỬA LẦN 2 (tự kiểm chứng phát hiện lỗi trong lúc làm): cách băm tên trước đó DỄ BỊ TRÙNG màu
+            // giữa các tên khác nhau (thử "Khu Vực 7", "Khu Vực 10", "Tổ dân phố 5" → cả 3 ra CÙNG 1 màu,
+            // đúng thứ mình đang cố tránh). Đổi sang gán màu theo ĐÚNG THỨ TỰ xuất hiện (sắp xếp theo tên) —
+            // đảm bảo KHÔNG BAO GIỜ trùng nhau miễn số ranh giới phụ ≤ 12 (thực tế 1 phường hiếm khi có quá
+            // 12 ranh giới phụ cùng lúc), chỉ lặp lại màu khi vượt quá số đó.
+            const dsTenRanhGioiPhuDaXep = Object.keys(ranhGioiPhuMap).sort((a, b) => a.localeCompare(b, 'vi'));
+            function mauRanhGioiPhuTheoTen(ten) {
+                const idx = dsTenRanhGioiPhuDaXep.indexOf(ten);
+                return BANG_MAU_RANH_GIOI_PHU[(idx >= 0 ? idx : 0) % BANG_MAU_RANH_GIOI_PHU.length];
+            }
+            // Vẽ các ranh giới PHỤ (KDC, tổ dân phố, khu vực riêng của từng CSKV...) — mỗi TÊN 1 màu riêng cố
+            // định (cùng tên luôn ra cùng màu, khác tên gần như chắc chắn khác màu), có tên riêng trong popup
+            // + nút xoá.
             Object.keys(ranhGioiPhuMap).forEach(ten => {
                 try {
-                    const lop = L.geoJSON(ranhGioiPhuMap[ten], { style: { color: "#f97316", weight: 3, opacity: 0.95, fillColor: "#f97316", fillOpacity: 0.15 } });
-                    lop.eachLayer(l => l.bindPopup(`<b style="color:#f97316;">🏘️ ${escHtml(ten)}</b><br><span style="font-size:10px;color:#94a3b8">Ranh giới phụ — dùng chung mọi thiết bị</span><br><button onclick="xoaRanhGioiPhu('${escHtml(ten).replace(/'/g, "&apos;")}')" style="font-size:10px;color:#f87171;text-decoration:underline;margin-top:4px;">Xoá ranh giới phụ này</button>`));
+                    const mau = mauRanhGioiPhuTheoTen(ten);
+                    const lop = L.geoJSON(ranhGioiPhuMap[ten], { style: { color: mau, weight: 3, opacity: 0.95, fillColor: mau, fillOpacity: 0.15 } });
+                    lop.eachLayer(l => l.bindPopup(`<b style="color:${mau};">🏘️ ${escHtml(ten)}</b><br><span style="font-size:10px;color:#94a3b8">Ranh giới phụ — dùng chung mọi thiết bị</span><br><button onclick="xoaRanhGioiPhu('${escHtml(ten).replace(/'/g, "&apos;")}')" style="font-size:10px;color:#f87171;text-decoration:underline;margin-top:4px;">Xoá ranh giới phụ này</button>`));
                     lopRanhGioiPhu.addLayer(lop);
                 } catch (e) { console.warn("Lỗi vẽ ranh giới phụ", ten, e.message); }
             });
@@ -5002,9 +5023,9 @@
             // Tách riêng số liệu (hộ, nhân khẩu, nam/nữ, độ tuổi) theo TỪNG DIỆN cư trú — không gộp
             // chung nữa, để CSKV báo cáo nhanh được ngay số liệu riêng của Thường trú / Tạm-Lưu trú / NOHN.
             const chiTietTheoDien = {
-                'Thường trú': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 },
-                'Tạm/Lưu trú': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 },
-                'NOHN/Khác': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0 }
+                'Thường trú': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0, theoDanToc: {}, theoTonGiao: {} },
+                'Tạm/Lưu trú': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0, theoDanToc: {}, theoTonGiao: {} },
+                'NOHN/Khác': { ho: 0, nk: 0, nam: 0, nu: 0, treEm: 0, laoDong: 0, caoTuoi: 0, theoDanToc: {}, theoTonGiao: {} }
             };
 
             const namHienTai = new Date().getFullYear();
@@ -5089,6 +5110,11 @@
                     let tg = (tv.tonGiao || '').trim() || 'Không';
                     theoDanToc[dt] = (theoDanToc[dt] || 0) + 1;
                     theoTonGiao[tg] = (theoTonGiao[tg] || 0) + 1;
+                    // MỚI: tách riêng dân tộc/tôn giáo theo TỪNG DIỆN cư trú — trước đây chỉ có tổng chung cả
+                    // phường, không xem được "trong số người Tạm trú, bao nhiêu người dân tộc X" — đúng yêu
+                    // cầu cần xem chi tiết TRONG PHẠM VI từng diện, không chỉ tổng gộp.
+                    chiTietTheoDien[nhomDien].theoDanToc[dt] = (chiTietTheoDien[nhomDien].theoDanToc[dt] || 0) + 1;
+                    chiTietTheoDien[nhomDien].theoTonGiao[tg] = (chiTietTheoDien[nhomDien].theoTonGiao[tg] || 0) + 1;
 
                     if (tv.ngaySinh) {
                         let mNam = String(tv.ngaySinh).match(/(\d{4})(?!.*\d{4})/);
@@ -5140,6 +5166,7 @@
             capNhatBieuDoTonGiao(theoTonGiao);
             capNhatBieuDoKhuVuc(theoKhuVuc);
             thucHienLocVaTimKiem();
+            chiTietTheoDienGlobal = { tatCa: { nam: cntNam, nu: cntNu, treEm: cntTreEm, laoDong: cntLaoDong, caoTuoi: cntCaoTuoi, theoDanToc, theoTonGiao }, theoDien: chiTietTheoDien };
 
             // TỰ ĐỘNG HOÁ MỚI: trước đây phải NHỚ bấm "Nhắc Hạn Tạm Trú" mới biết có hộ nào sắp hết hạn —
             // giờ tự tính ngay mỗi khi tải/làm mới dữ liệu, hiện số đỏ trên nút như thông báo chưa đọc, không
@@ -7763,6 +7790,57 @@
         // ================== DASHBOARD TỔNG QUAN — thiết kế chuyên nghiệp với biểu đồ thật ==================
         let dashboardCharts = {}; // Lưu các instance Chart.js để hủy đúng cách trước khi vẽ lại (tránh lỗi canvas)
         let duLieuThoTheoPhuongDashboard = {}; // Danh sách hộ theo từng phường (Toàn Thành Phố), dùng để xem chi tiết khu vực khi bấm vào 1 phường
+
+        // Gộp nhóm nhỏ thành "Khác" khi có quá nhiều dân tộc/tôn giáo khác nhau — tránh biểu đồ rối mắt.
+        function gomNhomTop(doiTuong, soNhomToiDa) {
+            const ds = Object.entries(doiTuong).sort((a, b) => b[1] - a[1]);
+            if (ds.length <= soNhomToiDa) return ds;
+            const top = ds.slice(0, soNhomToiDa - 1);
+            const conLai = ds.slice(soNhomToiDa - 1).reduce((s, [, v]) => s + v, 0);
+            return [...top, ['Khác', conLai]];
+        }
+        function veLaiChartDanTocTonGiaoDashboard(theoDanToc, theoTonGiao) {
+            if (dashboardCharts.danToc) dashboardCharts.danToc.destroy();
+            if (dashboardCharts.tonGiao) dashboardCharts.tonGiao.destroy();
+            const dsDT = gomNhomTop(theoDanToc || {}, 6);
+            const dsTG = gomNhomTop(theoTonGiao || {}, 6);
+            const mauSac = ['#0ea5e9', '#f97316', '#a855f7', '#22c55e', '#ec4899', '#eab308', '#6b7280'];
+            dashboardCharts.danToc = new Chart(document.getElementById('dbChartDanToc'), {
+                type: 'doughnut',
+                data: { labels: dsDT.map(d => d[0]), datasets: [{ data: dsDT.map(d => d[1]), backgroundColor: mauSac, borderWidth: 2, borderColor: '#111827' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 9 }, boxWidth: 10 } } } }
+            });
+            dashboardCharts.tonGiao = new Chart(document.getElementById('dbChartTonGiao'), {
+                type: 'doughnut',
+                data: { labels: dsTG.map(d => d[0]), datasets: [{ data: dsTG.map(d => d[1]), backgroundColor: mauSac, borderWidth: 2, borderColor: '#111827' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { size: 9 }, boxWidth: 10 } } } }
+            });
+        }
+
+        // MỚI THEO YÊU CẦU: nút chuyển đổi xem Giới tính/Tuổi/Dân tộc/Tôn giáo RIÊNG theo từng diện cư trú —
+        // trước đây Dashboard chỉ có số TỔNG GỘP, không xem được "trong số người Tạm trú có bao nhiêu dân
+        // tộc X, tôn giáo Y". Dùng lại đúng dữ liệu đã tính sẵn (chiTietTheoDienGlobal), không tính lại.
+        function doiDienDashboard(dien) {
+            if (!chiTietTheoDienGlobal) return;
+            document.querySelectorAll('.dashboard-dien-btn').forEach(b => b.classList.remove('bg-indigo-700'));
+            document.querySelectorAll('.dashboard-dien-btn').forEach(b => { if (!b.classList.contains('bg-indigo-700')) b.classList.add('bg-gray-800'); });
+            const btn = document.getElementById('dbDienBtn_' + dien);
+            if (btn) { btn.classList.remove('bg-gray-800'); btn.classList.add('bg-indigo-700'); }
+
+            const d = dien === 'tatCa' ? chiTietTheoDienGlobal.tatCa : chiTietTheoDienGlobal.theoDien[dien];
+            if (!d) return;
+            if (dashboardCharts.tuoiGioiTinh) dashboardCharts.tuoiGioiTinh.destroy();
+            dashboardCharts.tuoiGioiTinh = new Chart(document.getElementById('dbChartTuoiGioiTinh'), {
+                type: 'bar',
+                data: { labels: ['Nam', 'Nữ', 'D.16t', '16-60t', 'Tr.60t'], datasets: [{ data: [d.nam, d.nu, d.treEm, d.laoDong, d.caoTuoi], backgroundColor: ['#0ea5e9', '#ec4899', '#22d3ee', '#818cf8', '#fbbf24'], borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { color: '#374151' } } } }
+            });
+            veLaiChartDanTocTonGiaoDashboard(d.theoDanToc, d.theoTonGiao);
+            const nhan = dien === 'tatCa' ? '' : '(chỉ trong "' + dien + '")';
+            document.getElementById('dbDanTocPham').innerText = nhan;
+            document.getElementById('dbTonGiaoPham').innerText = nhan;
+        }
+
         function huyBieuDoDashboard() {
             Object.values(dashboardCharts).forEach(c => { if (c) c.destroy(); });
             dashboardCharts = {};
@@ -7942,6 +8020,57 @@
             moDashboard();
         }
 
+        // ================== NHẬN ĐỊNH NHANH (mới thêm) — phần "biết đọc số liệu" của báo cáo phân tích thật ==================
+        // KHÁC BIỆT CỐT LÕI giữa "dashboard có biểu đồ" và "báo cáo phân tích chuyên nghiệp": báo cáo phân
+        // tích không chỉ VẼ số liệu, mà DIỄN GIẢI ý nghĩa của chúng — người đọc (kể cả không rành số liệu)
+        // hiểu ngay "vậy thì sao" mà không cần tự soi từng biểu đồ. Toàn bộ ngưỡng dưới đây mang tính THAM
+        // KHẢO nghiệp vụ chung, không phải quy định cứng — CSKV vẫn cần đối chiếu thực tế địa bàn.
+        function taoNhanDinhDashboard(o) {
+            const nx = [];
+            const tyLeTamTru = o.tongHo > 0 ? (o.soTamTru / o.tongHo * 100) : 0;
+            if (tyLeTamTru >= 15) {
+                nx.push({ loai: 'canh_bao', text: `Tỷ lệ hộ Tạm/Lưu trú khá cao: <b>${tyLeTamTru.toFixed(1)}%</b> tổng số hộ (${o.soTamTru}/${o.tongHo}) — địa bàn có mức độ biến động dân cư lớn, nên ưu tiên công tác quản lý tạm trú, rà soát hết hạn.` });
+            } else if (tyLeTamTru > 0) {
+                nx.push({ loai: 'binh_thuong', text: `Tỷ lệ hộ Tạm/Lưu trú ở mức ${tyLeTamTru.toFixed(1)}% — trong ngưỡng thông thường.` });
+            }
+            if (o.soKhac > 0) {
+                const tyLeKhac = (o.soKhac / o.tongHo * 100);
+                nx.push({ loai: tyLeKhac >= 2 ? 'canh_bao' : 'binh_thuong', text: `Có <b>${o.soKhac}</b> hộ diện NOHN/Khác (${tyLeKhac.toFixed(1)}%) — nên rà soát định kỳ để xác minh đúng nơi cư trú thực tế.` });
+            }
+            if (o.soKhau > 0) {
+                const tyLeNam = o.soNam / o.soKhau * 100, tyLeNu = o.soNu / o.soKhau * 100;
+                if (Math.abs(tyLeNam - tyLeNu) >= 10) {
+                    nx.push({ loai: 'thong_tin', text: `Cơ cấu giới tính chênh lệch: Nam ${tyLeNam.toFixed(1)}% — Nữ ${tyLeNu.toFixed(1)}% (lệch ${Math.abs(tyLeNam - tyLeNu).toFixed(1)} điểm %).` });
+                }
+                const tyLeTreEm = o.soTreEm / o.soKhau * 100, tyLeCaoTuoi = o.soCaoTuoi / o.soKhau * 100;
+                if (tyLeTreEm >= 25) nx.push({ loai: 'thong_tin', text: `Dân số khá trẻ: <b>${tyLeTreEm.toFixed(1)}%</b> dưới 16 tuổi — cần chú trọng công tác đăng ký khai sinh, quản lý học sinh trên địa bàn.` });
+                if (tyLeCaoTuoi >= 15) nx.push({ loai: 'thong_tin', text: `Tỷ lệ người cao tuổi (trên 60) khá cao: <b>${tyLeCaoTuoi.toFixed(1)}%</b> — cần quan tâm chính sách an sinh, thăm hỏi người cao tuổi.` });
+            }
+            if (o.soBienDong > 0) {
+                nx.push({ loai: 'canh_bao', text: `<b>${o.soBienDong}</b> nhân khẩu đang ở trạng thái biến động (chết/chuyển đi/ở nước ngoài...) chưa xử lý dứt điểm hồ sơ — nên rà soát để cập nhật đúng thực tế.` });
+            }
+            if (o.soDoiTuongKV3 > 0) {
+                const tyLeKV3 = o.soKhau > 0 ? (o.soDoiTuongKV3 / o.soKhau * 1000) : 0;
+                nx.push({ loai: 'thong_tin', text: `Đang quản lý <b>${o.soDoiTuongKV3}</b> đối tượng diện KV3 (~${tyLeKV3.toFixed(1)}/1.000 dân)${o.dienKV3PhoBien ? `, phổ biến nhất là diện "<b>${escHtml(o.dienKV3PhoBien)}</b>"` : ''}.` });
+            }
+            if (o.soLoiDuLieu > 0) {
+                nx.push({ loai: 'canh_bao', text: `Phát hiện <b>${o.soLoiDuLieu}</b> hộ có lỗi dữ liệu (sai Số HSCT/sai Phường-Xã) — nên xử lý qua "🔧 Rà Soát Lỗi DL" để số liệu báo cáo chính xác hơn.` });
+            }
+            if (nx.length === 0) nx.push({ loai: 'binh_thuong', text: 'Chưa có gì bất thường nổi bật trong dữ liệu hiện có.' });
+            return nx;
+        }
+        function renderNhanDinhDashboard(o) {
+            const nx = taoNhanDinhDashboard(o);
+            const mauTheo = { canh_bao: 'border-amber-700/50 bg-amber-950/20 text-amber-200', thong_tin: 'border-sky-700/50 bg-sky-950/20 text-sky-200', binh_thuong: 'border-emerald-700/50 bg-emerald-950/20 text-emerald-200' };
+            const iconTheo = { canh_bao: '⚠️', thong_tin: 'ℹ️', binh_thuong: '✅' };
+            return `<div class="bg-gray-900/70 border border-indigo-800/50 rounded-lg p-2.5 mb-3">
+                <p class="text-indigo-300 font-semibold mb-1.5 text-[12px]">🧠 Nhận Định Nhanh</p>
+                <div class="space-y-1">
+                    ${nx.map(n => `<div class="text-[11px] border rounded px-2 py-1 ${mauTheo[n.loai]}">${iconTheo[n.loai]} ${n.text}</div>`).join('')}
+                </div>
+            </div>`;
+        }
+
         async function moDashboard() {
             document.getElementById('dashboardModal').classList.remove('hidden');
             document.getElementById('dashboardCapNhatLuc').innerText = 'Cập nhật lúc ' + new Date().toLocaleString('vi-VN');
@@ -8050,6 +8179,30 @@
                         ${theKPI('🔄', soBienDong, 'Nhân khẩu biến động', 'linear-gradient(135deg,#7f1d1d,#991b1b)', '#fca5a5')}
                         ${theKPI('📋', soSuVuDangXuLy, 'Sự vụ đang xử lý', 'linear-gradient(135deg,#3730a3,#4338ca)', '#c7d2fe')}
                     </div>
+                    ${renderNhanDinhDashboard({
+        tongHo: dsPhuongNay.length, soKhau, soTamTru, soKhac, soNam, soNu, soTreEm, soCaoTuoi, soBienDong,
+        soDoiTuongKV3: (typeof danhSachDoiTuong !== 'undefined' ? danhSachDoiTuong.length : 0),
+        dienKV3PhoBien: (typeof danhSachDoiTuong !== 'undefined' && danhSachDoiTuong.length > 0)
+            ? Object.entries(danhSachDoiTuong.reduce((a, d) => { const k = d.dienDoiTuong || ''; if (k) a[k] = (a[k] || 0) + 1; return a; }, {})).sort((a, b) => b[1] - a[1])[0]?.[0] : null,
+        soLoiDuLieu: (function () {
+            try {
+                return dsPhuongNay.filter(ho => {
+                    const kh = [...(ho.diaChi || '').matchAll(/(phường|xã)\s+([^,]+)/gi)];
+                    if (kh.length === 0) return false;
+                    const cuoi = kh[kh.length - 1];
+                    const trich = (/^phường/i.test(cuoi[1]) ? 'Phường ' : 'Xã ') + cuoi[2].trim();
+                    return boDauTiengViet(trich).toLowerCase().trim() !== boDauTiengViet(ho.phuong || '').toLowerCase().trim();
+                }).length;
+            } catch (e) { return 0; }
+        })()
+    })}
+                    <div class="mb-2 flex gap-1.5 flex-wrap items-center bg-gray-900/50 border border-gray-800 rounded-lg p-1.5">
+                        <span class="text-[10px] text-gray-400 mr-1">🔍 Xem chi tiết Giới tính/Tuổi/Dân tộc/Tôn giáo riêng theo:</span>
+                        <button onclick="doiDienDashboard('tatCa')" id="dbDienBtn_tatCa" class="dashboard-dien-btn bg-indigo-700 px-2 py-0.5 rounded text-[10px] font-medium">Tất cả</button>
+                        <button onclick="doiDienDashboard('Thường trú')" id="dbDienBtn_Thường trú" class="dashboard-dien-btn bg-gray-800 hover:bg-gray-700 px-2 py-0.5 rounded text-[10px] font-medium">🟢 Thường trú</button>
+                        <button onclick="doiDienDashboard('Tạm/Lưu trú')" id="dbDienBtn_Tạm/Lưu trú" class="dashboard-dien-btn bg-gray-800 hover:bg-gray-700 px-2 py-0.5 rounded text-[10px] font-medium">🟡 Tạm/Lưu trú</button>
+                        <button onclick="doiDienDashboard('NOHN/Khác')" id="dbDienBtn_NOHN/Khác" class="dashboard-dien-btn bg-gray-800 hover:bg-gray-700 px-2 py-0.5 rounded text-[10px] font-medium">🔴 NOHN/Khác</button>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
                             <p class="text-gray-300 font-semibold mb-1 text-[11px]">Phân bố cư trú</p>
@@ -8062,6 +8215,14 @@
                         <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
                             <p class="text-gray-300 font-semibold mb-1 text-[11px]">${phamViKVDashboard ? 'Chi tiết khu vực phụ trách' : 'Số hộ theo khu vực'}</p>
                             <div style="height:170px;"><canvas id="dbChartKhuVuc"></canvas></div>
+                        </div>
+                        <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
+                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">Dân tộc <span id="dbDanTocPham" class="text-gray-500 font-normal"></span></p>
+                            <div style="height:170px;"><canvas id="dbChartDanToc"></canvas></div>
+                        </div>
+                        <div class="bg-gray-900/70 border border-gray-800 rounded-lg p-2.5">
+                            <p class="text-gray-300 font-semibold mb-1 text-[11px]">Tôn giáo <span id="dbTonGiaoPham" class="text-gray-500 font-normal"></span></p>
+                            <div style="height:170px;"><canvas id="dbChartTonGiao"></canvas></div>
                         </div>
                     </div>
 
@@ -8128,6 +8289,10 @@
                 data: { labels: tenKV, datasets: [{ data: tenKV.map(k => theoKhuVuc[k]), backgroundColor: '#a855f7', borderRadius: 4 }] },
                 options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { color: '#374151' } }, y: { ticks: { color: '#9ca3af', font: { size: 9 } }, grid: { display: false } } } }
             });
+            // MỚI THEO YÊU CẦU: 2 biểu đồ Dân tộc/Tôn giáo trước đây CHỈ có ở module Phân Tích Dữ Liệu riêng,
+            // Dashboard hoàn toàn không có — giờ thêm ngay đây, mặc định hiện TỔNG (tatCa), có thể bấm nút lọc
+            // phía trên để xem riêng theo từng diện (Thường trú/Tạm-Lưu trú/NOHN).
+            veLaiChartDanTocTonGiaoDashboard(chiTietTheoDienGlobal ? chiTietTheoDienGlobal.tatCa.theoDanToc : {}, chiTietTheoDienGlobal ? chiTietTheoDienGlobal.tatCa.theoTonGiao : {});
 
             // Phần Toàn Thành phố — Admin/Chỉ huy TP/Cán bộ dữ liệu PC06 truy vấn được (Security Rules chặn người khác)
             if (currentUser.role === 'admin' || currentUser.role === 'chi_huy_tp' || currentUser.role === 'can_bo_du_lieu_tp') {
