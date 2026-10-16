@@ -187,6 +187,39 @@ table.an-t tfoot td{font-weight:700;color:var(--tx);border-top:1px solid var(--b
 @media print{.an-bar,.an-tabs,.an-btn{display:none!important}}
 .an svg g.pt .xh{opacity:0}.an svg g.pt:hover .xh{opacity:1}.an svg g.pt:hover circle{r:5}
 </style>
+
+<style id="nmCss">
+.nm-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;justify-content:flex-end}
+.nm-sep{width:1px;height:22px;background:rgba(148,163,184,.35);margin:0 2px}
+.nm-top{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;line-height:1;padding:8px 12px;border-radius:9px;
+  border:1px solid rgba(148,163,184,.28);background:rgba(30,41,59,.85);color:#e5e7eb;cursor:pointer;transition:background .15s,border-color .15s;white-space:nowrap}
+.nm-top:hover,.nm-top[aria-expanded="true"]{background:rgba(51,65,85,.95);border-color:rgba(148,163,184,.55)}
+.nm-pri{background:#059669;border-color:#10b981;color:#fff}.nm-pri:hover{background:#047857}
+.nm-sec{background:rgba(30,58,138,.55);border-color:rgba(96,165,250,.45)}.nm-sec:hover{background:rgba(30,64,175,.75)}
+.nm-out{background:transparent;border-color:rgba(248,113,113,.5);color:#fca5a5}.nm-out:hover{background:rgba(127,29,29,.5)}
+.nm-g{position:relative}
+.nm-ic{font-size:14px}.nm-car{font-size:10px;opacity:.7}
+.nm-dot{min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#dc2626;color:#fff;font-size:10px;line-height:16px;text-align:center;font-weight:700}
+.nm-dot.hidden{display:none}
+.nm-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:45;min-width:300px;max-width:min(92vw,360px);padding:6px;border-radius:12px;
+  background:#111827;border:1px solid rgba(148,163,184,.35);box-shadow:0 18px 40px rgba(0,0,0,.55)}
+.nm-panel.nm-right{left:auto;right:0}
+.nm-panel.hidden{display:none}
+.nm-item{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:8px 10px;border-radius:8px;background:transparent;border:0;color:#e5e7eb;cursor:pointer;font-size:12px}
+.nm-item:hover{background:rgba(51,65,85,.9)}
+.nm-item.hidden{display:none}
+.nm-item.bg-amber-600{background:rgba(245,158,11,.22)}
+.nm-w{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.nm-t{font-weight:600;font-size:12.5px}
+.nm-item small{font-size:10.5px;color:#9ca3af;font-weight:400;line-height:1.25}
+.nm-danger .nm-t{color:#fca5a5}
+.nm-item span[id^="badge"]{position:static!important;margin-left:auto;flex-shrink:0}
+.nm-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:6px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.28);background:rgba(30,41,59,.85);color:#e5e7eb;cursor:pointer;user-select:none}
+.nm-bar-sm .nm-top{font-size:11px;padding:7px 10px}
+header.glass-card:has(.nm-bar){position:relative;z-index:46}
+.glass-card:has(.nm-bar-sm){position:relative;z-index:44}
+@media(max-width:640px){.nm-bar{justify-content:flex-start}.nm-g{position:static}.nm-panel,.nm-panel.nm-right{position:absolute;left:8px;right:8px;top:100%;margin-top:6px;max-width:none;min-width:0}}
+</style>
 </head>
 <body class="bg-gray-950 text-white min-h-screen p-2 md:p-4 select-none">
 
@@ -318,49 +351,13 @@ table.an-t tfoot td{font-weight:700;color:var(--tx);border-top:1px solid var(--b
                 <p class="text-[10px] text-gray-500 mt-0.5">☎️ Hỗ trợ kỹ thuật / Admin tổng: <span class="text-gray-300">Nguyễn Văn Thảo</span> — <a href="tel:0765996879" class="text-cyan-400 hover:underline">0765996879</a> · <a href="https://zalo.me/0765996879" target="_blank" class="text-cyan-400 hover:underline">Zalo</a></p>
                 <p class="text-[10px] text-gray-500 mt-0.5">📞 Liên hệ Admin: Nguyễn Văn Thảo — 0765996879 (Zalo/Điện thoại)</p>
             </div>
-            <div class="flex flex-wrap gap-1.5">
-                <label id="btnNhapFileExcel" class="cursor-pointer bg-blue-600 hover:bg-blue-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow flex items-center gap-1">
-                    <span>📂 Nhập Excel</span>
-                    <input type="file" id="excelFile" accept=".xlsx, .xls" class="hidden" onchange="nhapFileExcel(event)">
-                </label>
-                <label id="btnNhapBoSungDanTocTonGiao" class="cursor-pointer bg-teal-700 hover:bg-teal-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow flex items-center gap-1" title="Chỉ cập nhật đúng 2 cột Dân tộc/Tôn giáo — khớp theo CCCD nếu có, hoặc theo Số HSCT + Họ tên nếu file không có CCCD. KHÔNG đụng đến bất kỳ dữ liệu nào khác đã sửa tay trên phần mềm">
-                    <span>🧬 Bổ Sung Dân Tộc/Tôn Giáo</span>
-                    <input type="file" id="excelFileBoSung" accept=".xlsx, .xls" class="hidden" onchange="nhapBoSungDanTocTonGiao(event)">
-                </label>
-                <button id="btnHoanTacNhap" onclick="hoanTacLanNhapExcelGanNhat()" class="bg-orange-700 hover:bg-orange-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow" title="Chỉ xóa đúng những hộ CHÍNH BẠN vừa nhập gần nhất — không đụng đến dữ liệu người khác">↩️ Hoàn Tác Lần Nhập Của Tôi</button>
-                <button onclick="moModalHuongDanExcel()" class="bg-gray-700 hover:bg-gray-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">❓ Hướng Dẫn Mẫu Excel</button>
-                <button id="btnCheDoNgoaiTroi" onclick="doiCheDoNgoaiTroi()" class="bg-gray-700 hover:bg-gray-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow" title="Tăng độ sáng/tương phản màn hình — dễ đọc hơn khi làm việc ngoài trời nắng gắt">☀️ Chế Độ Ngoài Trời</button>
-                <button onclick="moModalNguonNVQS()" class="bg-emerald-800 hover:bg-emerald-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow" title="Danh sách nam trong độ tuổi thực hiện NVQS/NVCA">🎖️ Nguồn NVQS/NVCA</button>
-                <button onclick="xuatBaoCaoExcelKV1()" class="bg-purple-600 hover:bg-purple-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📋 Xuất Mẫu KV1</button>
-                <button onclick="xuatBaoCaoExcelKV2()" class="bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📊 Xuất Mẫu KV2</button>
-                <button onclick="moModalChonKyBaoCao()" class="bg-cyan-600 hover:bg-cyan-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📈 Báo Cáo Thống Kê</button>
-                <button onclick="moModalNhacCCCD()" class="bg-orange-600 hover:bg-orange-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔔 Nhắc Mốc CCCD</button>
-                <button onclick="moModalNhacHanTamTru()" class="relative bg-yellow-700 hover:bg-yellow-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🏠 Nhắc Hạn Tạm Trú<span id="badgeSoTamTruSapHet" class="hidden absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span></button>
-                <button onclick="moModalLichKiemTraDinhKy()" class="bg-lime-700 hover:bg-lime-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🗓️ Lịch Kiểm Tra Định Kỳ</button>
-                <button onclick="moModalNhatKyDiaBan()" class="bg-indigo-700 hover:bg-indigo-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📋 Nhật Ký Địa Bàn</button>
-                <button onclick="moModalDoiTuong()" class="bg-rose-700 hover:bg-rose-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🗂️ Quản Lý Đối Tượng (KV3)</button>
-                <button onclick="moModalCoSo()" class="relative bg-amber-700 hover:bg-amber-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow" title="Hồ sơ cơ sở lưu trú, kinh doanh có điều kiện ANTT, thờ tự... kèm nhắc hạn giấy phép và kiểm tra">🏪 Cơ Sở Địa Bàn<span id="badgeCoSoCanXuLy" class="hidden absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span></button>
-                <button onclick="moModalBaoCaoVanBan()" class="bg-sky-700 hover:bg-sky-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow" title="Tự điền số liệu vào văn bản báo cáo tuần/tháng/quý để tải về Word">📝 Soạn Báo Cáo (Word)</button>
-                <button onclick="moDashboard()" class="bg-fuchsia-700 hover:bg-fuchsia-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📊 Dashboard</button>
-                <button onclick="moPhanTichDuLieu()" class="bg-teal-700 hover:bg-teal-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📈 Phân Tích Dữ Liệu</button>
-                <button id="btnDongBoDuLieuCu" onclick="dongBoDuLieuCuLenMayChu()" class="hidden bg-amber-600 hover:bg-amber-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">⬆️ Đồng Bộ Dữ Liệu Cũ Lên Máy Chủ</button>
-                <button onclick="moModalNhatKy()" class="bg-slate-600 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📜 Nhật Ký</button>
-                <button id="btnSaoLuu" onclick="xuatSaoLuuJSON()" class="bg-teal-700 hover:bg-teal-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">💾 Sao Lưu</button>
-                <label id="btnPhucHoi" class="cursor-pointer bg-teal-900 hover:bg-teal-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">
-                    ⬆️ Khôi Phục
-                    <input type="file" accept=".json" class="hidden" onchange="nhapSaoLuuJSON(event)">
-                </label>
-                <button id="btnBatThongBao" onclick="xinPhepThongBao()" class="bg-pink-700 hover:bg-pink-800 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔔 Bật Thông Báo</button>
-                <button id="btnXoaDL" onclick="moModalXoaDuLieu()" class="hidden bg-rose-600 hover:bg-rose-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🗑️ Xóa DL</button>
-                <button id="btnRaSoatLoi" onclick="moModalRaSoatLoi()" class="hidden bg-amber-700 hover:bg-amber-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔧 Rà Soát Lỗi DL</button>
-                <button id="btnThemHoMoi" onclick="moModalThemHoMoi()" class="hidden bg-emerald-700 hover:bg-emerald-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">➕ Thêm Hộ Mới</button>
-                <button id="btnRaSoatQuaHan" onclick="moModalRaSoatQuaHan()" class="hidden bg-amber-800 hover:bg-amber-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">⏰ Tạm Trú Quá Hạn</button>
-                <button id="btnKhaiBaoTamVang" onclick="moModalKhaiBaoTamVang()" class="hidden bg-indigo-800 hover:bg-indigo-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📋 Khai Báo Tạm Vắng</button>
-                <button id="btnSoCT15" onclick="moModalSoCT15()" class="hidden bg-cyan-800 hover:bg-cyan-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">📚 Sổ CT15</button>
-                <button id="btnBanGiao" onclick="moModalBanGiao()" class="hidden bg-teal-700 hover:bg-teal-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔄 Bàn Giao Địa Bàn</button>
-                <button onclick="moModalDoiMatKhau()" class="bg-slate-700 hover:bg-slate-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔑 Đổi Mật Khẩu</button>
-                <button onclick="dangXuat()" class="bg-red-600/80 hover:bg-red-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition shadow">🔒 Thoát</button>
-            </div>
+            <div class="nm-bar" id="nmBar"><button id="btnThemHoMoi" onclick="moModalThemHoMoi()" class="nm-top nm-pri">➕ Thêm Hộ Mới</button><button onclick="moDashboard()" class="nm-top nm-sec">📊 Dashboard</button><button onclick="moPhanTichDuLieu()" class="nm-top nm-sec">📈 Phân Tích Dữ Liệu</button><span class="nm-sep"></span><div class="nm-g" data-nm="du_lieu"><button type="button" class="nm-top nm-gb" onclick="nmMo('du_lieu',event)" aria-haspopup="true" aria-expanded="false"><span class="nm-ic">📥</span><span>Dữ liệu</span><span class="nm-dot hidden"></span><span class="nm-car">▾</span></button><div class="nm-panel hidden" role="menu"><label id="btnNhapFileExcel" class="nm-item"><span class="nm-w">
+                    <span class="nm-t">📂 Nhập Excel</span><small>Nạp file Excel hộ khẩu – nhân khẩu</small>
+                    </span><input type="file" id="excelFile" accept=".xlsx, .xls" class="hidden" onchange="nhapFileExcel(event)">
+                </label><label id="btnNhapBoSungDanTocTonGiao" class="nm-item" title="Chỉ cập nhật đúng 2 cột Dân tộc/Tôn giáo — khớp theo CCCD nếu có, hoặc theo Số HSCT + Họ tên nếu file không có CCCD. KHÔNG đụng đến bất kỳ dữ liệu nào khác đã sửa tay trên phần mềm"><span class="nm-w">
+                    <span class="nm-t">🧬 Bổ Sung Dân Tộc/Tôn Giáo</span><small>Chỉ cập nhật 2 cột dân tộc, tôn giáo</small>
+                    </span><input type="file" id="excelFileBoSung" accept=".xlsx, .xls" class="hidden" onchange="nhapBoSungDanTocTonGiao(event)">
+                </label><button id="btnHoanTacNhap" onclick="hoanTacLanNhapExcelGanNhat()" class="nm-item" title="Chỉ xóa đúng những hộ CHÍNH BẠN vừa nhập gần nhất — không đụng đến dữ liệu người khác"><span class="nm-w"><span class="nm-t">↩️ Hoàn Tác Lần Nhập Của Tôi</span><small>Xóa đúng những hộ bạn vừa nhập gần nhất</small></span></button><button onclick="moModalHuongDanExcel()" class="nm-item"><span class="nm-w"><span class="nm-t">❓ Hướng Dẫn Mẫu Excel</span><small>Cột nào, định dạng nào cho đúng mẫu</small></span></button><button id="btnDongBoDuLieuCu" onclick="dongBoDuLieuCuLenMayChu()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">⬆️ Đồng Bộ Dữ Liệu Cũ Lên Máy Chủ</span><small>Đẩy dữ liệu lưu trên máy lên máy chủ</small></span></button><button id="btnRaSoatLoi" onclick="moModalRaSoatLoi()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">🔧 Rà Soát Lỗi DL</span><small>Tìm hộ thiếu, trùng, sai thông tin</small></span></button><button id="btnXoaDL" onclick="moModalXoaDuLieu()" class="nm-item nm-danger hidden"><span class="nm-w"><span class="nm-t">🗑️ Xóa DL</span><small>Xóa theo lô — cẩn thận</small></span></button></div></div><div class="nm-g" data-nm="cu_tru"><button type="button" class="nm-top nm-gb" onclick="nmMo('cu_tru',event)" aria-haspopup="true" aria-expanded="false"><span class="nm-ic">🏠</span><span>Cư trú</span><span class="nm-dot hidden"></span><span class="nm-car">▾</span></button><div class="nm-panel hidden" role="menu"><button id="btnRaSoatQuaHan" onclick="moModalRaSoatQuaHan()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">⏰ Tạm Trú Quá Hạn</span><small>Hộ tạm trú đã quá hạn cần xử lý</small></span></button><button onclick="moModalNhacHanTamTru()" class="nm-item"><span class="nm-w"><span class="nm-t">🏠 Nhắc Hạn Tạm Trú</span><small>Hộ sắp hết hạn tạm trú</small></span><span id="badgeSoTamTruSapHet" class="hidden absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span></button><button onclick="moModalNhacCCCD()" class="nm-item"><span class="nm-w"><span class="nm-t">🔔 Nhắc Mốc CCCD</span><small>Người đến mốc đổi/cấp CCCD</small></span></button><button id="btnKhaiBaoTamVang" onclick="moModalKhaiBaoTamVang()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">📋 Khai Báo Tạm Vắng</span><small>Lập, theo dõi khai báo tạm vắng</small></span></button><button id="btnSoCT15" onclick="moModalSoCT15()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">📚 Sổ CT15</span><small>Sổ theo dõi cư trú</small></span></button><button onclick="moModalNguonNVQS()" class="nm-item" title="Danh sách nam trong độ tuổi thực hiện NVQS/NVCA"><span class="nm-w"><span class="nm-t">🎖️ Nguồn NVQS/NVCA</span><small>Nam trong độ tuổi nghĩa vụ quân sự, CAND</small></span></button></div></div><div class="nm-g" data-nm="dia_ban"><button type="button" class="nm-top nm-gb" onclick="nmMo('dia_ban',event)" aria-haspopup="true" aria-expanded="false"><span class="nm-ic">🛡️</span><span>Địa bàn & đối tượng</span><span class="nm-dot hidden"></span><span class="nm-car">▾</span></button><div class="nm-panel hidden" role="menu"><button onclick="moModalDoiTuong()" class="nm-item"><span class="nm-w"><span class="nm-t">🗂️ Quản Lý Đối Tượng (KV3)</span><small>Hồ sơ, nhắc hạn, theo dõi đối tượng</small></span></button><button onclick="moModalCoSo()" class="nm-item" title="Hồ sơ cơ sở lưu trú, kinh doanh có điều kiện ANTT, thờ tự... kèm nhắc hạn giấy phép và kiểm tra"><span class="nm-w"><span class="nm-t">🏪 Cơ Sở Địa Bàn</span><small>Cơ sở kinh doanh, giấy phép, hạn kiểm tra</small></span><span id="badgeCoSoCanXuLy" class="hidden absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span></button><button onclick="moModalNhatKyDiaBan()" class="nm-item"><span class="nm-w"><span class="nm-t">📋 Nhật Ký Địa Bàn</span><small>Sự vụ, tình hình ghi nhận hằng ngày</small></span></button><button onclick="moModalLichKiemTraDinhKy()" class="nm-item"><span class="nm-w"><span class="nm-t">🗓️ Lịch Kiểm Tra Định Kỳ</span><small>Lịch kiểm tra, nhắc đến hạn</small></span></button><button id="btnBanGiao" onclick="moModalBanGiao()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">🔄 Bàn Giao Địa Bàn</span><small>Chuyển giao địa bàn khi đổi cán bộ</small></span></button></div></div><div class="nm-g" data-nm="bao_cao"><button type="button" class="nm-top nm-gb" onclick="nmMo('bao_cao',event)" aria-haspopup="true" aria-expanded="false"><span class="nm-ic">📄</span><span>Báo cáo</span><span class="nm-dot hidden"></span><span class="nm-car">▾</span></button><div class="nm-panel hidden" role="menu"><button onclick="moModalBaoCaoVanBan()" class="nm-item" title="Tự điền số liệu vào văn bản báo cáo tuần/tháng/quý để tải về Word"><span class="nm-w"><span class="nm-t">📝 Soạn Báo Cáo (Word)</span><small>Xuất báo cáo công tác, hỗ trợ ký số / PDF</small></span></button><button onclick="moModalChonKyBaoCao()" class="nm-item"><span class="nm-w"><span class="nm-t">📈 Báo Cáo Thống Kê</span><small>Số liệu theo kỳ báo cáo</small></span></button><button onclick="xuatBaoCaoExcelKV1()" class="nm-item"><span class="nm-w"><span class="nm-t">📋 Xuất Mẫu KV1</span><small>Biểu mẫu Excel theo khu vực 1</small></span></button><button onclick="xuatBaoCaoExcelKV2()" class="nm-item"><span class="nm-w"><span class="nm-t">📊 Xuất Mẫu KV2</span><small>Biểu mẫu Excel theo khu vực 2</small></span></button></div></div><div class="nm-g" data-nm="he_thong"><button type="button" class="nm-top nm-gb" onclick="nmMo('he_thong',event)" aria-haspopup="true" aria-expanded="false"><span class="nm-ic">⚙️</span><span>Hệ thống</span><span class="nm-dot hidden"></span><span class="nm-car">▾</span></button><div class="nm-panel hidden" role="menu"><button onclick="sbMoModal()" class="nm-item" title="Sao lưu / khôi phục dữ liệu, tự đăng xuất, phiên bản"><span class="nm-w"><span class="nm-t">🛡️ Sao Lưu &amp; Bảo Mật</span><small>Sao lưu mã hóa, khôi phục, tự đăng xuất</small></span></button><button id="btnSaoLuu" onclick="xuatSaoLuuJSON()" class="nm-item"><span class="nm-w"><span class="nm-t">💾 Sao lưu nhanh (cũ)</span><small>Xuất JSON dạng cũ — nên dùng mục trên</small></span></button><label id="btnPhucHoi" class="nm-item"><span class="nm-w"><span class="nm-t">⬆️ Khôi phục (cũ)</span><small>Nhập lại file JSON dạng cũ</small></span></label><button onclick="moModalNhatKy()" class="nm-item"><span class="nm-w"><span class="nm-t">📜 Nhật Ký</span><small>Ai làm gì, lúc nào</small></span></button><button id="btnBatThongBao" onclick="xinPhepThongBao()" class="nm-item"><span class="nm-w"><span class="nm-t">🔔 Bật Thông Báo</span><small>Nhận nhắc việc trên thiết bị này</small></span></button><button id="btnCheDoNgoaiTroi" onclick="doiCheDoNgoaiTroi()" class="nm-item" title="Tăng độ sáng/tương phản màn hình — dễ đọc hơn khi làm việc ngoài trời nắng gắt"><span class="nm-w"><span class="nm-t">☀️ Chế Độ Ngoài Trời</span><small>Tăng tương phản khi dùng ngoài nắng</small></span></button><button onclick="moModalDoiMatKhau()" class="nm-item"><span class="nm-w"><span class="nm-t">🔑 Đổi Mật Khẩu</span><small>Đổi mật khẩu đăng nhập</small></span></button></div></div><span class="nm-sep"></span><button onclick="dangXuat()" class="nm-top nm-out">🔒 Thoát</button></div>
         </header>
 
         <!-- Bản đồ GIS & Thống kê -->
@@ -487,32 +484,16 @@ table.an-t tfoot td{font-weight:700;color:var(--tx);border-top:1px solid var(--b
                         <h2 class="text-xs font-semibold text-gray-200">🗺️ Bản Đồ Số GIS - </h2>
                         <select id="selectKhuVucBanDo" onchange="doiKhuVucBanDo(this.value)" class="bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 text-xs text-emerald-400 font-semibold focus:outline-none focus:border-emerald-500"></select>
                     </div>
-                    <div class="flex gap-1.5 flex-wrap">
-                        <label class="cursor-pointer bg-emerald-700 hover:bg-emerald-600 px-2.5 py-1 rounded text-[11px] font-medium shadow flex items-center gap-1">
-                            <span>📥 Nhập ranh giới GIS</span>
-                            <input type="file" id="fileRanhGioiGIS" accept=".geojson,.json,.kml" class="hidden" onchange="nhapRanhGioiGIS(event)">
-                        </label>
-                        <button onclick="xuatHinhVeThanhGeoJSON()" title="Xuất ranh giới đã vẽ của phường đang chọn ra file .geojson" class="bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1 rounded text-[11px] font-medium shadow">📤 Xuất Ranh Giới (.geojson)</button>
-                        <button onclick="luuHinhVeThanhRanhGioiChinhThuc()" class="bg-green-600 hover:bg-green-700 px-2.5 py-1 rounded text-[11px] font-medium shadow">💾 Lưu Ranh Giới</button>
-                        <button onclick="batDauVeRanhGioiPhu()" class="bg-orange-600 hover:bg-orange-700 px-2.5 py-1 rounded text-[11px] font-medium shadow">🏘️ Thêm Ranh Giới Phụ (KDC...)</button>
-                        <label class="flex items-center gap-1 bg-gray-800 hover:bg-gray-700 px-2.5 py-1 rounded text-[11px] cursor-pointer select-none">
+                    <div class="nm-bar nm-bar-sm" id="nmBarGis"><label class="nm-chip">
                             <input type="checkbox" id="chkTienIchGIS" onchange="bamTienIchGIS(this.checked)" class="accent-amber-500">
                             <span>📍 Tiện ích quanh khu vực</span>
-                        </label>
-                        <label class="flex items-center gap-1 bg-gray-800 hover:bg-gray-700 px-2.5 py-1 rounded text-[11px] cursor-pointer select-none">
+                        </label><label class="nm-chip">
                             <input type="checkbox" id="chkBanDoNhiet" onchange="bamBanDoNhiet(this.checked)" class="accent-red-500">
                             <span>🔥 Bản đồ nhiệt mật độ hộ dân</span>
-                        </label>
-                        <button onclick="xoaRanhGioiDaNhap()" class="bg-rose-700/80 hover:bg-rose-700 px-2 py-1 rounded text-[11px]">🗑️ Gỡ ranh giới đã nhập</button>
-                        <button onclick="hienThiTrongDiemHanhChinh()" class="bg-fuchsia-700 hover:bg-fuchsia-600 px-2.5 py-1 rounded text-[11px] font-medium shadow">🚓 Định Vị Công An Phường</button>
-                        <button onclick="moGoogleMapsThamKhao()" class="bg-gray-800 hover:bg-gray-700 px-2.5 py-1 rounded text-[11px] font-medium shadow">🌐 Mở Trên Google Maps</button>
-                        <button onclick="xoaTuyenDuongTuanTra()" class="bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-[11px]">Xóa tuyến</button>
-                        <button onclick="tinhTuyenDuongTuanTra()" class="bg-blue-600 hover:bg-blue-700 px-2.5 py-1 rounded text-[11px] font-medium shadow flex items-center gap-1">
-                            <span>🧭 Lập tuyến kiểm tra nhanh</span>
-                        </button>
-                        <button onclick="moDanhBaCongAn()" class="bg-red-700 hover:bg-red-600 px-2.5 py-1 rounded text-[11px] font-medium shadow">📇 Danh Bạ Công An Các Phường</button>
-                        <button onclick="document.getElementById('soTayPhapLyModal').classList.remove('hidden')" class="bg-amber-800 hover:bg-amber-700 px-2.5 py-1 rounded text-[11px] font-medium shadow">📖 Sổ Tay Luật Cư Trú</button>
-                    </div>
+                        </label><span class="nm-sep"></span><div class="nm-g" data-nm="ranh_gioi"><button type="button" class="nm-top nm-gb" onclick="nmMo('ranh_gioi',event)" aria-haspopup="true" aria-expanded="false"><span class="nm-ic">🗺️</span><span>Ranh giới</span><span class="nm-dot hidden"></span><span class="nm-car">▾</span></button><div class="nm-panel hidden" role="menu"><label class="nm-item"><span class="nm-w">
+                            <span class="nm-t">📥 Nhập ranh giới GIS</span><small>Nạp file .geojson, .json, .kml</small>
+                            </span><input type="file" id="fileRanhGioiGIS" accept=".geojson,.json,.kml" class="hidden" onchange="nhapRanhGioiGIS(event)">
+                        </label><button onclick="xuatHinhVeThanhGeoJSON()" title="Xuất ranh giới đã vẽ của phường đang chọn ra file .geojson" class="nm-item"><span class="nm-w"><span class="nm-t">📤 Xuất Ranh Giới (.geojson)</span><small>Xuất ranh giới đã vẽ ra .geojson</small></span></button><button onclick="luuHinhVeThanhRanhGioiChinhThuc()" class="nm-item"><span class="nm-w"><span class="nm-t">💾 Lưu Ranh Giới</span><small>Lưu hình vừa vẽ làm ranh giới chính thức</small></span></button><button onclick="batDauVeRanhGioiPhu()" class="nm-item"><span class="nm-w"><span class="nm-t">🏘️ Thêm Ranh Giới Phụ (KDC...)</span><small>Khu dân cư, tổ… nằm trong khu vực</small></span></button><button onclick="xoaRanhGioiDaNhap()" class="nm-item nm-danger"><span class="nm-w"><span class="nm-t">🗑️ Gỡ ranh giới đã nhập</span><small>Bỏ lớp ranh giới vừa nhập</small></span></button></div></div><div class="nm-g" data-nm="tuyen"><button type="button" class="nm-top nm-gb" onclick="nmMo('tuyen',event)" aria-haspopup="true" aria-expanded="false"><span class="nm-ic">🧭</span><span>Tuyến & định vị</span><span class="nm-dot hidden"></span><span class="nm-car">▾</span></button><div class="nm-panel hidden" role="menu"><button onclick="tinhTuyenDuongTuanTra()" class="nm-item"><span class="nm-w"><span class="nm-t">🧭 Lập tuyến kiểm tra nhanh</span><small>Sắp xếp tuyến đi qua các hộ cần kiểm tra</small></span></button><button onclick="xoaTuyenDuongTuanTra()" class="nm-item"><span class="nm-w"><span class="nm-t">Xóa tuyến</span><small>Gỡ tuyến đang hiển thị</small></span></button><button onclick="hienThiTrongDiemHanhChinh()" class="nm-item"><span class="nm-w"><span class="nm-t">🚓 Định Vị Công An Phường</span><small>Đưa bản đồ về trụ sở</small></span></button><button onclick="moGoogleMapsThamKhao()" class="nm-item"><span class="nm-w"><span class="nm-t">🌐 Mở Trên Google Maps</span><small>Mở vị trí đang xem để tham khảo</small></span></button></div></div><div class="nm-g" data-nm="tra_cuu"><button type="button" class="nm-top nm-gb" onclick="nmMo('tra_cuu',event)" aria-haspopup="true" aria-expanded="false"><span class="nm-ic">📚</span><span>Tra cứu</span><span class="nm-dot hidden"></span><span class="nm-car">▾</span></button><div class="nm-panel hidden" role="menu"><button onclick="moDanhBaCongAn()" class="nm-item"><span class="nm-w"><span class="nm-t">📇 Danh Bạ Công An Các Phường</span><small>Số liên hệ công an các phường</small></span></button><button onclick="document.getElementById('soTayPhapLyModal').classList.remove('hidden')" class="nm-item"><span class="nm-w"><span class="nm-t">📖 Sổ Tay Luật Cư Trú</span><small>Điều luật, mẫu biểu cần nhớ</small></span></button></div></div></div>
                     <div class="flex items-center gap-1.5 mt-1.5">
                         <span class="text-[11px] text-gray-400 flex-shrink-0">🚓 Địa chỉ trụ sở Công an phường:</span>
                         <input type="text" id="diaChiCaChu" placeholder="VD: Số 02, đường Nguyễn Tri Phương, Phường Tân An..." class="flex-1 bg-gray-900 border border-gray-700 rounded px-2 py-1 text-[11px] text-white">
@@ -1355,6 +1336,13 @@ table.an-t tfoot td{font-weight:700;color:var(--tx);border-top:1px solid var(--b
                     <label class="text-gray-400 block mb-0.5">Họ tên người ký (không bắt buộc)</label>
                     <input id="bc_hoTenKy" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
                 </div>
+                <div class="col-span-2">
+                    <label class="text-gray-400 block mb-0.5">Hình thức ký</label>
+                    <select id="bc_hinhThucKy" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                        <option value="tay">Ký tay (in ra, ký, đóng dấu)</option><option value="so">Ký số (chừa chỗ cho chữ ký số)</option>
+                    </select>
+                    <p class="text-[10px] text-gray-500 mt-1">Chọn <b>Ký số</b>: phần mềm chừa trống vị trí ký lớn hơn và bỏ dòng "dự thảo". Phần mềm <b>không tự ký số</b> — bấm "Mở bản in / Lưu PDF", lưu thành PDF rồi dùng USB token, SIM ký số hoặc phần mềm ký số của đơn vị để ký. Để trống ô họ tên nếu hình ảnh chữ ký số của anh/chị đã có sẵn họ tên.</p>
+                </div>
             </div>
 
             <div class="border-t border-gray-800 pt-2 space-y-2">
@@ -1379,7 +1367,8 @@ table.an-t tfoot td{font-weight:700;color:var(--tx);border-top:1px solid var(--b
             <div id="bcTrangThai" class="text-gray-400"></div>
             <div class="flex justify-end gap-2 border-t border-gray-700 pt-2">
                 <button onclick="document.getElementById('baoCaoVanBanModal').classList.add('hidden')" class="bg-gray-700 hover:bg-gray-600 px-4 py-1.5 rounded">Đóng</button>
-                <button id="bcBtnTao" onclick="taoBaoCaoVanBan()" class="bg-sky-600 hover:bg-sky-700 px-4 py-1.5 rounded font-bold">📥 Tải báo cáo về Word</button>
+                <button id="bcBtnPdf" onclick="taoBaoCaoVanBan('pdf')" class="bg-emerald-700 hover:bg-emerald-800 px-4 py-1.5 rounded font-bold">🖨 Mở bản in / Lưu PDF</button>
+                <button id="bcBtnTao" onclick="taoBaoCaoVanBan('word')" class="bg-sky-600 hover:bg-sky-700 px-4 py-1.5 rounded font-bold">📥 Tải về Word</button>
             </div>
         </div>
     </div>
@@ -1739,6 +1728,19 @@ table.an-t tfoot td{font-weight:700;color:var(--tx);border-top:1px solid var(--b
                 <button onclick="anDong('anDrillModal')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
             </div>
             <div id="anDrillNoiDung" class="an"></div>
+        </div>
+    </div>
+
+    <div id="sbModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
+        <div class="glass-card w-full max-w-3xl rounded-xl shadow-2xl p-4 border border-emerald-800 text-xs max-h-[92vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-3">
+                <div>
+                    <h3 class="font-bold text-emerald-400 text-sm">🛡️ Sao Lưu &amp; Bảo Mật</h3>
+                    <p class="text-[10px] text-gray-500">Phiên bản phần mềm: <span id="sbPhienBan"></span></p>
+                </div>
+                <button onclick="anDong('sbModal')" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+            </div>
+            <div id="noiDungSaoLuu" class="an"></div>
         </div>
     </div>
 
@@ -3120,6 +3122,7 @@ table.an-t tfoot td{font-weight:700;color:var(--tx);border-top:1px solid var(--b
         }
 
         function kichHoatGiaoDienChinh() {
+            if (typeof sbBatDauGiamSat === 'function') sbBatDauGiamSat();
             // LỚP BẢO VỆ CUỐI CÙNG (tự chữa lành): nếu email đăng nhập khớp ĐÚNG danh sách Admin nhưng vì bất
             // kỳ lý do gì (lỗi tạm thời, dữ liệu cache cũ...) mà "role" tính ra KHÔNG phải 'admin', tự động
             // sửa lại NGAY LẬP TỨC tại đây — đảm bảo Admin không bao giờ bị khóa khỏi chính hệ thống mình quản
@@ -8306,7 +8309,7 @@ table.an-t tfoot td{font-weight:700;color:var(--tx);border-top:1px solid var(--b
             } catch (e) { return null; }
         }
 
-        async function taoBaoCaoVanBan() {
+        async function taoBaoCaoVanBan(dinhDang) {
             const ky = bcTinhKy(document.getElementById('bc_ky').value);
             if (!ky) return alert("Vui lòng chọn đủ và đúng khoảng thời gian (từ ngày không được sau đến ngày).");
             const btn = document.getElementById('bcBtnTao'), tt = document.getElementById('bcTrangThai');
@@ -8405,6 +8408,7 @@ table.an-t tfoot td{font-weight:700;color:var(--tx);border-top:1px solid var(--b
                 const soKH = document.getElementById('bc_soKyHieu').value.trim();
                 const chucDanh = document.getElementById('bc_chucDanh').value;
                 const hoTenKy = document.getElementById('bc_hoTenKy').value.trim();
+                const kySo = (document.getElementById('bc_hinhThucKy') || {}).value === 'so';
                 const phamViChu = (currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length) ? currentUser.khuVucPhuTrach.join(', ') + ' — ' + khuVucHienTai : khuVucHienTai;
 
                 const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
@@ -8458,19 +8462,28 @@ ${(document.getElementById('bc_phuongHuong').value || '').trim() ? noiDung(docum
 
 <table width="100%" style="border:none;border-collapse:collapse;margin-top:14pt"><tr>
 <td width="50%" valign="top" style="border:none;font-size:12pt"><p style="text-align:left;margin:0"><b><i>Nơi nhận:</i></b></p><p style="text-align:left;margin:0">- Lãnh đạo Công an ${o(khuVucHienTai)};</p><p style="text-align:left;margin:0">- Lưu: hồ sơ.</p></td>
-<td width="50%" valign="top" align="center" style="border:none"><b>${o(chucDanh)}</b><br><br><br><br><br>${hoTenKy ? '<b>' + o(hoTenKy) + '</b>' : ''}</td>
+<td width="50%" valign="top" align="center" style="border:none"><b>${o(chucDanh)}</b>${kySo ? '<br>'.repeat(9) : '<br><br><br><br><br>'}${hoTenKy ? '<b>' + o(hoTenKy) + '</b>' : ''}</td>
 </tr></table>
-<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự thảo do phần mềm Quản Lý Địa Bàn CSKV tự tổng hợp từ số liệu tại thời điểm ${hn.toLocaleString('vi-VN')}; cán bộ cần đối chiếu, bổ sung và xác nhận trước khi ký, gửi.</i></p>
+${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự thảo do phần mềm Quản Lý Địa Bàn CSKV tự tổng hợp từ số liệu tại thời điểm ${hn.toLocaleString('vi-VN')}; cán bộ cần đối chiếu, bổ sung và xác nhận trước khi ký, gửi.</i></p>`}
 </div></body></html>`;
 
+                if (dinhDang === 'pdf') {
+                    const w = window.open('', '_blank');
+                    if (!w) { tt.innerText = ''; return alert('Trình duyệt đang chặn cửa sổ bật lên (pop-up). Hãy cho phép rồi bấm lại.'); }
+                    w.document.write(html); w.document.close();
+                    setTimeout(() => { w.focus(); w.print(); }, 600);
+                    ghiNhatKy('Soạn báo cáo công tác (bản in/PDF)', ky.nhan + (kySo ? ' — ký số' : ''));
+                    tt.innerText = '✅ Đã mở bản in — chọn "Lưu thành PDF"' + (kySo ? ', sau đó ký số bằng USB token/SIM ký số hoặc phần mềm ký số của đơn vị.' : '.');
+                } else {
                 const blob = new Blob(['﻿', html], { type: 'application/msword' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; a.download = 'BaoCao_' + khuVucHienTai.replace(/\s+/g, '_') + '_' + ky.nhan.replace(/[^\wÀ-ỹ]+/g, '_') + '.doc';
-                document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                setTimeout(() => URL.revokeObjectURL(url), 2000);
-                ghiNhatKy('Soạn báo cáo công tác (Word)', ky.nhan);
-                tt.innerText = '✅ Đã tạo báo cáo ' + ky.nhan + ' — mở file vừa tải bằng Word để chỉnh sửa.';
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = 'BaoCao_' + khuVucHienTai.replace(/\s+/g, '_') + '_' + ky.nhan.replace(/[^\wÀ-ỹ]+/g, '_') + '.doc';
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(url), 2000);
+                    ghiNhatKy('Soạn báo cáo công tác (Word)', ky.nhan);
+                    tt.innerText = '✅ Đã tạo báo cáo ' + ky.nhan + ' — mở file vừa tải bằng Word để chỉnh sửa.';
+                }
             } catch (err) {
                 tt.innerText = '';
                 alert('❌ Không tạo được báo cáo: ' + (err.message || err));
@@ -9754,12 +9767,14 @@ ${(document.getElementById('bc_phuongHuong').value || '').trim() ? noiDung(docum
             them('wa', M.L.thieuHanTam.length, 'Hộ tạm trú chưa nhập ngày hết hạn', anDKHo('Hộ tạm trú chưa nhập ngày hết hạn', M.L.thieuHanTam));
             them('in', M.L.thieuGPS.length, 'Hộ chưa có tọa độ GPS', anDKHo('Hộ chưa có tọa độ GPS', M.L.thieuGPS));
             if (anDash.suVu) viec.push({ l: 'wa', n: anDash.suVu, t: 'Sự vụ đang xử lý (xem Nhật ký địa bàn)' });
+            const nhacSL = (typeof sbCanNhacSaoLuu === 'function') ? sbCanNhacSaoLuu() : null;
+            if (nhacSL) viec.push({ l: 'wa', n: 1, t: nhacSL + ' — bấm để mở Sao Lưu', fn: 'sbMoModal()' });
             const ic = { cr: ['an-ic-cr', '✖'], se: ['an-ic-se', '▲'], wa: ['an-ic-wa', '▲'], in: ['an-ic-in', 'i'], ok: ['an-ic-ok', '✓'] };
             const thuTu = { cr: 0, se: 1, wa: 2, in: 3 };
             viec.sort((a, b) => thuTu[a.l] - thuTu[b.l] || b.n - a.n);
             h += '<div class="an-g2">';
             h += anThe('Việc cần xử lý', 'Sắp xếp theo mức độ khẩn — bấm vào từng dòng để xem danh sách',
-                viec.length ? viec.map(v => `<div class="an-alert${v.d ? ' clk' : ''}"${anAttr(v.d)}><span class="ic ${ic[v.l][0]}">${ic[v.l][1]}</span><span class="tx">${v.t}</span><span class="nb">${anN(v.n)}</span></div>`).join('') : '<div class="an-alert"><span class="ic an-ic-ok">✓</span><span class="tx">Không có việc tồn đọng trong phạm vi đang xem.</span></div>');
+                viec.length ? viec.map(v => `<div class="an-alert${(v.d || v.fn) ? ' clk' : ''}"${v.fn ? ' onclick="' + v.fn + '"' : anAttr(v.d)}><span class="ic ${ic[v.l][0]}">${ic[v.l][1]}</span><span class="tx">${v.t}</span><span class="nb">${anN(v.n)}</span></div>`).join('') : '<div class="an-alert"><span class="ic an-ic-ok">✓</span><span class="tx">Không có việc tồn đọng trong phạm vi đang xem.</span></div>');
             h += anThe('Nhận định nhanh', 'Rút ra tự động từ số liệu — mang tính tham khảo, đối chiếu thực tế địa bàn', anNhanDinhHtml(nd));
             h += '</div>';
 
@@ -10071,6 +10086,290 @@ ${(document.getElementById('bc_phuongHuong').value || '').trim() ? noiDung(docum
                 <h1>${escHtml(tieu)}</h1><p class="meta">Lập lúc ${new Date().toLocaleString('vi-VN')} · Phần mềm Quản lý địa bàn CSKV</p><div class="an sang">${src.innerHTML}</div></body></html>`);
             w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 500);
         }
+
+        // ======================================================================================================
+        //  SAO LƯU / KHÔI PHỤC / BẢO MẬT PHIÊN / THÔNG BÁO BẢN MỚI (tiền tố sb*)
+        //  - Sao lưu lấy từ dữ liệu ĐÃ TẢI SẴN trên màn hình (không đọc thêm Firestore, không tốn hạn mức) và đúng phạm vi quyền.
+        //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
+        //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
+        // ======================================================================================================
+        const PHIEN_BAN_APP = '2026.10.13';
+        const SB_NHOM = [
+            { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
+            { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
+            { k: 'co_so_dia_ban', nhan: 'Cơ sở trên địa bàn', lay: () => anCoSoTrongPham() }
+        ];
+        const SB_KHOA_LAN_CUOI = 'sbLanSaoLuuCuoi';
+        let sbGoiDangXem = null;      // gói sao lưu đã đọc + xác minh, chờ khôi phục
+
+        function sbDoc(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+        function sbGhi(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
+        function sbLanSaoLuuCuoi() { const t = parseInt(sbDoc(SB_KHOA_LAN_CUOI) || '0', 10); return t > 0 ? t : 0; }
+        function sbCanNhacSaoLuu() {
+            if (!['admin', 'chi_huy', 'can_bo_du_lieu'].includes(currentUser.role)) return null;
+            const t = sbLanSaoLuuCuoi();
+            if (!t) return 'Chưa từng sao lưu dữ liệu trên máy này';
+            const ngay = Math.floor((Date.now() - t) / 86400000);
+            return ngay >= 7 ? 'Đã ' + ngay + ' ngày chưa sao lưu dữ liệu' : null;
+        }
+
+        // ---- mật mã học (WebCrypto) ----
+        const sbCoCrypto = () => !!(window.crypto && crypto.subtle);
+        function sbB64(buf) { const b = new Uint8Array(buf); let s = ''; for (let i = 0; i < b.length; i += 8192) s += String.fromCharCode.apply(null, b.subarray(i, i + 8192)); return btoa(s); }
+        function sbB64Giai(s) { const r = atob(s); const b = new Uint8Array(r.length); for (let i = 0; i < r.length; i++) b[i] = r.charCodeAt(i); return b; }
+        async function sbSha256(chuoi) {
+            const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(chuoi));
+            return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, '0')).join('');
+        }
+        async function sbKhoaTuMatKhau(matKhau, salt) {
+            const goc = await crypto.subtle.importKey('raw', new TextEncoder().encode(matKhau), 'PBKDF2', false, ['deriveKey']);
+            return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 200000, hash: 'SHA-256' }, goc, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+        }
+        async function sbMaHoaAES(vanBan, matKhau) {
+            const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+            const khoa = await sbKhoaTuMatKhau(matKhau, salt);
+            const kq = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, khoa, new TextEncoder().encode(vanBan));
+            return { loai: 'QuanLyDiaBan-SaoLuu-MaHoa', thuatToan: 'PBKDF2-SHA256-200000/AES-256-GCM', salt: sbB64(salt), iv: sbB64(iv), data: sbB64(kq) };
+        }
+        async function sbGiaiMaAES(goi, matKhau) {
+            const khoa = await sbKhoaTuMatKhau(matKhau, sbB64Giai(goi.salt));
+            const kq = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: sbB64Giai(goi.iv) }, khoa, sbB64Giai(goi.data));
+            return new TextDecoder().decode(kq);
+        }
+        // Firestore Timestamp <-> JSON
+        function sbMaHoa(v) {
+            if (v === null || v === undefined) return v;
+            if (typeof v === 'object' && typeof v.toMillis === 'function' && typeof v.seconds === 'number') return { __ts: v.toMillis() };
+            if (Array.isArray(v)) return v.map(sbMaHoa);
+            if (typeof v === 'object') { const o = {}; Object.keys(v).forEach(k => { if (v[k] !== undefined) o[k] = sbMaHoa(v[k]); }); return o; }
+            return v;
+        }
+        function sbGiaiMa(v) {
+            if (v === null || typeof v !== 'object') return v;
+            if (Array.isArray(v)) return v.map(sbGiaiMa);
+            const ks = Object.keys(v);
+            if (ks.length === 1 && ks[0] === '__ts' && typeof v.__ts === 'number') return firebase.firestore.Timestamp.fromMillis(v.__ts);
+            const o = {}; ks.forEach(k => o[k] = sbGiaiMa(v[k])); return o;
+        }
+        const sbMocGio = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()); };
+
+        // ---- giao diện ----
+        function sbMoModal() {
+            if (!currentUser || !currentUser.email || currentUser.role === 'chua_cap_quyen') return alert('Tài khoản chưa được cấp quyền.');
+            document.getElementById('sbPhienBan').innerText = PHIEN_BAN_APP;
+            document.getElementById('sbModal').classList.remove('hidden');
+            dangKyLangNgheDoiTuongNenTang(); if (typeof dangKyLangNgheCoSoNenTang === 'function') dangKyLangNgheCoSoNenTang();
+            sbVe(); setTimeout(() => { const f = document.getElementById('sbFile'); if (!document.getElementById('sbModal').classList.contains('hidden') && !(f && f.files && f.files.length) && !sbGoiDangXem && !(document.getElementById('sbKetQuaSaoLuu') || {}).innerText) sbVe(true); }, 1500);
+        }
+        function sbVe(giuTrang) {
+            const el = document.getElementById('noiDungSaoLuu'); if (!el) return;
+            const giuLai = giuTrang ? { mk: (document.getElementById('sbMatKhau') || {}).value || '', mk2: (document.getElementById('sbMatKhau2') || {}).value || '' } : { mk: '', mk2: '' };
+            const laAdmin = currentUser.role === 'admin';
+            const sl = SB_NHOM.map(n => [n.nhan, n.lay().length]);
+            const lanCuoi = sbLanSaoLuuCuoi();
+            const nhac = sbCanNhacSaoLuu();
+            const phutHienTai = sbPhutCho();
+            let h = '';
+            if (nhac) h += `<div class="an-note wa"><b style="color:inherit">▲ ${escHtml(nhac)}</b> — nên sao lưu mỗi tuần và cất file ở nơi an toàn (không gửi qua Zalo/mail công cộng).</div>`;
+            h += `<div class="an-card"><h4>📥 Sao lưu dữ liệu</h4><p class="cap">Phạm vi: <b>${escHtml(khuVucHienTai)}</b>${currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach ? ' — chỉ ' + escHtml(currentUser.khuVucPhuTrach.join(', ')) : ''}. Lấy từ dữ liệu đang hiển thị nên không tốn lượt đọc máy chủ.</p>
+                <div class="an-tw" style="max-height:none;margin-bottom:8px"><table class="an-t"><tbody>${sl.map(([n, c]) => `<tr><td class="l">${escHtml(n)}</td><td>${anN(c)} bản ghi</td></tr>`).join('')}</tbody></table></div>
+                <div class="an-bar" style="margin-bottom:6px"><label>🔑 Mật khẩu file <input id="sbMatKhau" type="password" autocomplete="new-password" class="an-in" style="min-width:170px" placeholder="khuyến nghị đặt" value="${escHtml(giuLai.mk)}"></label>
+                <label>Nhập lại <input id="sbMatKhau2" type="password" autocomplete="new-password" class="an-in" style="min-width:140px" value="${escHtml(giuLai.mk2)}"></label></div>
+                <p class="an-sub" style="margin-bottom:8px">File sao lưu chứa họ tên, CCCD, địa chỉ của công dân. Có mật khẩu thì file được mã hóa AES-256 — <b>mất mật khẩu là không mở lại được</b>, phần mềm không có cách lấy lại.</p>
+                <button class="an-btn pri" onclick="sbTaoSaoLuu()">📥 Tải bản sao lưu</button>
+                <span class="an-sub" style="margin-left:8px">Lần sao lưu gần nhất trên máy này: <span id="sbLanCuoiTxt">${lanCuoi ? new Date(lanCuoi).toLocaleString('vi-VN') : 'chưa có'}</span></span>
+                <div id="sbKetQuaSaoLuu" class="an-sub" style="margin-top:6px"></div></div>`;
+            if (laAdmin) {
+                h += `<div class="an-card"><h4>♻️ Khôi phục từ bản sao lưu <span class="an-pill" style="background:var(--wa)">chỉ Admin</span></h4>
+                    <p class="cap">Chọn file sao lưu của đúng phường đang xem (<b>${escHtml(khuVucHienTai)}</b>). Phần mềm kiểm tra file trước, hiện bản tóm tắt, rồi mới ghi.</p>
+                    <div class="an-bar" style="margin-bottom:6px"><input id="sbFile" type="file" accept=".json,application/json" class="an-in" onchange="sbDocFile(this)">
+                    <label>🔑 Mật khẩu giải mã <input id="sbMatKhauGiai" type="password" autocomplete="off" class="an-in" style="min-width:150px" placeholder="nếu file có mật khẩu"></label>
+                    <button class="an-btn" onclick="sbDocFile(document.getElementById('sbFile'))">Đọc lại file</button></div>
+                    <div id="sbXemTruoc"></div></div>`;
+            } else {
+                h += `<div class="an-card"><h4>♻️ Khôi phục</h4><p class="cap">Chỉ tài khoản Admin được khôi phục dữ liệu. Cần khôi phục, hãy gửi file sao lưu cho Admin.</p></div>`;
+            }
+            h += `<div class="an-card"><h4>⏱️ Tự đăng xuất khi không thao tác</h4><p class="cap">Máy bị bỏ quên khi đang mở phần mềm là rủi ro lộ dữ liệu cư trú. Hết thời gian này phần mềm báo trước 60 giây rồi tự đăng xuất. Cài đặt này áp dụng riêng cho máy/trình duyệt này.</p>
+                <label class="an-sub">Thời gian chờ <select class="an-in" onchange="sbDatPhutCho(this.value)">${[10, 20, 30, 60, 120].map(p => `<option value="${p}"${p === phutHienTai ? ' selected' : ''}>${p} phút</option>`).join('')}</select></label></div>`;
+            h += `<div class="an-card"><h4>🔄 Phiên bản</h4><p class="cap">Đang dùng bản <b>${PHIEN_BAN_APP}</b>. Phần mềm tự kiểm tra bản mới khi mở lại ứng dụng và mỗi 30 phút.</p>
+                <button class="an-btn" onclick="sbKiemTraBanMoi(true)">Kiểm tra bản mới ngay</button> <span id="sbKetQuaBanMoi" class="an-sub" style="margin-left:8px"></span></div>`;
+            el.innerHTML = h;
+        }
+
+        // ---- sao lưu ----
+        async function sbTaoSaoLuu() {
+            const kq = document.getElementById('sbKetQuaSaoLuu');
+            try {
+                const mk = document.getElementById('sbMatKhau').value, mk2 = document.getElementById('sbMatKhau2').value;
+                if (mk || mk2) {
+                    if (mk !== mk2) return alert('Hai ô mật khẩu chưa giống nhau.');
+                    if (mk.length < 6) return alert('Mật khẩu cần từ 6 ký tự trở lên.');
+                    if (!sbCoCrypto()) return alert('Trình duyệt này không hỗ trợ mã hóa (cần mở bằng địa chỉ https). Để trống mật khẩu hoặc dùng Chrome bản mới.');
+                } else if (!confirm('Bạn chưa đặt mật khẩu. File sao lưu sẽ chứa CCCD của công dân ở dạng đọc được. Vẫn tải về?')) return;
+                kq.innerText = 'Đang tạo file...';
+                const du = {}, soLuong = {};
+                SB_NHOM.forEach(n => { du[n.k] = n.lay().map(x => { const o = Object.assign({}, x); const id = o.id; delete o.id; return Object.assign({ _id: id }, sbMaHoa(o)); }); soLuong[n.k] = du[n.k].length; });
+                const goi = { loai: 'QuanLyDiaBan-SaoLuu', dinhDang: 1, phienBanApp: PHIEN_BAN_APP, phuong: khuVucHienTai, taoLuc: new Date().toISOString(), taoBoi: currentUser.email, vaiTro: currentUser.role, soLuong, du_lieu: du };
+                if (sbCoCrypto()) goi.sha256 = await sbSha256(JSON.stringify(du));
+                let noiDung = JSON.stringify(goi), mahoa = false;
+                if (mk) { noiDung = JSON.stringify(await sbMaHoaAES(noiDung, mk)); mahoa = true; }
+                const blob = new Blob([noiDung], { type: 'application/json' });
+                const url = URL.createObjectURL(blob), a = document.createElement('a');
+                a.href = url; a.download = 'SaoLuu_' + boDauTiengViet(khuVucHienTai).replace(/\s+/g, '_') + '_' + sbMocGio() + (mahoa ? '_MAHOA' : '') + '.json';
+                document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 3000);
+                sbGhi(SB_KHOA_LAN_CUOI, String(Date.now()));
+                ghiNhatKy('Sao lưu dữ liệu', Object.entries(soLuong).map(([k, v]) => k + ': ' + v).join('; ') + (mahoa ? ' (có mật khẩu)' : ' (không mật khẩu)'));
+                kq.innerHTML = '✅ Đã tải ' + escHtml(a.download) + (goi.sha256 ? '<br>Mã kiểm tra SHA-256: <span style="font-family:monospace;word-break:break-all">' + goi.sha256 + '</span>' : '');
+                const lc = document.getElementById('sbLanCuoiTxt'); if (lc) lc.innerText = new Date().toLocaleString('vi-VN');
+            } catch (e) { kq.innerText = ''; alert('❌ Không tạo được bản sao lưu: ' + (e.message || e)); }
+        }
+
+        // ---- khôi phục ----
+        async function sbDocFile(input) {
+            const xt = document.getElementById('sbXemTruoc'); sbGoiDangXem = null;
+            if (!input || !input.files || !input.files[0]) { xt.innerHTML = ''; return; }
+            xt.innerHTML = '<p class="an-sub">Đang đọc và kiểm tra file...</p>';
+            const loi = m => { xt.innerHTML = `<div class="an-note cr"><b style="color:inherit">✖ ${escHtml(m)}</b></div>`; };
+            try {
+                let goi = JSON.parse(await input.files[0].text());
+                if (goi && goi.loai === 'QuanLyDiaBan-SaoLuu-MaHoa') {
+                    const mk = document.getElementById('sbMatKhauGiai').value;
+                    if (!mk) return loi('File này có mật khẩu — nhập mật khẩu giải mã ở ô bên trên rồi bấm "Đọc lại file".');
+                    if (!sbCoCrypto()) return loi('Trình duyệt không hỗ trợ giải mã (cần địa chỉ https).');
+                    try { goi = JSON.parse(await sbGiaiMaAES(goi, mk)); } catch (e) { return loi('Sai mật khẩu hoặc file đã bị hỏng.'); }
+                }
+                if (!goi || goi.loai !== 'QuanLyDiaBan-SaoLuu' || !goi.du_lieu) return loi('Đây không phải file sao lưu của phần mềm này.');
+                if (goi.sha256) {
+                    if (!sbCoCrypto()) return loi('Không kiểm tra được mã SHA-256 trên trình duyệt này.');
+                    if ((await sbSha256(JSON.stringify(goi.du_lieu))) !== goi.sha256) return loi('Mã kiểm tra SHA-256 KHÔNG khớp — file đã bị hỏng hoặc bị sửa. Không khôi phục từ file này.');
+                }
+                if (goi.phuong !== khuVucHienTai) return loi('File thuộc "' + goi.phuong + '" nhưng đang xem "' + khuVucHienTai + '". Chuyển sang đúng phường rồi chọn lại file.');
+                const hien = {}; SB_NHOM.forEach(n => hien[n.k] = new Set(n.lay().map(x => x.id)));
+                const dong = SB_NHOM.map(n => {
+                    const ds = goi.du_lieu[n.k] || [];
+                    const trung = ds.filter(r => hien[n.k].has(r._id)).length;
+                    return [n.nhan, ds.length, ds.length - trung, trung];
+                });
+                sbGoiDangXem = goi;
+                xt.innerHTML = `<div class="an-note ok"><b style="color:inherit">✓ File hợp lệ${goi.sha256 ? ', mã SHA-256 khớp' : ''}.</b> Sao lưu lúc ${escHtml(new Date(goi.taoLuc).toLocaleString('vi-VN'))} bởi ${escHtml(goi.taoBoi || '?')} (bản ${escHtml(goi.phienBanApp || '?')}).</div>
+                    <div class="an-tw" style="max-height:none;margin-bottom:8px"><table class="an-t"><thead><tr><th>Loại dữ liệu</th><th>Trong file</th><th>Chưa có trên máy chủ</th><th>Đã có (trùng ID)</th></tr></thead><tbody>${dong.map(r => `<tr><td class="l">${escHtml(r[0])}</td><td>${anN(r[1])}</td><td>${anN(r[2])}</td><td>${anN(r[3])}</td></tr>`).join('')}</tbody></table></div>
+                    <div style="margin-bottom:6px"><label style="display:block;margin-bottom:3px"><input type="radio" name="sbCheDo" value="them" checked> <b>Chỉ thêm bản ghi chưa có</b> (an toàn — không đụng dữ liệu hiện tại)</label>
+                    <label style="display:block"><input type="radio" name="sbCheDo" value="ghide"> <b>Ghi đè cả bản ghi trùng</b> — đưa về đúng thời điểm sao lưu; mọi chỉnh sửa sau thời điểm đó của các bản ghi trùng sẽ <b>mất</b></label></div>
+                    <div class="an-bar"><label>Nếu chọn ghi đè, gõ <b>KHOI PHUC</b> để xác nhận <input id="sbXacNhan" class="an-in" style="width:110px" autocomplete="off"></label>
+                    <button class="an-btn pri" id="sbBtnKhoiPhuc" onclick="sbKhoiPhuc()">♻️ Khôi phục</button></div><div id="sbTienDo" class="an-sub"></div>`;
+            } catch (e) { loi('Không đọc được file: ' + (e.message || e)); }
+        }
+        async function sbKhoiPhuc() {
+            if (currentUser.role !== 'admin') return alert('Chỉ Admin được khôi phục.');
+            if (!CHE_DO_FIREBASE || !dbFirestore) return alert('Khôi phục chỉ dùng được khi đã kết nối máy chủ.');
+            const goi = sbGoiDangXem; if (!goi) return alert('Hãy chọn và kiểm tra file sao lưu trước.');
+            if (goi.phuong !== khuVucHienTai) return alert('Đang xem phường khác với file sao lưu.');
+            const cheDo = (document.querySelector('input[name="sbCheDo"]:checked') || {}).value || 'them';
+            if (cheDo === 'ghide' && (document.getElementById('sbXacNhan').value || '').trim().toUpperCase() !== 'KHOI PHUC') return alert('Chế độ ghi đè cần gõ đúng KHOI PHUC vào ô xác nhận.');
+            if (!confirm('Khôi phục dữ liệu ' + goi.phuong + ' từ bản sao lưu lúc ' + new Date(goi.taoLuc).toLocaleString('vi-VN') + '?\nChế độ: ' + (cheDo === 'them' ? 'chỉ thêm bản ghi chưa có' : 'GHI ĐÈ bản ghi trùng') + '.')) return;
+            const btn = document.getElementById('sbBtnKhoiPhuc'), td = document.getElementById('sbTienDo'); btn.disabled = true;
+            try {
+                const tong = { them: 0, ghide: 0, boQua: 0, loi: 0 };
+                const viec = [];
+                SB_NHOM.forEach(n => {
+                    const hien = new Set(n.lay().map(x => x.id));
+                    (goi.du_lieu[n.k] || []).forEach(r => {
+                        const id = r._id;
+                        if (typeof id !== 'string' || !id || id.includes('/') || id === '.' || id === '..') { tong.loi++; return; }
+                        if (r.phuong !== goi.phuong) { tong.loi++; return; }
+                        const trung = hien.has(id);
+                        if (trung && cheDo === 'them') { tong.boQua++; return; }
+                        const du = Object.assign({}, r); delete du._id;
+                        viec.push({ k: n.k, id, du: sbGiaiMa(du), trung });
+                    });
+                });
+                for (let i = 0; i < viec.length; i += 400) {
+                    const lo = dbFirestore.batch();
+                    viec.slice(i, i + 400).forEach(v => { lo.set(dbFirestore.collection(v.k).doc(v.id), v.du); if (v.trung) tong.ghide++; else tong.them++; });
+                    await lo.commit();
+                    td.innerText = 'Đã ghi ' + Math.min(i + 400, viec.length) + '/' + viec.length + '...';
+                }
+                ghiNhatKy('Khôi phục dữ liệu từ bản sao lưu', 'chế độ ' + cheDo + '; thêm ' + tong.them + ', ghi đè ' + tong.ghide + ', bỏ qua ' + tong.boQua + ', lỗi ' + tong.loi);
+                td.innerHTML = `✅ Hoàn tất: thêm mới <b>${anN(tong.them)}</b>, ghi đè <b>${anN(tong.ghide)}</b>, bỏ qua (đã có) ${anN(tong.boQua)}, bản ghi lỗi/không hợp lệ ${anN(tong.loi)}.`;
+            } catch (e) {
+                td.innerHTML = '<span style="color:var(--cr)">✖ Dừng giữa chừng: ' + escHtml(e.code === 'permission-denied' ? 'không đủ quyền ghi (kiểm tra firestore.rules)' : (e.message || e)) + '. Có thể đã ghi một phần — chạy lại ở chế độ "chỉ thêm" là an toàn.</span>';
+            } finally { btn.disabled = false; }
+        }
+
+        // ---- tự đăng xuất khi không thao tác ----
+        let sbDaChay = false, sbLanHoatDong = Date.now(), sbDangCanhBao = false;
+        function sbPhutCho() { const v = parseInt(sbDoc('sbTuDangXuatPhut') || '30', 10); return [10, 20, 30, 60, 120].includes(v) ? v : 30; }
+        function sbDatPhutCho(v) { sbGhi('sbTuDangXuatPhut', String(parseInt(v, 10))); sbLanHoatDong = Date.now(); }
+        function sbGhiNhanHoatDong() { if (!sbDangCanhBao) sbLanHoatDong = Date.now(); }
+        function sbBatDauGiamSat() {
+            if (sbDaChay) return; sbDaChay = true; sbLanHoatDong = Date.now();
+            ['pointerdown', 'keydown', 'touchstart', 'wheel', 'scroll'].forEach(e => document.addEventListener(e, sbGhiNhanHoatDong, { passive: true, capture: true }));
+            document.addEventListener('visibilitychange', sbKiemTraRanh);
+            setInterval(sbKiemTraRanh, 1000);
+        }
+        function sbKiemTraRanh() {
+            if (!currentUser || !currentUser.email) return;
+            const con = sbPhutCho() * 60000 - (Date.now() - sbLanHoatDong);
+            if (con <= 0) { sbAnCanhBao(); dangXuat(); return; }
+            if (con <= 60000) sbHienCanhBao(Math.ceil(con / 1000)); else if (sbDangCanhBao) sbAnCanhBao();
+        }
+        function sbHienCanhBao(giay) {
+            let el = document.getElementById('sbCanhBaoRanh');
+            if (!el) {
+                el = document.createElement('div'); el.id = 'sbCanhBaoRanh';
+                el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;padding:16px';
+                el.innerHTML = '<div style="background:#1f2937;border:1px solid #f59e0b;border-radius:12px;padding:20px;max-width:360px;text-align:center;color:#fff;font-size:14px"><div style="font-size:30px">⏱️</div><p style="margin:8px 0"><b>Sắp tự đăng xuất</b> vì lâu không thao tác.</p><p style="margin:6px 0">Còn <b id="sbGiayCon" style="font-size:22px;color:#fbbf24"></b> giây.</p><button id="sbTiepTuc" style="margin-top:8px;background:#0ea5e9;color:#fff;border:0;border-radius:8px;padding:8px 18px;font-weight:700;cursor:pointer">Tôi vẫn đang dùng</button></div>';
+                document.body.appendChild(el);
+                el.querySelector('#sbTiepTuc').addEventListener('click', () => { sbDangCanhBao = false; sbLanHoatDong = Date.now(); sbAnCanhBao(); });
+            }
+            sbDangCanhBao = true; el.querySelector('#sbGiayCon').textContent = String(giay);
+        }
+        function sbAnCanhBao() { sbDangCanhBao = false; const el = document.getElementById('sbCanhBaoRanh'); if (el) el.remove(); }
+
+        // ---- thông báo có bản mới (so ETag/Last-Modified của chính trang; không cần file phụ) ----
+        let sbDauVetGoc = null, sbDaBao = false;
+        async function sbLayDauVet() {
+            try {
+                const r = await fetch(location.href.split('#')[0], { method: 'HEAD', cache: 'no-store' });
+                if (!r.ok) return null;
+                return r.headers.get('etag') || r.headers.get('last-modified') || null;
+            } catch (e) { return null; }
+        }
+        async function sbKhoiTaoBanMoi() {
+            if (!location.protocol.startsWith('http')) return;
+            sbDauVetGoc = await sbLayDauVet();
+            setInterval(() => sbKiemTraBanMoi(false), 30 * 60000);
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) sbKiemTraBanMoi(false); });
+        }
+        async function sbKiemTraBanMoi(thuCong) {
+            const kq = document.getElementById('sbKetQuaBanMoi');
+            if (!sbDauVetGoc) { if (thuCong && kq) kq.innerText = 'Không kiểm tra được lúc này (đang offline hoặc chạy từ file cục bộ).'; return; }
+            const moi = await sbLayDauVet();
+            if (moi && moi !== sbDauVetGoc) { sbHienBanMoi(); if (thuCong && kq) kq.innerText = '🔄 Có bản mới — bấm "Cập nhật ngay" ở thanh phía trên.'; }
+            else if (thuCong && kq) kq.innerText = moi ? '✅ Đang dùng bản mới nhất.' : 'Không kiểm tra được lúc này.';
+        }
+        function sbHienBanMoi() {
+            if (sbDaBao || document.getElementById('sbBanMoi')) return; sbDaBao = true;
+            const el = document.createElement('div'); el.id = 'sbBanMoi';
+            el.style.cssText = 'position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9998;background:#0c4a6e;border:1px solid #38bdf8;border-radius:10px;padding:8px 12px;color:#fff;font-size:12px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 20px rgba(0,0,0,.5);max-width:94vw';
+            el.innerHTML = '<span>🔄 Có bản cập nhật mới của phần mềm.</span><button id="sbCapNhat" style="background:#0ea5e9;border:0;color:#fff;border-radius:6px;padding:4px 10px;font-weight:700;cursor:pointer">Cập nhật ngay</button><button id="sbDeSau" style="background:transparent;border:1px solid #7dd3fc;color:#bae6fd;border-radius:6px;padding:4px 8px;cursor:pointer">Để sau</button>';
+            document.body.appendChild(el);
+            el.querySelector('#sbDeSau').addEventListener('click', () => el.remove());
+            el.querySelector('#sbCapNhat').addEventListener('click', async () => {
+                if (!confirm('Tải lại phần mềm để dùng bản mới? Nếu đang nhập dở dữ liệu chưa lưu thì sẽ mất.')) return;
+                try { if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } } catch (e) { }
+                location.reload();
+            });
+        }
+        // Nhãn phiên bản nhỏ góc dưới (không chặn thao tác) + khởi động các cơ chế nền
+        function sbKhoiTao() {
+            if (document.getElementById('sbNhanPhienBan')) return;
+            const el = document.createElement('div'); el.id = 'sbNhanPhienBan';
+            el.style.cssText = 'position:fixed;left:6px;bottom:3px;font-size:9px;color:#9ca3af;opacity:.55;pointer-events:none;z-index:30';
+            el.textContent = 'v' + PHIEN_BAN_APP; document.body.appendChild(el);
+            sbKhoiTaoBanMoi();
+        }
+        window.addEventListener('load', () => { try { sbKhoiTao(); } catch (e) { console.warn(e); } });
 
         // Trả về TOÀN BỘ hộ trong đúng phạm vi được phép xem (khu vực phụ trách nếu là CSKV) của phường
         // đang chọn — KHÔNG áp dụng các bộ lọc tạm thời trên giao diện (ô tìm kiếm, diện cư trú, các
@@ -10422,5 +10721,38 @@ ${(document.getElementById('bc_phuongHuong').value || '').trim() ? noiDung(docum
             alert(`✅ Đã xuất đầy đủ ${filteredData.length} hộ / ${sttCounter - 1} nhân khẩu (đúng phạm vi phụ trách của ${khuVucHienTai}).${canhBaoLoc}`);
         }
     </script>
+
+<script id="nmJs">
+(function(){
+  var dongTatCa=function(){document.querySelectorAll('.nm-panel').forEach(function(p){p.classList.add('hidden');});
+    document.querySelectorAll('.nm-gb').forEach(function(b){b.setAttribute('aria-expanded','false');});};
+  window.nmMo=function(k,e){
+    if(e){e.stopPropagation();}
+    var g=document.querySelector('.nm-g[data-nm="'+k+'"]'); if(!g) return;
+    var p=g.querySelector('.nm-panel'), b=g.querySelector('.nm-gb'), mo=!p.classList.contains('hidden');
+    dongTatCa(); if(mo) return;
+    p.classList.remove('hidden'); b.setAttribute('aria-expanded','true'); p.classList.remove('nm-right');
+    var r=p.getBoundingClientRect(); if(r.right>window.innerWidth-8) p.classList.add('nm-right');
+  };
+  document.addEventListener('click',function(e){
+    var it=e.target.closest&&e.target.closest('.nm-panel .nm-item');
+    if(it){ if(it.tagName==='BUTTON') setTimeout(dongTatCa,0); return; }   // nhãn nhập file: đóng khi chọn xong (sự kiện change)
+    if(!(e.target.closest&&e.target.closest('.nm-panel'))) dongTatCa();
+  });
+  document.addEventListener('change',function(e){ if(e.target.closest&&e.target.closest('.nm-panel')) dongTatCa(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') dongTatCa(); });
+  function hien(el){ return !el.classList.contains('hidden') && el.offsetParent!==null || (el.closest('.nm-panel')&&!el.classList.contains('hidden')); }
+  window.nmCapNhat=function(){
+    document.querySelectorAll('.nm-g').forEach(function(g){
+      var its=g.querySelectorAll('.nm-panel > .nm-item'), co=0, dem=0;
+      its.forEach(function(it){ if(!it.classList.contains('hidden')){ co++;
+        it.querySelectorAll('span[id^="badge"]').forEach(function(bd){ if(!bd.classList.contains('hidden')){ var n=parseInt((bd.innerText||'').replace(/[^0-9]/g,''),10); dem+= isNaN(n)?1:n; } }); } });
+      g.style.display = co? '' : 'none';
+      var d=g.querySelector('.nm-dot'); if(dem>0){ d.textContent= dem>99?'99+':String(dem); d.classList.remove('hidden'); } else d.classList.add('hidden');
+    });
+  };
+  setInterval(window.nmCapNhat,1500); document.addEventListener('DOMContentLoaded',function(){ setTimeout(window.nmCapNhat,300); });
+})();
+</script>
 </body>
 </html>
