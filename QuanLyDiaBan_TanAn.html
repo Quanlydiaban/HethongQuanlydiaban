@@ -318,6 +318,32 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
 .an:not(.sang){--bg:#0b1630;--pn:#101e3c;--gr:#1a2b50;--bl:#26396a;--mu:#8fa0c0}
 
 @media(max-width:767px){#mainApp>header.glass-card{background:linear-gradient(180deg,rgba(6,12,26,.95),rgba(6,12,26,.84)),var(--anh-tru-so) center/cover no-repeat,#0a1428!important}#mainApp>header h1{font-size:.95rem}.ui-k .so{font-size:1.4rem}}
+
+/* ---- Cửa sổ Phân quyền: chữ rõ, thẻ lớn ---- */
+.rb-tab{padding:.5rem .9rem;border-radius:999px;border:1px solid rgba(130,160,210,.35);background:rgba(10,20,40,.7);color:#d6e0f2;font-size:13.5px;font-weight:600;cursor:pointer}
+.rb-tab b{margin-left:.3rem;color:#fff}
+.rb-tab.on{background:rgba(217,165,32,.22);border-color:var(--cand-vang);color:var(--cand-vang-t)}
+.rb-tab.canh-bao:not(.on){border-color:var(--cand-vang);color:var(--cand-vang-t)}
+.rb-ds{max-height:58vh;min-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:.55rem;padding-right:.3rem}
+.rb-row{padding:.8rem .95rem;border-radius:10px;background:rgba(10,20,40,.72);border:1px solid rgba(130,160,210,.22);border-left:4px solid #3aa876}
+.rb-row.cho{border-left-color:var(--cand-vang);background:rgba(217,165,32,.09)}
+.rb-row .ten{font-size:15.5px;font-weight:700;color:#fff;line-height:1.3}
+.rb-row .mail{font-size:13.5px;color:#9fb0cc;word-break:break-all}
+.rb-row .ct{font-size:13.5px;color:#d3dcee;margin-top:2px}
+.rb-chip{display:inline-block;font-size:12.5px;font-weight:600;padding:.15rem .65rem;border-radius:999px;margin:.3rem .3rem 0 0}
+.rb-nut{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.55rem}
+.rb-btn{font-size:13.5px;padding:.42rem .9rem;border-radius:8px;font-weight:600;cursor:pointer}
+.rb-xam{background:rgba(70,90,130,.45);border:1px solid rgba(150,175,220,.4);color:#e4ebf8}
+.rb-trong{padding:1.1rem;text-align:center;color:#9fb0cc;font-size:14px;border:1px dashed rgba(130,160,210,.3);border-radius:10px}
+.rb-form{padding:1rem;border-radius:10px;background:rgba(10,20,40,.62);border:1px solid rgba(217,165,32,.35)}
+@media(min-width:1024px){.rb-form{position:sticky;top:0}}
+.rb-f label{display:block;font-size:12.5px;color:#a9b9d6;margin-bottom:3px;font-weight:600}
+.rb-f:has(>.hidden){display:none}
+.rb-details{border:1px solid rgba(130,160,210,.25);border-radius:10px;padding:.6rem .8rem;background:rgba(10,20,40,.5)}
+.rb-details summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--cand-vang-t)}
+.rb-nho{font-size:12.5px;color:#9fb0cc;margin:.5rem 0}
+.rb-gy{display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding:.4rem 0;border-top:1px solid rgba(130,160,210,.15)}
+.rb-gy .mail{font-size:13.5px;color:#d3dcee;word-break:break-all}
 </style></head>
 <body class="bg-gray-950 text-white min-h-screen p-2 md:p-4 select-none">
 
@@ -446,7 +472,7 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
                     <span id="badgeCheDoKetNoi" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-700 text-gray-300"></span>
                     
                 </div>
-                <p class="text-[11px] text-gray-300 mt-0.5">Cán bộ: <span id="userNameDisplay" class="text-emerald-400 font-semibold"></span> | <button onclick="moModalRBAC()" class="text-blue-400 underline ml-1 hover:text-blue-300">Phân quyền (RBAC)</button></p>
+                <p class="text-[11px] text-gray-300 mt-0.5">Cán bộ: <span id="userNameDisplay" class="text-emerald-400 font-semibold"></span> | <button onclick="moModalRBAC()" class="text-blue-400 underline ml-1 hover:text-blue-300">Phân quyền (RBAC)</button><span id="badgeChoCapQuyen" class="hidden ml-1 px-1.5 py-0.5 rounded-full text-[11px] font-bold" style="background:#c8102e;color:#fff;cursor:pointer" onclick="moModalRBAC()"></span></p>
                 <p class="text-[10px] text-gray-500 mt-0.5">☎️ Hỗ trợ kỹ thuật / Admin tổng: <span class="text-gray-300">Nguyễn Văn Thảo</span> — <a href="tel:0765996879" class="text-cyan-400 hover:underline">0765996879</a> · <a href="https://zalo.me/0765996879" target="_blank" class="text-cyan-400 hover:underline">Zalo</a></p>
                 <p class="ui-ngay mt-0.5">📅 <span id="uiNgay"></span></p>
             </div>
@@ -992,71 +1018,93 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
 
 
     <div id="rbacModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
-        <div class="glass-card w-full max-w-lg rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[90vh] overflow-y-auto">
+        <div class="glass-card w-full max-w-6xl rounded-xl shadow-2xl p-5 space-y-4 border border-gray-700 text-sm max-h-[92vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
-                <h3 class="font-bold text-blue-400">🔐 Phân Quyền & Khu Vực Phụ Trách</h3>
-                <button onclick="dongModalRBAC()" class="text-gray-300 hover:text-white font-bold text-base">&times;</button>
+                <h3 class="font-bold text-blue-400 text-base">🔐 Phân Quyền & Khu Vực Phụ Trách</h3>
+                <button onclick="dongModalRBAC()" class="text-gray-300 hover:text-white font-bold text-xl leading-none">&times;</button>
             </div>
 
-            <div class="space-y-1.5 bg-gray-900/70 p-2.5 rounded-lg border border-gray-800">
-                <p class="text-gray-400">Tài khoản hiện tại:</p>
-                <input type="text" id="rbacUserEmail" readonly class="w-full bg-gray-900 border border-gray-700 rounded px-2.5 py-1.5 text-gray-400">
-                <p class="text-gray-400 mt-1">Quyền hệ thống <span class="text-[10px]">(tự động theo email, không thể tự đổi)</span>:</p>
-                <p id="rbacRoleBadge" class="font-bold"></p>
-                <p id="rbacKhuVucCuaToi" class="text-gray-300"></p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-gray-900/70 p-3 rounded-lg border border-gray-800">
+                <div>
+                    <p class="text-gray-400 text-xs mb-1">Tài khoản hiện tại</p>
+                    <input type="text" id="rbacUserEmail" readonly class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-gray-300 text-sm">
+                </div>
+                <div>
+                    <p class="text-gray-400 text-xs mb-1">Quyền hệ thống <span class="text-[11px]">(tự động theo email, không thể tự đổi)</span></p>
+                    <p id="rbacRoleBadge" class="font-bold text-sm"></p>
+                    <p id="rbacKhuVucCuaToi" class="text-gray-300 text-sm"></p>
+                </div>
             </div>
 
-            <div id="rbacAdminPanel" class="hidden space-y-2 border-t border-gray-700 pt-2">
-                <p id="rbacTieuDePanel" class="font-semibold text-emerald-400">👮 Quản lý phân quyền tài khoản (chỉ Admin thấy mục này)</p>
-                <p class="text-[10px] text-gray-500 leading-relaxed">Lưu ý: đây là ứng dụng tĩnh (không có máy chủ dùng chung), danh sách phân quyền được lưu trên trình duyệt của Admin. Sau khi thêm/sửa, hãy bấm "Xuất danh sách" rồi gửi file cho tài khoản đó để họ bấm "Nhập danh sách" trên máy của họ, đảm bảo đồng bộ đúng quyền/phường/khu vực. Có thể dùng để cấp quyền cho <b>nhiều tài khoản Gmail khác nhau phụ trách các phường khác nhau</b> trong 103 phường/xã TP. Cần Thơ.</p>
-                <div id="rbacGoiYEmail" class="hidden text-[10px] text-gray-500 leading-relaxed"></div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                    <input type="email" id="inputEmailCSKV" list="dsGoiYEmailDangNhap" placeholder="Email tài khoản Gmail" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
-                    <datalist id="dsGoiYEmailDangNhap"></datalist>
-                    <select id="inputVaiTroCSKV" onchange="doiVaiTroTrongForm()" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
-                        <option value="can_bo">Cảnh sát khu vực (1 khu vực trong 1 phường)</option>
-                        <option value="chi_huy">Chỉ huy phường (toàn bộ 1 phường)</option>
-                        <option value="can_bo_du_lieu">Cán bộ dữ liệu (toàn bộ 1 phường, không có quyền xóa/quản trị)</option>
-                        <option value="chi_huy_tp">Chỉ huy cấp Thành phố / PC06 (xem tất cả 103 phường)</option>
-                        <option value="can_bo_du_lieu_tp">Cán bộ dữ liệu PC06 (CHỈ XEM tất cả 103 phường, không sửa/xóa/nhập bất kỳ đâu)</option>
-                    </select>
+            <div id="rbacAdminPanel" class="hidden space-y-3 border-t border-gray-700 pt-3">
+                <p id="rbacTieuDePanel" class="font-semibold text-emerald-400 text-base">👮 Quản lý phân quyền tài khoản (chỉ Admin thấy mục này)</p>
+                <p class="text-gray-400 text-[13px] leading-relaxed">Danh sách lấy trực tiếp từ máy chủ và tự cập nhật. <b class="text-amber-300">Tài khoản mới đăng ký hiện ở mục "⏳ Chờ cấp quyền"</b>: bấm <b>Cấp quyền</b>, kiểm tra thông tin họ đã khai báo trong khung cập nhật, chọn vai trò và phường rồi bấm Lưu.</p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+                    <div class="lg:col-span-3 space-y-2 min-w-0">
+                        <input type="text" id="timKiemPhanQuyen" oninput="renderDanhSachCSKV()" placeholder="🔍 Tìm theo tên, email, đơn vị, số điện thoại, phường..." class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm">
+                        <div id="rbacTabs" class="flex flex-wrap gap-2"></div>
+                        <div id="rbacDanhSachCSKV" class="rb-ds"></div>
+                        <div id="rbacGoiYEmail" class="hidden"></div>
+                    </div>
+
+                    <div class="lg:col-span-2 min-w-0">
+                        <div class="rb-form space-y-2.5">
+                            <p id="rbacFormTieuDe" class="font-bold text-base" style="color:var(--cand-vang-t)">➕ Thêm tài khoản mới</p>
+                            <div class="rb-f"><label for="inputEmailCSKV">Email tài khoản Gmail</label>
+                                <input type="email" id="inputEmailCSKV" list="dsGoiYEmailDangNhap" oninput="rbacCapNhatTieuDeForm()" placeholder="vd: canbo@gmail.com" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm">
+                                <datalist id="dsGoiYEmailDangNhap"></datalist></div>
+                            <div class="rb-f"><label for="inputVaiTroCSKV">Vai trò</label>
+                                <select id="inputVaiTroCSKV" onchange="doiVaiTroTrongForm()" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm">
+                                    <option value="can_bo">Cảnh sát khu vực (1 khu vực trong 1 phường)</option>
+                                    <option value="chi_huy">Chỉ huy phường (toàn bộ 1 phường)</option>
+                                    <option value="can_bo_du_lieu">Cán bộ dữ liệu (toàn bộ 1 phường, không có quyền xóa/quản trị)</option>
+                                    <option value="chi_huy_tp">Chỉ huy cấp Thành phố / PC06 (xem tất cả 103 phường)</option>
+                                    <option value="can_bo_du_lieu_tp">Cán bộ dữ liệu PC06 (CHỈ XEM tất cả 103 phường, không sửa/xóa/nhập bất kỳ đâu)</option>
+                                </select></div>
+                            <div class="rb-f"><label for="inputHoTenCSKV">Họ tên cán bộ <span class="text-rose-400">*</span></label>
+                                <input type="text" id="inputHoTenCSKV" required placeholder="Họ và tên" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"></div>
+                            <div class="rb-f"><label for="inputDonViCSKV">Đơn vị công tác <span class="text-rose-400">*</span></label>
+                                <input type="text" id="inputDonViCSKV" required placeholder="VD: Công an phường Tân An" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <div class="rb-f"><label for="inputChucVuCSKV">Chức vụ <span class="text-rose-400">*</span></label>
+                                    <input type="text" id="inputChucVuCSKV" required placeholder="VD: CSKV, Trưởng CA phường" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"></div>
+                                <div class="rb-f"><label for="inputSdtCSKV">Số điện thoại <span class="text-rose-400">*</span></label>
+                                    <input type="tel" id="inputSdtCSKV" required placeholder="VD: 0912345678" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"></div>
+                            </div>
+                            <div class="rb-f"><label for="inputPhuongCSKV">Phường / xã phụ trách</label>
+                                <select id="inputPhuongCSKV" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"></select></div>
+                            <div class="rb-f"><label for="inputKhuVucCSKV">Khu vực phụ trách <span class="text-gray-500">(chỉ với Cảnh sát khu vực)</span></label>
+                                <input type="text" id="inputKhuVucCSKV" placeholder="Phường: VD Khu Vực 3, Khu Vực 4 — Xã: VD Ấp 3, Khóm 2" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"></div>
+                            <input type="hidden" id="inputLoaiHinhDonViCSKV" value="">
+                            <button onclick="themPhanQuyenCSKV()" class="btn-chinh w-full rounded px-3 py-2.5 font-bold text-sm">💾 Lưu / cập nhật tài khoản này</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-1.5">
-                    <input type="text" id="inputHoTenCSKV" required placeholder="* Họ tên cán bộ (bắt buộc)" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
-                    <input type="text" id="inputDonViCSKV" required placeholder="* Đơn vị công tác (bắt buộc, VD: CA Phường Tân An)" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
-                    <input type="text" id="inputChucVuCSKV" required placeholder="* Chức vụ (bắt buộc, VD: CSKV, Trưởng CA phường...)" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
-                    <input type="tel" id="inputSdtCSKV" required placeholder="* SĐT liên lạc (bắt buộc, VD: 0912345678)" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="xuatDanhBaCanBo()" class="btn-phu rounded px-4 py-2 font-semibold text-sm">📇 Xuất Danh Bạ Cán Bộ (.xlsx)</button>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                    <select id="inputPhuongCSKV" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></select>
-                    <input type="text" id="inputKhuVucCSKV" placeholder="Phường: VD Khu Vực 3, Khu Vực 4 — Xã: VD Ấp 3, Khóm 2, Thôn 1" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
-                </div>
-                <input type="hidden" id="inputLoaiHinhDonViCSKV" value="">
-                <button onclick="themPhanQuyenCSKV()" class="w-full bg-emerald-600 hover:bg-emerald-700 rounded px-2 py-1.5 font-bold">+ Thêm / Cập nhật tài khoản này</button>
-                <input type="text" id="timKiemPhanQuyen" oninput="renderDanhSachCSKV()" placeholder="🔍 Tìm theo tên, email, đơn vị, phường..." class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
-                <label class="flex items-center gap-1.5 text-[11px] text-amber-300 cursor-pointer select-none">
-                    <input type="checkbox" id="chkChiHienThieuThongTin" onchange="renderDanhSachCSKV()" class="accent-amber-500">
-                    <span>⚠️ Chỉ hiện tài khoản THIẾU thông tin (chưa rõ họ tên hoặc đơn vị) — dễ dò để xử lý/gỡ hàng loạt</span>
-                </label>
-                <p class="text-[10px] text-gray-500">Tài khoản tô cam bên dưới = đã tự khai báo, đang chờ duyệt — bấm "Cấp quyền" để tự điền lại đúng thông tin họ đã khai báo vào form phía trên.</p>
-                <div id="rbacDanhSachCSKV" class="max-h-52 overflow-y-auto divide-y divide-gray-800 border border-gray-800 rounded-lg"></div>
-                <button onclick="xuatDanhBaCanBo()" class="w-full bg-teal-600 hover:bg-teal-700 rounded px-2 py-1.5 font-medium">📇 Xuất Danh Bạ Cán Bộ (.xlsx)</button>
-                <div id="rbacXuatNhapJson" class="flex gap-2 pt-1">
-                    <button onclick="xuatDanhSachPhanQuyen()" class="bg-indigo-600 hover:bg-indigo-700 px-2.5 py-1.5 rounded flex-1">📤 Xuất danh sách (.json)</button>
-                    <label class="bg-gray-700 hover:bg-gray-600 px-2.5 py-1.5 rounded flex-1 text-center cursor-pointer">
+                <div id="rbacXuatNhapJson" class="space-y-2 pt-1">
+                    <p class="text-gray-500 text-xs">Chế độ chưa kết nối máy chủ: danh sách lưu trên trình duyệt này. Sau khi thêm/sửa, bấm "Xuất danh sách" rồi gửi file cho tài khoản đó để họ bấm "Nhập danh sách" trên máy của họ.</p>
+                    <div class="flex gap-2">
+                    <button onclick="xuatDanhSachPhanQuyen()" class="bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded flex-1 text-sm">📤 Xuất danh sách (.json)</button>
+                    <label class="bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded flex-1 text-center cursor-pointer text-sm">
                         📥 Nhập danh sách
                         <input type="file" accept=".json" class="hidden" onchange="nhapDanhSachPhanQuyen(event)">
                     </label>
+                    </div>
                 </div>
             </div>
 
             <div class="flex justify-end gap-2 pt-1">
-                <button onclick="dongModalRBAC()" class="bg-gray-700 px-3 py-1.5 rounded">Đóng</button>
+                <button onclick="dongModalRBAC()" class="bg-gray-700 px-4 py-2 rounded text-sm">Đóng</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal hướng dẫn nhập file Excel -->
+    
+<!-- Modal hướng dẫn nhập file Excel -->
     <div id="huongDanExcelModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
         <div class="glass-card w-full max-w-2xl rounded-xl shadow-2xl p-4 space-y-3 border border-gray-700 text-xs max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
@@ -3423,6 +3471,7 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
             if (currentUser.role === 'chua_cap_quyen') { moGateChuaCapQuyen(); }
             else { const g = document.getElementById('gateChuaCapQuyenModal'); if (g) g.classList.add('hidden'); }
             document.getElementById('userNameDisplay').innerText = currentUser.email;
+            if (currentUser.role === 'admin' && CHE_DO_FIREBASE) setTimeout(() => { try { dangKyLangNghePhanQuyen(); } catch (e) { } }, 2000);
             document.getElementById('userBadgeRole').innerText = currentUser.role === 'admin' ? 'Quyền: Admin' : (currentUser.role === 'chi_huy_tp' ? 'Chỉ Huy TP' : (currentUser.role === 'can_bo_du_lieu_tp' ? '👁️ CB Dữ Liệu PC06' : (currentUser.role === 'chi_huy' ? 'Chỉ Huy' : (currentUser.role === 'can_bo_du_lieu' ? 'Cán Bộ Dữ Liệu' : (currentUser.role === 'can_bo' ? 'CSKV' : '⚠️ Chưa cấp quyền')))));
             const btnTTP = document.getElementById('btnTimToanThanhPho');
             if (btnTTP) btnTTP.classList.toggle('hidden', !(currentUser.role === 'admin' || currentUser.role === 'chi_huy_tp' || currentUser.role === 'can_bo_du_lieu_tp'));
@@ -3601,6 +3650,9 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
             if (!CHE_DO_FIREBASE) return; // Chế độ local không có Firestore để lưu khai báo — chỉ hiện cổng chặn.
             try {
                 const doc = await dbFirestore.collection('permissions').doc(currentUser.email.toLowerCase()).get();
+                // Tài khoản mới đăng nhập lần đầu: tạo ngay hồ sơ "chờ cấp quyền" (chưa có vai trò) để Admin THẤY được họ trong mục Phân quyền,
+                // kể cả khi họ chưa kịp điền khai báo. Luật Firestore cho phép tự tạo hồ sơ của chính mình, miễn không tự gắn vai trò/phường/khu vực.
+                try { await dbFirestore.collection('permissions').doc(currentUser.email.toLowerCase()).set(Object.assign({ email: currentUser.email.toLowerCase(), lanDangNhapCuoi: firebase.firestore.FieldValue.serverTimestamp() }, doc.exists ? {} : { trangThai: 'moi_dang_ky', dangKyLuc: firebase.firestore.FieldValue.serverTimestamp() }), { merge: true }); } catch (e) { console.warn('Không tạo được hồ sơ chờ cấp quyền:', e.message); }
                 const daKhaiBaoDu = doc.exists && doc.data().hoTen && doc.data().donVi && doc.data().chucVu && doc.data().sdt;
                 if (daKhaiBaoDu) {
                     const r = doc.data();
@@ -3752,6 +3804,7 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
             document.getElementById('inputDonViCSKV').value = '';
             document.getElementById('inputChucVuCSKV').value = '';
             document.getElementById('inputSdtCSKV').value = '';
+            rbacCapNhatTieuDeForm();
         }
 
         function xuatDanhBaCanBo() {
@@ -3806,58 +3859,77 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
             }, err => console.error("Lỗi đồng bộ danh sách phân quyền:", err));
         }
 
+        // ---------- Danh sách tài khoản phân quyền (giao diện mới: tab, thẻ lớn, chữ rõ) ----------
+        let rbacLoc = 'cho', rbacChonTabTuDong = true;
+        const rbacLaAdminEmail = e => ADMIN_EMAILS.includes(String(e || '').toLowerCase());
+        const rbacLaCho = r => !r.vaiTro && !rbacLaAdminEmail(r.email);
+        function rbacThoiGian(r) {
+            try { const t = r.dangKyLuc && r.dangKyLuc.toDate ? r.dangKyLuc.toDate() : (r.dangKyLuc ? new Date(r.dangKyLuc) : null); return t && !isNaN(t) ? t : null; } catch (e) { return null; }
+        }
+        const rbacFmtGio = t => t ? String(t.getDate()).padStart(2, '0') + '/' + String(t.getMonth() + 1).padStart(2, '0') + '/' + t.getFullYear() + ' ' + String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0') : '';
+        function capNhatBadgeChoCapQuyen() {
+            const b = document.getElementById('badgeChoCapQuyen'); if (!b) return;
+            const n = (currentUser && currentUser.role === 'admin') ? danhSachPhanQuyen.filter(r => r && r.email && rbacLaCho(r)).length : 0;
+            if (n > 0) { b.innerText = n > 99 ? '99+' : n; b.title = n + ' tài khoản đang chờ được cấp quyền'; b.classList.remove('hidden'); } else b.classList.add('hidden');
+        }
+        function rbacDatLoc(k) { rbacLoc = k; rbacChonTabTuDong = false; renderDanhSachCSKV(); }
+        function rbacCapNhatTieuDeForm() {
+            const t = document.getElementById('rbacFormTieuDe'), e = (document.getElementById('inputEmailCSKV') || {}).value || '';
+            if (t) t.innerText = e.trim() ? '✏️ Cấp quyền / cập nhật: ' + e.trim() : '➕ Thêm tài khoản mới';
+        }
+        function rbacNap(email) { const r = danhSachPhanQuyen.find(x => x.email === email); if (r) napLaiVaoFormRBAC(r); }
         function renderDanhSachCSKV() {
+            capNhatBadgeChoCapQuyen();
             const el = document.getElementById('rbacDanhSachCSKV');
             if (!el) return;
+            const tat = danhSachPhanQuyen.filter(r => r && r.email);
+            const dem = {
+                cho: tat.filter(rbacLaCho).length,
+                da: tat.filter(r => !rbacLaCho(r)).length,
+                thieu: tat.filter(r => (!r.hoTen || !r.donVi) && !rbacLaAdminEmail(r.email)).length,
+                tat: tat.length
+            };
+            if (rbacChonTabTuDong && tat.length > 0) { rbacLoc = dem.cho > 0 ? 'cho' : 'tat'; rbacChonTabTuDong = false; }
+            const tabEl = document.getElementById('rbacTabs');
+            if (tabEl) tabEl.innerHTML = [['cho', '⏳ Chờ cấp quyền', dem.cho], ['da', '✅ Đã cấp quyền', dem.da], ['thieu', '⚠️ Thiếu thông tin', dem.thieu], ['tat', 'Tất cả', dem.tat]]
+                .map(([k, n, c]) => `<button type="button" onclick="rbacDatLoc('${k}')" class="rb-tab ${rbacLoc === k ? 'on' : ''} ${k === 'cho' && c > 0 ? 'canh-bao' : ''}">${n} <b>${c}</b></button>`).join('');
             const oTim = document.getElementById('timKiemPhanQuyen');
             const tuKhoa = oTim ? boDauTiengViet(oTim.value.trim()) : '';
-
-            let danhSachHien = danhSachPhanQuyen;
-            if (tuKhoa) {
-                danhSachHien = danhSachHien.filter(r =>
-                    [r.email, r.hoTen, r.donVi, r.chucVu, r.sdt, r.phuong].some(t => t && boDauTiengViet(t).includes(tuKhoa))
-                );
-            }
-            // MỚI THEO YÊU CẦU: sau thời gian dùng thử, cần dò ra tài khoản KHÔNG RÕ danh tính (thường do
-            // được cấp quyền TRƯỚC KHI có cổng khai báo bắt buộc, hoặc cán bộ tự khai báo bỏ trống) để xử lý/
-            // gỡ hàng loạt — trước đây phải cuộn tay tìm từng dòng ghi "(chưa rõ tên)" giữa danh sách dài.
-            const chiHienThieuTT = document.getElementById('chkChiHienThieuThongTin');
-            if (chiHienThieuTT && chiHienThieuTT.checked) {
-                danhSachHien = danhSachHien.filter(r => !r.hoTen || !r.donVi);
-            }
-
-            if (danhSachPhanQuyen.length === 0) {
-                el.innerHTML = '<p class="text-gray-500 p-2">Chưa có tài khoản nào tự khai báo hoặc được phân quyền.</p>';
+            let ds = tat;
+            if (rbacLoc === 'cho') ds = ds.filter(rbacLaCho);
+            else if (rbacLoc === 'da') ds = ds.filter(r => !rbacLaCho(r));
+            else if (rbacLoc === 'thieu') ds = ds.filter(r => (!r.hoTen || !r.donVi) && !rbacLaAdminEmail(r.email));
+            if (tuKhoa) ds = ds.filter(r => [r.email, r.hoTen, r.donVi, r.chucVu, r.sdt, r.phuong].some(t => t && boDauTiengViet(t).includes(tuKhoa)));
+            if (tat.length === 0) { el.innerHTML = '<p class="rb-trong">Chưa có tài khoản nào tự khai báo hoặc được phân quyền.</p>'; return; }
+            if (ds.length === 0) {
+                el.innerHTML = '<p class="rb-trong">' + (tuKhoa ? 'Không tìm thấy tài khoản nào khớp từ khóa.' : rbacLoc === 'cho' ? '✅ Hiện không có tài khoản nào đang chờ cấp quyền. Tài khoản mới đăng ký sẽ tự hiện ở đây.' : 'Không có tài khoản nào trong mục này.') + '</p>';
                 return;
             }
-            if (danhSachHien.length === 0) {
-                el.innerHTML = '<p class="text-gray-500 p-2">Không tìm thấy tài khoản nào khớp từ khóa.</p>';
-                return;
-            }
-            // Đưa các tài khoản ĐÃ TỰ KHAI BÁO nhưng CHƯA được cấp vai trò lên đầu danh sách — đây là nhóm
-            // Admin cần xử lý trước (chỉ cần bấm "Sửa" để nạp thông tin họ đã khai báo vào form cấp quyền).
-            danhSachHien = [...danhSachHien].sort((a, b) => (a.vaiTro ? 1 : 0) - (b.vaiTro ? 1 : 0));
-            el.innerHTML = danhSachHien.map(r => {
-                let nhanVaiTro;
-                if (!r.vaiTro) nhanVaiTro = '<span class="text-orange-400 font-bold">⏳ Đã khai báo — ĐANG CHỜ được cấp quyền</span>';
-                else if (r.vaiTro === 'chi_huy_tp') nhanVaiTro = '<span class="text-red-400">Chỉ huy cấp Thành phố — Toàn bộ các phường</span>';
-                else if (r.vaiTro === 'can_bo_du_lieu_tp') nhanVaiTro = '<span class="text-cyan-400">👁️ Cán bộ dữ liệu PC06 — CHỈ XEM toàn bộ các phường (không sửa/xóa/nhập)</span>';
-                else if (r.vaiTro === 'chi_huy') nhanVaiTro = '<span class="text-amber-400">Chỉ huy — ' + escHtml(r.phuong || '?') + '</span>';
-                else if (r.vaiTro === 'can_bo_du_lieu') nhanVaiTro = '<span class="text-fuchsia-400">Cán bộ dữ liệu — ' + escHtml(r.phuong || '?') + '</span>';
-                else nhanVaiTro = '<span class="text-emerald-400">' + escHtml(r.phuong || '?') + ' — ' + (r.khuVuc || []).join(', ') + '</span>';
-                const dongCanBo = (r.hoTen || r.donVi || r.chucVu || r.sdt)
-                    ? `<p class="text-[10px] text-gray-400">${escHtml(r.hoTen || '(chưa rõ tên)')}${r.chucVu ? ' — ' + escHtml(r.chucVu) : ''}${r.donVi ? ' — ' + escHtml(r.donVi) : ''}${r.sdt ? ' — ☎ ' + escHtml(r.sdt) : ''}</p>` : '';
-                const nhan2FA = r.vaiTro ? (r.totpSecret ? '<span class="text-emerald-400">🔐 Đã bật 2FA</span>' : '<span class="text-rose-400">⚠️ Chưa bật 2FA</span>') : '';
-                return `<div class="flex justify-between items-center p-1.5 gap-1 ${!r.vaiTro ? 'bg-orange-950/30' : ''}">
-                    <div class="min-w-0">
-                        <p class="text-white truncate">${escHtml(r.email)}</p>
-                        ${dongCanBo}
-                        <p class="text-[10px]">${nhanVaiTro} ${nhan2FA}</p>
-                    </div>
-                    <div class="flex gap-1 flex-shrink-0">
-                        <button onclick='napLaiVaoFormRBAC(${JSON.stringify(r).replace(/'/g, "&apos;")})' class="${!r.vaiTro ? 'bg-orange-600 hover:bg-orange-500 text-white px-2 rounded' : 'text-blue-400 hover:text-blue-300 px-1.5'}">${!r.vaiTro ? 'Cấp quyền' : 'Sửa'}</button>
-                        <button onclick="datLai2FA('${r.email}')" class="text-cyan-400 hover:text-cyan-300 px-1.5" title="Dùng khi cán bộ mất điện thoại/mất app Authenticator">Đặt lại 2FA</button>
-                        <button onclick="xoaPhanQuyenCSKV('${r.email}')" class="text-rose-400 hover:text-rose-300 px-1.5">Gỡ</button>
+            ds = [...ds].sort((a, b) => (rbacLaCho(b) ? 1 : 0) - (rbacLaCho(a) ? 1 : 0)
+                || ((rbacThoiGian(b) || 0) - (rbacThoiGian(a) || 0))
+                || String(a.hoTen || a.email).localeCompare(String(b.hoTen || b.email), 'vi'));
+            el.innerHTML = ds.map(r => {
+                const cho = rbacLaCho(r), admin = rbacLaAdminEmail(r.email), e = escHtml(r.email);
+                let chip;
+                if (admin) chip = '<span class="rb-chip" style="background:#5a1a1a;color:#ffd5d5">👑 Quản trị viên (Admin)</span>';
+                else if (cho) chip = (r.hoTen || r.donVi) ? '<span class="rb-chip" style="background:#5a4208;color:#fbe7a6">⏳ Đã khai báo — đang chờ cấp quyền</span>' : '<span class="rb-chip" style="background:#3b2a05;color:#ffd978">🆕 Mới đăng ký — chưa khai báo thông tin</span>';
+                else if (r.vaiTro === 'chi_huy_tp') chip = '<span class="rb-chip" style="background:#5a1a1a;color:#ffd5d5">Chỉ huy cấp Thành phố — toàn bộ các phường</span>';
+                else if (r.vaiTro === 'can_bo_du_lieu_tp') chip = '<span class="rb-chip" style="background:#0d3b4a;color:#a8e8f7">👁️ Cán bộ dữ liệu PC06 — chỉ xem toàn bộ</span>';
+                else if (r.vaiTro === 'chi_huy') chip = '<span class="rb-chip" style="background:#4a3a08;color:#fbe7a6">Chỉ huy — ' + escHtml(r.phuong || '?') + '</span>';
+                else if (r.vaiTro === 'can_bo_du_lieu') chip = '<span class="rb-chip" style="background:#3f1d52;color:#ecc9ff">Cán bộ dữ liệu — ' + escHtml(r.phuong || '?') + '</span>';
+                else chip = '<span class="rb-chip" style="background:#0f4430;color:#b6f0d3">' + escHtml(r.phuong || '?') + (r.khuVuc && r.khuVuc.length ? ' — ' + escHtml(r.khuVuc.join(', ')) : '') + '</span>';
+                const chip2FA = (r.vaiTro && !admin) ? (r.totpSecret ? '<span class="rb-chip" style="background:#0f4430;color:#b6f0d3">🔐 Đã bật 2FA</span>' : '<span class="rb-chip" style="background:#5a1a1a;color:#ffd5d5">⚠️ Chưa bật 2FA</span>') : '';
+                const ct = [r.chucVu, r.donVi].filter(Boolean).map(escHtml).join(' — ');
+                const gio = rbacFmtGio(rbacThoiGian(r));
+                return `<div class="rb-row ${cho ? 'cho' : ''}">
+                    <div class="ten">${escHtml(r.hoTen || '(chưa có họ tên)')}</div>
+                    <div class="mail">${e}</div>
+                    ${(ct || r.sdt) ? `<div class="ct">${ct}${r.sdt ? (ct ? ' · ' : '') + '☎ ' + escHtml(r.sdt) : ''}</div>` : ''}
+                    <div>${chip}${chip2FA}${gio ? `<span class="rb-chip" style="background:#16233f;color:#9fb0cc">Đăng ký lúc ${gio}</span>` : ''}</div>
+                    <div class="rb-nut">
+                        <button type="button" onclick="rbacNap('${e}')" class="rb-btn ${cho ? 'btn-chinh' : 'btn-phu'}">${cho ? '✅ Cấp quyền' : '✏️ Sửa'}</button>
+                        ${(admin || cho) ? '' : `<button type="button" onclick="datLai2FA('${e}')" class="rb-btn rb-xam" title="Dùng khi cán bộ mất điện thoại/mất app Authenticator">Đặt lại 2FA</button>`}
+                        ${admin ? '' : `<button type="button" onclick="xoaPhanQuyenCSKV('${e}')" class="rb-btn btn-hiem" title="${cho ? 'Xóa hồ sơ chờ này (tài khoản vẫn đăng nhập được nhưng không có quyền gì)' : 'Gỡ toàn bộ phân quyền của tài khoản này'}">🗑 Gỡ</button>`}
                     </div>
                 </div>`;
             }).join('');
@@ -3872,13 +3944,14 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
             document.getElementById('inputChucVuCSKV').value = r.chucVu || '';
             document.getElementById('inputSdtCSKV').value = r.sdt || '';
             document.getElementById('inputKhuVucCSKV').value = (r.khuVuc || []).join(', ');
-            // SỬA THIẾU SÓT: trước đây "Loại hình đơn vị" (Phường/Xã) đã tự khai báo ở cổng chặn KHÔNG được
-            // mang theo vào form cấp quyền — Admin/Chỉ huy phải tự đoán lại. Giờ nạp đúng lại giá trị đã có.
+            // "Loại hình đơn vị" (Phường/Xã) đã tự khai báo ở cổng chặn được mang theo vào form cấp quyền.
             const oLoaiHinh = document.getElementById('inputLoaiHinhDonViCSKV');
             if (oLoaiHinh) oLoaiHinh.value = r.loaiHinhDonVi || '';
             doiVaiTroTrongForm();
             if (r.phuong) document.getElementById('inputPhuongCSKV').value = r.phuong;
-            document.getElementById('inputEmailCSKV').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            rbacCapNhatTieuDeForm();
+            const f = document.getElementById('rbacFormTieuDe'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => { const o = document.getElementById('inputVaiTroCSKV'); if (o) o.focus(); }, 300);
         }
 
         // Lấy danh sách email đã từng đăng nhập thành công (từ nhật ký hoạt động) để gợi ý cho Admin khi
@@ -3893,28 +3966,28 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
             const oGoiY = document.getElementById('rbacGoiYEmail');
             const oDatalist = document.getElementById('dsGoiYEmailDangNhap');
             try {
-                const snap = await dbFirestore.collection('activity_log').where('hanhDong', '==', 'Đăng nhập').limit(500).get();
-                let emails = [...new Set(snap.docs.map(d => d.data().email).filter(Boolean))].sort();
+                // Lấy các lần đăng nhập GẦN NHẤT. Trước đây lấy 500 bản ghi bất kỳ (không sắp xếp) nên khi nhật ký dài,
+                // tài khoản mới đăng nhập có thể không nằm trong 500 bản ghi đó -> không hiện. Thử truy vấn có sắp xếp theo
+                // thời gian (cần chỉ mục); nếu máy chủ chưa có chỉ mục thì lấy các hoạt động mới nhất rồi lọc ngay trên máy.
+                let docs;
+                try { docs = (await dbFirestore.collection('activity_log').where('hanhDong', '==', 'Đăng nhập').orderBy('thoiGian', 'desc').limit(500).get()).docs; }
+                catch (e1) { docs = (await dbFirestore.collection('activity_log').orderBy('thoiGian', 'desc').limit(800).get()).docs.filter(d => d.data().hanhDong === 'Đăng nhập'); }
+                let emails = [...new Set(docs.map(d => d.data().email).filter(Boolean))].sort();
                 if (emails.length === 0) { oGoiY.classList.add('hidden'); return; }
 
                 const emailBiAn = JSON.parse(localStorage.getItem('rbacEmailDaAnKhoiGoiY') || '[]');
                 emails = emails.filter(e => !emailBiAn.includes(e));
-                if (emails.length === 0) { oGoiY.classList.add('hidden'); return; }
-
                 oDatalist.innerHTML = emails.map(e => `<option value="${escHtml(e)}">`).join('');
-                const emailDaKhaiBao = new Set(danhSachPhanQuyen.map(r => r.email));
-                const nhomDaKhaiBao = emails.filter(e => emailDaKhaiBao.has(e));
-                const nhomChuaKhaiBao = emails.filter(e => !emailDaKhaiBao.has(e));
-
-                const nutEmail = (e) => `<span class="inline-flex items-center gap-0.5 mr-1 mb-1">
-                    <button type="button" onclick="document.getElementById('inputEmailCSKV').value='${escHtml(e)}'" class="underline hover:text-blue-400">${escHtml(e)}</button>
-                    <button type="button" onclick="anEmailKhoiGoiY('${escHtml(e)}')" title="Ẩn email này khỏi gợi ý (nếu chắc chắn không dùng/không cần theo dõi nữa)" class="text-rose-500 hover:text-rose-400 text-[10px] px-0.5">✕</button>
-                </span>`;
-
+                const emailDaCoHoSo = new Set(danhSachPhanQuyen.map(r => r.email));
+                const nhomChuaCoHoSo = emails.filter(e => !emailDaCoHoSo.has(e) && !rbacLaAdminEmail(e));
+                if (nhomChuaCoHoSo.length === 0) { oGoiY.classList.add('hidden'); return; }
                 oGoiY.classList.remove('hidden');
-                oGoiY.innerHTML = `
-                    ${nhomChuaKhaiBao.length > 0 ? `<div class="mb-1"><b class="text-amber-400">⚠️ ${nhomChuaKhaiBao.length} email đã đăng nhập nhưng CHƯA TỪNG khai báo/được cấp quyền gì</b> (khả năng cao là rác, nhầm, hoặc không dùng nữa — bấm ✕ để ẩn khỏi danh sách này):<br>${nhomChuaKhaiBao.map(nutEmail).join('')}</div>` : ''}
-                    ${nhomDaKhaiBao.length > 0 ? `<div><b class="text-emerald-400">✅ ${nhomDaKhaiBao.length} email đã từng khai báo/được cấp quyền</b> (gõ vài ký tự vào ô Email để xem gợi ý):<br>${nhomDaKhaiBao.map(nutEmail).join('')}</div>` : ''}`;
+                oGoiY.innerHTML = `<details class="rb-details"><summary>📧 ${nhomChuaCoHoSo.length} email từng đăng nhập nhưng chưa có hồ sơ trong danh sách</summary>
+                    <p class="rb-nho">Có thể là tài khoản không dùng hoặc nhập nhầm. Bấm "Tạo hồ sơ" để cấp quyền, hoặc ✕ để ẩn khỏi mục này (chỉ ẩn trên máy này, không xóa gì trên máy chủ).</p>
+                    ${nhomChuaCoHoSo.map(e => `<div class="rb-gy"><span class="mail">${escHtml(e)}</span>
+                        <span><button type="button" class="rb-btn btn-chinh" onclick="document.getElementById('inputEmailCSKV').value='${escHtml(e)}';rbacCapNhatTieuDeForm();document.getElementById('inputHoTenCSKV').focus()">Tạo hồ sơ</button>
+                        <button type="button" class="rb-btn rb-xam" title="Ẩn email này khỏi mục này" onclick="anEmailKhoiGoiY('${escHtml(e)}')">✕</button></span></div>`).join('')}
+                </details>`;
             } catch (err) { console.warn("Không tải được danh sách email gợi ý:", err.message); }
         }
 
@@ -8116,7 +8189,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             // loại hình đơn vị/đơn vị/chức vụ/SĐT) ở cổng chặn vẫn giữ nguyên — Admin dùng thông tin đó làm
             // căn cứ tự tay xét duyệt, không ủy quyền duyệt cho ai khác.
             if (isAdmin) {
-                doDayDanhSachPhuongVaoFormRBAC(); doiVaiTroTrongForm();
+                doDayDanhSachPhuongVaoFormRBAC(); doiVaiTroTrongForm(); rbacChonTabTuDong = true; rbacCapNhatTieuDeForm();
                 if (CHE_DO_FIREBASE) {
                     document.getElementById('rbacXuatNhapJson').classList.add('hidden'); // Firestore đồng bộ trực tiếp, không cần xuất/nhập file nữa
                     dangKyLangNghePhanQuyen();
@@ -11367,7 +11440,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
         //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
         // ======================================================================================================
-        const PHIEN_BAN_APP = '2026.10.20';
+        const PHIEN_BAN_APP = '2026.10.21';
         const SB_NHOM = [
             { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
             { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
