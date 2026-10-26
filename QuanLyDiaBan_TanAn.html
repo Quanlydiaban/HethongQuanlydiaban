@@ -1869,8 +1869,8 @@ header.glass-card:has(.nm-bar){position:relative;z-index:46}
                         <div><label class="text-gray-400 block mb-0.5">Số Biên bản xác minh</label><input id="xfSoXM" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
                         <div><label class="text-gray-400 block mb-0.5">Số Thông báo</label><input id="xfSoTB" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
                         <div><label class="text-gray-400 block mb-0.5">Số Biên bản xóa</label><input id="xfSoBB" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
-                        <div class="md:col-span-2"><label class="text-gray-400 block mb-0.5">Dòng đầu mẫu (cơ quan cấp trên)</label><input id="xfCapTren" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
-                        <div><label class="text-gray-400 block mb-0.5">Ký hiệu cuối số (VD: CAP)</label><input id="xfHauTo" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                        <div class="md:col-span-2"><label class="text-gray-400 block mb-0.5">Cơ quan chủ quản (VD: CÔNG AN THÀNH PHỐ CẦN THƠ)</label><input id="xfCapTren" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                        <div class="md:col-span-2"><label class="text-gray-400 block mb-0.5">Dòng tên đơn vị ban hành (để trống = tự ghi theo phường, VD: CÔNG AN PHƯỜNG TÂN AN)</label><input id="xfDonVi" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div><div><label class="text-gray-400 block mb-0.5">Ký hiệu cuối số (VD: CAP)</label><input id="xfHauTo" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
                         <div><label class="text-gray-400 block mb-0.5">Thành phố</label><input id="xfThanhPho" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
                     </div></details>
                 <div class="flex flex-wrap gap-4 text-gray-300"><label class="flex items-center gap-1.5"><input type="checkbox" id="xfTuNop" class="accent-emerald-500"> Công dân đã tự đến làm thủ tục (đóng hồ sơ)</label><label class="flex items-center gap-1.5"><input type="checkbox" id="xfHuy" class="accent-gray-400"> Hủy, không xóa nữa</label></div>
@@ -7251,7 +7251,7 @@ function xsNgayNghiLe() {
         const xsNs = s => { const m = String(s || '').match(/(\d{4})(?!.*\d{4})/); return m ? m[1] : ''; };
         const xsCapDau = s => String(s || '').trim();
         function xsCongNgay(iso, n) { const d = csParseNgay(iso); if (!d) return null; d.setDate(d.getDate() + n); return d; }
-        function xsNgayChu(iso) { const d = csParseNgay(iso); return d ? 'ngày ' + d.getDate() + ' tháng ' + (d.getMonth() + 1) + ' năm ' + d.getFullYear() : 'ngày …… tháng …… năm ……'; }
+        function xsNgayChu(iso) { const d = csParseNgay(iso); if (!d) return 'ngày …… tháng …… năm ……'; const m = d.getMonth() + 1; return 'ngày ' + (d.getDate() < 10 ? '0' : '') + d.getDate() + ' tháng ' + (m < 3 ? '0' : '') + m + ' năm ' + d.getFullYear(); } // Nghị định 30/2020: số chỉ ngày nhỏ hơn 10 và tháng 1, 2 ghi thêm số 0
         function xsFmt(iso) { const d = csParseNgay(iso); return d ? xsP2(d.getDate()) + '/' + xsP2(d.getMonth() + 1) + '/' + d.getFullYear() : ''; }
         const xsPhThuong = () => { const s = khuVucHienTai || ''; return s.charAt(0).toLowerCase() + s.slice(1); };
         const xsTenNgan = () => (khuVucHienTai || '').replace(/^(Phường|Xã|Đặc khu)\s+/i, '');
@@ -7342,7 +7342,7 @@ function xsNgayNghiLe() {
             const ma = xsMaCa(), kvSo = xsSoKV(khuVuc);
             const tkv = (gan.find(c => c.khuVuc === khuVuc && c.truongKV) || {}).truongKV || '';
             return {
-                capTren: cuoi.capTren || may.capTren || 'CÔNG AN TP CẦN THƠ',
+                capTren: cuoi.capTren || may.capTren || 'CÔNG AN THÀNH PHỐ CẦN THƠ',
                 hauTo: cuoi.hauTo || may.hauTo || ma,
                 thanhPho: cuoi.thanhPho || may.thanhPho || 'Cần Thơ',
                 canBo1: cuoi.canBo1 || may.canBo1 || { ten: '', chucVu: 'Phó Trưởng ' + ma + ' ' + xsTenNgan() },
@@ -7429,7 +7429,7 @@ function xsNgayNghiLe() {
             gan('xfKetQua', v.ketQuaXacMinh);
             const cb1 = v.canBo1 || md.canBo1, cb2 = v.canBo2 || md.canBo2;
             gan('xfCB1Ten', cb1.ten); gan('xfCB1CV', cb1.chucVu); gan('xfCB2Ten', cb2.ten); gan('xfCB2CV', cb2.chucVu);
-            gan('xfCapTren', v.capTren || md.capTren); gan('xfHauTo', v.hauTo || md.hauTo); gan('xfThanhPho', v.thanhPho || md.thanhPho);
+            gan('xfCapTren', v.capTren || md.capTren); gan('xfDonVi', v.donViDong); gan('xfHauTo', v.hauTo || md.hauTo); gan('xfThanhPho', v.thanhPho || md.thanhPho);
             gan('xfNgayXM', v.ngayXacMinh || (c ? '' : hn)); gan('xfNgayTB', v.ngayThongBao != null ? v.ngayThongBao : (c ? '' : hn)); gan('xfNgayBB', v.ngayLapBienBan); gan('xfNgayPM', v.ngayCapNhatPhanMem);
             gan('xfSo', v.so != null ? v.so : (c ? '' : xsSoTiepTheo(hn))); gan('xfSoXM', v.soXM); gan('xfSoTB', v.soTB); gan('xfSoBB', v.soBB);
             gan('xfGhiChu', v.ghiChu); xsEl('xfTuNop').checked = !!v.tuNop; xsEl('xfHuy').checked = !!v.huy;
@@ -7526,7 +7526,7 @@ function xsNgayNghiLe() {
             const c = xsSuaId ? Object.assign({}, xsDS.find(x => x.id === xsSuaId)) : { nguon: 'phan_mem' };
             Object.assign(c, d, {
                 canBo1: { ten: xsGt('xfCB1Ten').trim(), chucVu: xsGt('xfCB1CV').trim() }, canBo2: { ten: xsGt('xfCB2Ten').trim(), chucVu: xsGt('xfCB2CV').trim() },
-                capTren: xsGt('xfCapTren').trim(), hauTo: xsGt('xfHauTo').trim(), thanhPho: xsGt('xfThanhPho').trim(),
+                capTren: xsGt('xfCapTren').trim(), donViDong: xsGt('xfDonVi').trim(), hauTo: xsGt('xfHauTo').trim(), thanhPho: xsGt('xfThanhPho').trim(),
                 ketQuaXacMinh: xsGt('xfKetQua').trim(), so: xsGt('xfSo').trim(), soXM: xsGt('xfSoXM').trim(), soTB: xsGt('xfSoTB').trim(), soBB: xsGt('xfSoBB').trim(),
                 ngayXacMinh: xsGt('xfNgayXM'), ngayThongBao: xsGt('xfNgayTB'), ngayLapBienBan: xsGt('xfNgayBB'), ngayCapNhatPhanMem: xsGt('xfNgayPM'), ghiChu: xsGt('xfGhiChu').trim(),
                 tuNop: xsEl('xfTuNop').checked, huy: xsEl('xfHuy').checked
@@ -7581,9 +7581,9 @@ function xsNgayNghiLe() {
             const nn = xsP2(c.soNKKhac || 0), ns = c.namSinh || '……', ch = c.chuHo || '……', dc = c.diaChi || '……', tv = c.thanhVienXoa || [];
             return { nn, ns, ch, dc, tv, soTV: xsP2(tv.length) };
         }
-        function xsHtmlVanBan(c, loai) {
+        function xsHtmlVanBan(c, loai, choWord) {
             const o = escHtml, ph = xsPhThuong(), tp = c.thanhPho || 'Cần Thơ', ten = xsTenNgan(), caPh = 'Công an ' + ph, hau = c.hauTo || xsMaCa();
-            const vt = xsVietTat(), donVi = 'CÔNG AN ' + (vt ? vt + ' ' : '') + ten.toUpperCase();
+            const donVi = c.donViDong || ('CÔNG AN ' + (khuVucHienTai || '').toUpperCase());
             const so = k => (c['so' + k] || c.so || '……');
             const g = xsGiaiTrinhDoiTuong(c), nk = c.loai === 'nhan_khau';
             const kvThuong = String(c.khuVuc || '').toLowerCase();
@@ -7599,17 +7599,20 @@ function xsNgayNghiLe() {
             const luat = '<p class="tl">Căn cứ Luật Cư trú số 68/2020/QH14 ngày 13/11/2020 của Quốc hội, có hiệu lực thi hành ngày 01/7/2021;</p>';
             const nghiDinh = (kt) => '<p class="tl">Căn cứ Nghị định số 154/2024/NĐ-CP ngày 26/11/2024 của chính phủ Quy định chi tiết một số điều và biện pháp thi hành Luật Cư trú năm 2020' + kt + '</p>';
             const doan = s => String(s || '').split(/\n+/).filter(x => x.trim()).map(x => '<p class="tl">' + o(x) + '</p>').join('');
-            const dauTrang = (tieuDe) => `<table class="dau"><tr><td width="42%" align="center" valign="top">${o(c.capTren || 'CÔNG AN TP CẦN THƠ')}<br><b><u>${o(donVi)}</u></b></td><td width="58%" align="center" valign="top"><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b><u>Độc lập – Tự do – Hạnh phúc</u></b></td></tr><tr><td align="center">Số: ${o(soHienTai)}/${kyHieu}-${o(hau)}</td><td align="center"><i>${o(ten)}, ${xsNgayChu(ngayCua)}</i></td></tr></table><p align="center" style="text-align:center;margin-bottom:8pt"><b>${tieuDe}</b><br><b>Về việc xóa đăng ký thường trú</b></p>`;
+            const duongKe = pc => `<table align="center" width="${pc}%" style="border-collapse:collapse;margin:0 auto"><tr><td style="border-top:1px solid #000;font-size:1pt;line-height:1pt;height:1pt;padding:0">&nbsp;</td></tr></table>`;
+            const dauTrang = (tieuDe) => `<table class="dau"><tr><td width="42%" align="center" valign="top" style="font-size:12pt;white-space:nowrap">${o(c.capTren || 'CÔNG AN THÀNH PHỐ CẦN THƠ')}<br><b>${o(donVi)}</b>${duongKe(45)}</td><td width="58%" align="center" valign="top"><b style="font-size:12pt;white-space:nowrap">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><table align="center" style="border-collapse:collapse;margin:0 auto"><tr><td style="border-bottom:1px solid #000;padding:0 2pt 1pt 2pt;font-size:14pt;white-space:nowrap"><b>Độc lập - Tự do - Hạnh phúc</b></td></tr></table></td></tr><tr><td align="center" valign="top" style="font-size:13pt;padding-top:4pt">Số: ${o(soHienTai)}/${kyHieu}-${o(hau)}</td><td align="center" valign="top" style="font-size:14pt;padding-top:4pt"><i>${o(ten)}, ${xsNgayChu(ngayCua)}</i></td></tr></table><p align="center" style="text-align:center;margin:12pt 0 0 0"><b style="font-size:14pt">${tieuDe}</b></p><p align="center" style="text-align:center;margin:0"><b style="font-size:14pt">Về việc xóa đăng ký thường trú</b></p>${duongKe(17)}<p style="margin:0;font-size:6pt">&nbsp;</p>`;
             const canBo = `<p class="tl"><b><u>Chúng tôi gồm</u></b>:</p><p class="tl">1) Đ/c ${cb(c.canBo1)}, Chức vụ: ${o((c.canBo1 || {}).chucVu || '……')}, Đơn vị: ${o(caPh)}, TP. ${o(tp)}.</p><p class="tl">2) Đ/c ${cb(c.canBo2)}, Chức vụ: ${o((c.canBo2 || {}).chucVu || '……')}, Đơn vị: ${o(caPh)}, TP. ${o(tp)}.</p>`;
-            const lap = '<p class="tl">Biên bản lập xong hồi ………… giờ ………… cùng ngày, lập thành 02 bản, đã đọc lại cho những người có tên người cùng nghe, đồng ý và thống nhất cùng ký tên./.</p>';
+            const lap = '<p class="tl" style="page-break-after:avoid">Biên bản lập xong hồi ………… giờ ………… cùng ngày, lập thành 02 bản, đã đọc lại cho những người có tên người cùng nghe, đồng ý và thống nhất cùng ký tên./.</p>';
             const hoXoa = nk ? `nhân khẩu thuộc hộ ông/bà ${o(g.ch)}` : `hộ ông/bà ${o(g.ch)}`;
             const hoDaiDien = `hộ ông/bà: ${o(g.ch)}, sinh năm ${o(g.ns)} cùng ${g.nn} nhân khẩu`;
+            const kyBang = (cot, cao) => `<table class="ky" style="page-break-inside:avoid"><tr style="page-break-inside:avoid">${cot.map(x => `<td width="${x.w}%" align="center" valign="top">${x.tieu}</td>`).join('')}</tr><tr><td colspan="${cot.length}" height="${cao || 64}" style="height:${cao || 64}pt">&nbsp;</td></tr><tr>${cot.map(x => `<td align="center" valign="top"><b>${o(x.ten || '')}</b></td>`).join('')}</tr></table>`;
+            const kyKT = `<b>KT. TRƯỞNG CÔNG AN<br>PHÓ TRƯỞNG CÔNG AN</b>`;
             let thanBai = '';
             if (loai === 'xm') {
                 thanBai = luat + nghiDinh('.') + `<p class="tl">Hôm nay, vào lúc ………… giờ ………… phút, ${xsNgayChu(ngayXM)}, Tại: ${o(diaDiem)}, ${o(ph)}, thành phố ${o(tp)}.</p>` + canBo +
                     `<p class="tl">Tiến hành làm việc cùng với ông/bà: ${o(tkv)}, hiện là ${o(chucTKV)}, ${o(ph)}, TP. ${o(tp)} để xác minh quá trình cư trú của ${hoDaiDien}, có địa chỉ thường trú tại: ${o(g.dc)}.</p>` +
                     '<p class="gi"><b>KẾT QUẢ XÁC MINH</b></p>' + doan(c.ketQuaXacMinh) + lap +
-                    '<table class="ky"><tr><td width="34%" align="center"><b>Người cung cấp thông tin</b></td><td width="33%" align="center"><b>BCH Công an phường</b></td><td width="33%" align="center"><b>Cán bộ lập biên bản</b></td></tr></table>';
+                    kyBang([{ w: 34, tieu: '<b>Người cung cấp thông tin</b>', ten: c.truongKV }, { w: 33, tieu: '<b>BCH Công an ' + o(ph.split(' ')[0]) + '</b>', ten: (c.canBo1 || {}).ten }, { w: 33, tieu: '<b>Cán bộ lập biên bản</b>', ten: (c.canBo2 || {}).ten }]);
             } else if (loai === 'tb') {
                 const doiTuong = nk ? `các nhân khẩu thuộc hộ ông/bà: ${o(g.ch)}, sinh năm: ${o(g.ns)} địa chỉ khẩu thường trú tại: ${o(g.dc)}, gồm ${g.soTV} nhân khẩu: ${o(xsDsNK(g.tv))}` : `hộ ông/bà: ${o(g.ch)} cùng ${g.nn} nhân khẩu trong hộ, có hộ khẩu thường trú tại: ${o(g.dc)}`;
                 const phatHien = nk ? `các nhân khẩu thuộc hộ ông/bà ${o(g.ch)}` : `hộ ông/bà ${o(g.ch)}`;
@@ -7620,7 +7623,7 @@ function xsNgayNghiLe() {
                     `<p class="tl">Qua công tác xác minh và quản lý cư trú, ${o(caPh)} phát hiện ${phatHien} thuộc trường hợp phải xóa đăng ký thường trú theo quy định tại ${o(diemTxt.replace(/^điểm/, 'Điểm'))}. Do đó, Công an ${o(ph.split(' ')[0])} đề nghị ông/bà ${o(g.ch)} liên hệ ${o(caPh)} để nộp hồ sơ làm thủ tục xóa đăng ký thường trú${choNK} theo quy định pháp luật.</p>` +
                     `<p class="tl">Trường hợp quá ${xsP2(XS_SO_NGAY_THONG_BAO)} ngày kể từ ngày ${o(caPh)} thông báo mà ${nk ? 'hộ gia đình ' : 'hộ gia đình '}ông/bà ${o(g.ch)} không nộp hồ sơ làm thủ tục xóa đăng ký thường trú${choNK} thì ${o(caPh)} sẽ tiến hành xóa đăng ký thường trú đối với ${nk ? 'các nhân khẩu trên' : 'hộ ông/bà ' + o(g.ch)} theo quy định.</p>` +
                     `<p class="tl">Với nội dung như trên, ${o(caPh)}, thành phố ${o(tp)} thông báo đến hộ ông/bà ${o(g.ch)} biết.</p>` +
-                    `<table class="ky"><tr><td width="50%" valign="top" style="text-align:left"><b><i>Nơi nhận:</i></b><br><span style="font-size:11pt">- Ông/bà: ${o(g.ch)} (để biết);<br>- Lưu: HS (CSKV).</span></td><td width="50%" align="center" valign="top"><b>KT. TRƯỞNG CÔNG AN<br>PHÓ TRƯỞNG CÔNG AN</b></td></tr></table>`;
+                    `<table class="ky" style="page-break-inside:avoid"><tr><td width="50%" rowspan="3" valign="top" style="text-align:left"><b><i style="font-size:12pt">Nơi nhận:</i></b><br><span style="font-size:11pt">- Ông/bà: ${o(g.ch)} (để biết);<br>- Lưu: HS (CSKV).</span></td><td width="50%" align="center" valign="top">${kyKT}</td></tr><tr><td height="64" style="height:64pt">&nbsp;</td></tr><tr><td align="center" valign="top"><b>${o((c.canBo1 || {}).ten || '')}</b></td></tr></table>`;
             } else {
                 const nd = (c.lyDoNoiDung || '……') + (c.diem ? ' (thuộc trường hợp quy định tại ' + diemTxt + ')' : '');
                 const doiTuongBB = nk ? `nhân khẩu thuộc hộ ông/bà ${o(g.ch)}, sinh năm ${o(g.ns)} có địa chỉ thường trú tại: ${o(g.dc)} gồm ${g.soTV} nhân khẩu: ${o(xsDsNK(g.tv))}.` : `hộ ông/bà ${o(g.ch)}, sinh năm ${o(g.ns)} cùng ${g.nn} nhân khẩu, có địa chỉ thường trú tại: ${o(g.dc)}.`;
@@ -7629,31 +7632,32 @@ function xsNgayNghiLe() {
                     `<p class="tl">Hôm nay, vào lúc ………… giờ ………… phút, ${xsNgayChu(ngayBB)}</p><p class="tl">Tại: ${o(diaDiem)}, ${o(ph)}, thành phố ${o(tp)}.</p>` + canBo +
                     `<p class="tl">Đã tiếp xúc làm việc với ông/bà ${o(tkv)}, hiện là ${o(chucTKV)}, ${o(ph)}, TP. ${o(tp)}, để tiến hành lập biên bản về việc xóa đăng ký thường trú đối với ${doiTuongBB}</p>` +
                     `<p class="tl">Lý do xóa đăng ký thường trú: <i>${o(nd)}.</i></p>` + lap +
-                    '<table class="ky"><tr><td width="50%" align="center" valign="top"><b>Cán bộ lập biên bản</b></td><td width="50%" align="center" valign="top"><b>KT. TRƯỞNG CÔNG AN<br>PHÓ TRƯỞNG CÔNG AN</b></td></tr><tr><td colspan="2" style="height:90pt"></td></tr><tr><td width="50%" align="center"><b>NGƯỜI CHỨNG KIẾN</b></td><td width="50%" align="center"><b>NGƯỜI THAM GIA</b></td></tr></table>';
+                    kyBang([{ w: 50, tieu: '<b>Cán bộ lập biên bản</b>', ten: (c.canBo2 || {}).ten }, { w: 50, tieu: kyKT, ten: (c.canBo1 || {}).ten }], 56) + kyBang([{ w: 50, tieu: '<b>NGƯỜI CHỨNG KIẾN</b>' }, { w: 50, tieu: '<b>NGƯỜI THAM GIA</b>' }], 56);
             }
             const tieuDe = loai === 'xm' ? 'BIÊN BẢN XÁC MINH' : loai === 'tb' ? 'THÔNG BÁO' : 'BIÊN BẢN';
             return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="utf-8"><title>${o(XS_VB[loai])}</title>
 <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
 <style>
-@page WordSection1 { size: 21.0cm 29.7cm; margin: 1.8cm 1.8cm 1.8cm 3.0cm; }
+/* Thể thức theo Nghị định 30/2020/NĐ-CP: A4; lề trên 20mm, dưới 20mm, trái 30mm, phải 20mm; Times New Roman 13; số trang ở giữa lề trên từ trang 2 */
+@page WordSection1 { size: 21.0cm 29.7cm; margin: 2.0cm 2.0cm 2.0cm 3.0cm; mso-header-margin: 1.0cm; mso-footer-margin: 1.0cm; ${choWord ? 'mso-header: h1; mso-first-header: fh1; mso-title-page: yes;' : ''} }
 div.WordSection1 { page: WordSection1; }
-body { font-family: "Times New Roman", serif; font-size: 14pt; }
-p { margin: 0 0 3pt 0; line-height: 115%; }
+body { font-family: "Times New Roman", serif; font-size: 13pt; }
+p { margin: 0 0 6pt 0; line-height: 112%; }
 p.tl { text-align: justify; text-indent: 1.27cm; }
 p.gi { text-align: center; margin-top: 6pt; }
-p.tieude { margin-bottom: 8pt; }
 table.dau, table.ky { width: 100%; border-collapse: collapse; }
-table.dau td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 1pt 2pt; }
-table.dau { margin-bottom: 10pt; }
+table.dau td { font-family: "Times New Roman", serif; padding: 0 2pt; }
 table.ky { margin-top: 6pt; }
-table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2pt; height: 80pt; }
+table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2pt; }
 </style></head>
-<body><div class="WordSection1">${dauTrang(tieuDe)}${thanBai}</div></body></html>`;
+<body><div class="WordSection1">${dauTrang(tieuDe)}${thanBai}</div>${choWord ? `
+<div style="mso-element:header" id="h1"><p align="center" style="text-align:center;margin:0"><span style="mso-field-code:' PAGE '"><span style="mso-no-proof:yes">2</span></span></p></div>
+<div style="mso-element:header" id="fh1"><p style="margin:0">&nbsp;</p></div>` : ''}</body></html>`;
         }
         function xsTaiVanBan(loai, dinhDang) {
             const id = xsEl('xvNut').dataset.id, c = xsDS.find(x => x.id === id); if (!c) return;
-            const html = xsHtmlVanBan(c, loai);
+            const html = xsHtmlVanBan(c, loai, dinhDang !== 'in');
             const tenFile = { xm: 'BBXM', tb: 'TB', bb: 'BB' }[loai] + '_XoaDKTT_' + (c.so || 'chuaso') + '_' + boDauTiengViet(c.chuHo || '').replace(/[^\w]+/g, '_');
             if (dinhDang === 'in') {
                 const w = window.open('', '_blank'); if (!w) return alert('Trình duyệt đang chặn cửa sổ bật lên (pop-up). Hãy cho phép rồi bấm lại.');
