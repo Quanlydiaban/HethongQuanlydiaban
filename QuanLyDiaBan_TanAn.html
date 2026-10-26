@@ -2831,6 +2831,13 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
             authFirebase.onAuthStateChanged(async (user) => {
                 if (user) {
                     const quyen = await xacDinhQuyenTuFirestore(user.email);
+                    // CHẶN GMAIL ẢO: tài khoản email+mật khẩu CHƯA cấp quyền mà chưa xác minh được hộp thư thật
+                    // thì không được đi tiếp (không tạo hồ sơ chờ, không khai báo). Tài khoản đã được cấp quyền
+                    // và tài khoản Google (Google đã xác minh sẵn) không bị ảnh hưởng.
+                    if (quyen.role === 'chua_cap_quyen' && !user.emailVerified) {
+                        await lgYeuCauXacMinhEmail(user);
+                        return;
+                    }
                     // BẮT BUỘC lớp bảo mật thứ 2 (mã TOTP từ app Authenticator) cho MỌI tài khoản có quyền
                     // xem dữ liệu thật (Admin/Chỉ huy TP/Chỉ huy phường/CSKV) — không chỉ riêng Admin như
                     // trước đây. Tài khoản "chưa cấp quyền" (mới đăng ký, chưa xem được gì) thì bỏ qua bước
@@ -2983,6 +2990,10 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
             if (laEmailDeNhamLan(email)) {
                 return alert("⛔ Email \"" + email + "\" là dạng CHUNG CHUNG, dễ gây nhầm lẫn không biết là cán bộ nào. Vui lòng đăng ký bằng đúng địa chỉ Gmail công vụ/cá nhân thật của anh/chị, không dùng chữ ví dụ trong ô nhập.");
             }
+            const phanTruocMail = email.split('@')[0];
+            if (/@gmail\.com$/i.test(email) && phanTruocMail.replace(/\./g, '').length < 6) {
+                return alert("⛔ Gmail thật có phần trước @ tối thiểu 6 ký tự. Email \"" + email + "\" không thể là Gmail thật. Hãy dùng đúng Gmail của anh/chị.");
+            }
             const loiMatKhau = kiemTraDoMạnhMatKhau(matKhau);
             if (loiMatKhau.length > 0) {
                 return alert("❌ Mật khẩu CHƯA đủ mạnh, còn thiếu:\n\n• " + loiMatKhau.join("\n• ") + "\n\nVí dụ mật khẩu hợp lệ: Cskv@2026 hoặc Tan#An079");
@@ -2990,7 +3001,7 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
             if (!confirm("Đăng ký tài khoản mới với email " + email + "?\n\nLưu ý: tài khoản mới sẽ CHƯA có quyền xem dữ liệu nào cho đến khi Admin cấp quyền qua mục Phân quyền (RBAC).")) return;
             try {
                 await authFirebase.createUserWithEmailAndPassword(email, matKhau);
-                alert("✅ Đăng ký thành công! Vui lòng liên hệ Admin (" + ADMIN_EMAILS[0] + ") để được cấp quyền xem dữ liệu.");
+                // Việc gửi thư xác minh và thông báo do onAuthStateChanged → lgYeuCauXacMinhEmail xử lý.
             } catch (err) {
                 alert("❌ Đăng ký thất bại: " + (err.message || err.code));
             }
@@ -3007,6 +3018,24 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
         function lgHienMatKhau() {
             const o = document.getElementById('matKhauInput'), b = document.getElementById('btnHienMk');
             const hien = o.type === 'password'; o.type = hien ? 'text' : 'password'; b.innerText = hien ? '🙈 Ẩn' : '👁 Hiện';
+        }
+
+        async function lgYeuCauXacMinhEmail(user) {
+            const email = user.email || '';
+            const khoa = 'lgXacMinhLuc_' + email.toLowerCase();
+            let lan = 0; try { lan = parseInt(localStorage.getItem(khoa) || '0', 10) || 0; } catch (e) {}
+            let guiDuoc = false, loiGui = '';
+            if (Date.now() - lan > 60000) {
+                try { await user.sendEmailVerification({ url: location.origin + location.pathname }); guiDuoc = true; }
+                catch (e1) { try { await user.sendEmailVerification(); guiDuoc = true; } catch (e2) { loiGui = (e2 && (e2.code || e2.message)) || ''; } }
+                if (guiDuoc) { try { localStorage.setItem(khoa, String(Date.now())); } catch (e) {} }
+            }
+            try { await authFirebase.signOut(); } catch (e) {}
+            document.getElementById('loginScreen').classList.remove('hidden');
+            lgThongBao('📧 Email <b>' + lgEsc(email) + '</b> <b>chưa được xác minh là hộp thư thật</b>, nên chưa được vào hệ thống.<ul>' +
+                (guiDuoc ? '<li>Hệ thống vừa gửi thư xác minh tới email này. Mở thư (xem cả Thư rác), bấm đường link xác minh.</li>' : loiGui ? '<li>Chưa gửi được thư xác minh (' + lgEsc(loiGui) + '). Thử lại sau ít phút.</li>' : '<li>Thư xác minh đã gửi trong 1 phút qua, hãy kiểm tra hộp thư (cả Thư rác).</li>') +
+                '<li>Xác minh xong, quay lại đăng nhập lại là được. Sau đó khai báo thông tin để Admin duyệt.</li>' +
+                '<li>Email không có thật (VD: a@gmail.com) thì không nhận được thư và không vào được.</li></ul>', 'tin');
         }
 
         async function dangNhapGoogle() {
@@ -11558,7 +11587,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
         //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
         // ======================================================================================================
-        const PHIEN_BAN_APP = '2026.10.22';
+        const PHIEN_BAN_APP = '2026.10.23';
         const SB_NHOM = [
             { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
             { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
