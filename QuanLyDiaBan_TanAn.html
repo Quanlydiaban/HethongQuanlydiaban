@@ -385,6 +385,36 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
 #loginScreen .lg-ten{font-size:clamp(1.3rem,4.6vw,1.6rem)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;line-height:1.25}
 #loginScreen .lg-card>.lg-dau{display:block}
 .lg-logo .logo-cand-img{width:100%;height:100%;border-radius:50%}
+
+/* ---- Liên kết đối tượng KV3 ---- */
+.dt-chip{display:inline-block;font-size:12.5px;font-weight:600;line-height:1.3;padding:.12rem .55rem;border-radius:999px;border:1px solid;cursor:default;margin:.1rem 0}
+button.dt-chip{cursor:pointer}
+.dt-chip.pl{background:rgba(217,165,32,.16);border-color:var(--cand-vang);color:var(--cand-vang-t)}
+.dt-chip.nv{background:rgba(58,168,118,.16);border-color:var(--cand-xanh-s);color:#9be3c0}
+.dt-them{font-size:11.5px;color:#8fa0bf;text-decoration:underline;background:none;border:0;cursor:pointer;padding:.1rem 0}
+.dt-them:hover{color:var(--cand-vang-t)}
+.dt-link{font-size:12.5px;font-weight:600;color:var(--cand-vang-t);text-decoration:underline;background:none;border:0;cursor:pointer;margin-left:.3rem}
+#dtKhungHo:not(:empty){margin:.4rem 0}
+.dt-tt,.dt-gy{font-size:13.5px;line-height:1.5;padding:.6rem .8rem;border-radius:10px;border:1px solid rgba(130,160,210,.3);background:rgba(10,20,40,.7);color:#e6ebf5}
+.dt-gy{border-color:var(--cand-vang);background:rgba(217,165,32,.1)}
+.dt-tt ul{margin:.3rem 0 0;list-style:none;padding:0}.dt-tt li{margin:.25rem 0}
+.dt-gy-d{margin-top:.4rem}.dt-ly{font-size:12.5px;color:#c3cfe4;margin:.1rem 0 .1rem .2rem}
+.dt-vang{color:var(--cand-vang-t);font-weight:600}.dt-do{color:#ff9b9b;font-weight:700}
+.dt-nhomhien{font-size:13.5px;margin-top:.4rem;padding:.35rem .6rem;border-radius:8px;color:#9fb0cc}
+.dt-nhomhien.pl{background:rgba(217,165,32,.14);color:var(--cand-vang-t)}.dt-nhomhien.nv{background:rgba(58,168,118,.14);color:#9be3c0}
+.cd-khung{margin-top:10px;padding:10px;border:1px solid rgba(220,38,38,.35);border-radius:10px;background:rgba(127,29,29,.12)}
+.cd-bm{margin-top:10px}.cd-bm-t{font-weight:700;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cd-gc{color:#cbd5e1;font-size:13px}.cd-gd{margin:8px 0 4px;color:#fca5a5;font-weight:600;font-size:13px}
+.cd-luoi{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:6px}
+.cd-nut{text-align:left;padding:8px 10px;border-radius:8px;background:#1f2937;border:1px solid #374151;color:#e5e7eb;font-size:13px;cursor:pointer}
+.cd-nut:hover{border-color:#ef4444;background:#2b1d1d}.cd-ma{display:inline-block;background:#7f1d1d;color:#fff;border-radius:4px;padding:0 6px;margin-right:4px;font-weight:700;font-size:12px}
+.cd-ls{font-size:12.5px;color:#cbd5e1;padding-left:16px;list-style:disc}
+.cd-chia{display:flex;gap:10px;min-height:0;flex:1;overflow:hidden}.cd-trai{width:38%;overflow:auto;padding-right:6px}.cd-phai{flex:1;min-width:0}
+.cd-xem{width:100%;height:76vh;background:#fff;border-radius:6px;border:0}
+.cd-luoi-f{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cd-f{display:flex;flex-direction:column;gap:2px}.cd-f.cd-r{grid-column:1/-1}
+.cd-f label,.cd-f>span{color:#9ca3af;font-size:12px}.cd-o{width:100%;background:#111827;border:1px solid #374151;border-radius:6px;padding:6px 8px;color:#fff;font-size:13px}
+.cd-chk{display:flex;gap:6px;align-items:center;color:#e5e7eb;font-size:13px}.cd-kt{margin-top:10px;padding:8px;border:1px dashed #6b7280;border-radius:8px;display:grid;gap:8px}
+@media(max-width:820px){.cd-chia{flex-direction:column;overflow:auto}.cd-trai{width:100%}.cd-xem{height:60vh}.cd-luoi-f{grid-template-columns:1fr}}
 </style></head>
 <body class="bg-gray-950 text-white min-h-screen p-2 md:p-4 select-none">
 
@@ -802,7 +832,8 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
                                 <span>Ghi chú:</span>
                                 <button type="button" onclick="ghiAmVaoOChu('editGhiChu', this)" class="no-print bg-gray-700 hover:bg-gray-600 text-white text-[10px] px-2 py-0.5 rounded-full">🎤 Nói để ghi chú</button>
                             </label>
-                            <textarea id="editGhiChu" rows="2" placeholder="Ghi chú tay... (hoặc bấm 🎤 để nói)" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white w-full"></textarea>
+                            <textarea id="editGhiChu" rows="2" oninput="dtVeKhungHo()" onchange="dtVeKhungHo()" placeholder="Ghi chú tay... (hoặc bấm 🎤 để nói)" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-white w-full"></textarea>
+                            <div id="dtKhungHo" class="no-print"></div>
 
                             <div class="flex items-center justify-between bg-gray-800 rounded px-2 py-1.5 mt-1">
                                 <span class="text-gray-400">🗓️ Kiểm tra định kỳ gần nhất: <span id="hienThiNgayKiemTra" class="text-white font-medium">Chưa từng</span></span>
@@ -1571,6 +1602,77 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
         </div>
     </div>
 
+    <!-- ============ GẮN DIỆN ĐỐI TƯỢNG QUẢN LÝ (liên kết nhân khẩu ↔ hồ sơ KV3) ============ -->
+    <div id="dtgModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-[65]">
+        <div class="glass-card w-full max-w-lg rounded-xl shadow-2xl p-4 space-y-3 text-sm">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold">🗂️ Gắn diện đối tượng quản lý</h3>
+                <button onclick="document.getElementById('dtgModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-xl">&times;</button>
+            </div>
+            <div>
+                <label class="block text-gray-300 mb-1 font-medium">Nhân khẩu</label>
+                <select id="dtg_tv" onchange="dtGanDoiNguoi()" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-2 text-white"></select>
+            </div>
+            <div>
+                <label class="block text-gray-300 mb-1 font-medium">Diện đối tượng <span class="text-rose-500">*</span></label>
+                <select id="dtg_dien" onchange="dtGanDoiDien()" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-2 text-white"></select>
+                <p id="dtg_nhom" class="dt-nhomhien">Chọn diện để xem thuộc nhóm nào.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div><label class="block text-gray-300 mb-1">Bắt đầu quản lý</label><input type="date" id="dtg_tu" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-2 text-white"></div>
+                <div><label class="block text-gray-300 mb-1">Hết thời hạn (thử thách…)</label><input type="date" id="dtg_den" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-2 text-white"></div>
+            </div>
+            <div>
+                <label class="block text-gray-300 mb-1">Quyết định / giấy tờ căn cứ</label>
+                <input type="text" id="dtg_qd" placeholder="VD: Quyết định số .../QĐ-TA ngày ..." class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-2 text-white">
+            </div>
+            <p id="dtg_hs" class="text-gray-300 text-[13px]"></p>
+            <div class="flex flex-wrap justify-end gap-2 border-t border-gray-700 pt-2">
+                <button onclick="document.getElementById('dtgModal').classList.add('hidden')" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded">Đóng</button>
+                <button onclick="dtLuuGan(true)" class="btn-phu px-4 py-2 rounded font-bold">Lưu &amp; mở hồ sơ KV3</button>
+                <button onclick="dtLuuGan(false)" class="btn-chinh px-4 py-2 rounded font-bold">💾 Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ BỘ MẪU VĂN BẢN: LẬP VĂN BẢN & THÔNG TIN ĐƠN VỊ ============ -->
+    <div id="cdvModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-2 z-[75]">
+        <div class="glass-card w-full max-w-6xl rounded-xl shadow-2xl p-3 text-sm flex flex-col" style="max-height:96vh">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-2">
+                <h3 class="font-bold" id="cdvTieuDe">Lập văn bản</h3>
+                <button onclick="document.getElementById('cdvModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-xl">&times;</button>
+            </div>
+            <div class="cd-chia">
+                <div class="cd-trai">
+                    <div id="cdvTruong" class="cd-luoi-f"></div>
+                    <div id="cdvKetThuc" class="hidden cd-kt">
+                        <label class="cd-chk"><input type="checkbox" id="cdv_ketThuc"> Ghi nhận <b>đã kết thúc quản lý</b> trong hồ sơ khi tạo văn bản</label>
+                        <label class="cd-f cd-r"><span>Chuyển hồ sơ sang diện khác (nếu có)</span><select id="cdv_chuyenDien" class="cd-o"></select></label>
+                    </div>
+                </div>
+                <div class="cd-phai"><iframe id="cdvXem" title="Xem trước" class="cd-xem"></iframe></div>
+            </div>
+            <div class="flex flex-wrap justify-end gap-2 border-t border-gray-700 pt-2 mt-2">
+                <button onclick="document.getElementById('cdvModal').classList.add('hidden')" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded">Đóng</button>
+                <button onclick="cdXuat('in')" class="btn-phu px-4 py-2 rounded font-bold">🖨️ In</button>
+                <button onclick="cdXuat('word')" class="btn-chinh px-4 py-2 rounded font-bold">📥 Tải Word (.doc)</button>
+            </div>
+        </div>
+    </div>
+    <div id="cdchModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-[80]">
+        <div class="glass-card w-full max-w-2xl rounded-xl shadow-2xl p-4 text-sm space-y-3" style="max-height:92vh;overflow:auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h3 class="font-bold">⚙️ Thông tin đơn vị &amp; cán bộ (dùng chung cho bộ mẫu)</h3>
+                <button onclick="document.getElementById('cdchModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-xl">&times;</button>
+            </div>
+            <p class="text-gray-400 text-[13px]">Lưu trên máy này, theo từng phường. Chỉ cần nhập một lần.</p>
+            <div id="cdchTruong" class="cd-luoi-f"></div>
+            <div class="flex justify-end gap-2 border-t border-gray-700 pt-2">
+                <button onclick="document.getElementById('cdchModal').classList.add('hidden')" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded">Đóng</button>
+                <button onclick="cdLuuCauHinh()" class="btn-chinh px-4 py-2 rounded font-bold">💾 Lưu</button>
+            </div>
+        </div>
+    </div>
     <!-- ============ QUẢN LÝ ĐỐI TƯỢNG (KV3) — modal danh sách / mục lục ============ -->
     <div id="doiTuongModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-50">
         <div class="glass-card w-full max-w-4xl rounded-xl shadow-2xl p-4 space-y-3 border border-rose-800 text-xs max-h-[90vh] overflow-y-auto">
@@ -1585,6 +1687,7 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
                 <select id="locDienDoiTuong" onchange="renderDanhSachDoiTuong()" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
                     <option value="">-- Tất cả diện --</option>
                 </select>
+                <select id="locNhomDoiTuong" onchange="renderDanhSachDoiTuong()" class="bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"><option value="">-- Cả 2 nhóm --</option><option value="phap_luat">⚖️ Quản lý theo pháp luật</option><option value="nghiep_vu">🎯 Quản lý theo nghiệp vụ</option></select>
                 <button onclick="moFormDoiTuong(null)" class="bg-rose-600 hover:bg-rose-700 px-3 py-1.5 rounded font-bold">➕ Thêm Đối Tượng</button>
                 <button onclick="xuatMucLucDoiTuongExcel()" class="bg-emerald-700 hover:bg-emerald-600 px-3 py-1.5 rounded font-medium">📊 Xuất Mục Lục Excel (KV3)</button>
             </div>
@@ -1605,7 +1708,7 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
             <div class="grid grid-cols-2 gap-2">
                 <div class="col-span-2">
                     <label class="text-gray-400 block mb-0.5">Diện đối tượng <span class="text-rose-500">*</span></label>
-                    <select id="dt_dienDoiTuong" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+                    <select id="dt_dienDoiTuong" onchange="dtFormDoiDien()" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
                         <option value="">-- Chọn diện đối tượng --</option>
                         <optgroup label="Quản lý theo quy định pháp luật">
                             <option>Cấm đi khỏi nơi cư trú</option>
@@ -1634,6 +1737,28 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
                             <option>Khác (ghi rõ ở Ghi chú)</option>
                         </optgroup>
                     </select>
+                    <p id="dt_nhomHienThi" class="dt-nhomhien"></p>
+                    <div class="grid grid-cols-3 gap-2 mt-2">
+                        <div><label class="text-gray-400 block mb-0.5">Bắt đầu quản lý</label><input type="date" id="dt_tuNgayQL" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                        <div><label class="text-gray-400 block mb-0.5">Hết thời hạn quản lý</label><input type="date" id="dt_denNgayQL" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                        <div><label class="text-gray-400 block mb-0.5">Quyết định căn cứ</label><input type="text" id="dt_quyetDinh" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                    </div>
+                    <input type="hidden" id="dt_hoId">
+                    <button type="button" id="dt_btnMoHo" onclick="dtMoHoCuaDoiTuong(document.getElementById('dtId').value)" class="hidden dt-link">🏠 Mở hộ liên kết ▸</button>
+                    <div id="dtCD" class="hidden cd-khung">
+                        <div class="cd-bm-t">⛓️ Thông tin Lệnh/Quyết định cấm đi khỏi nơi cư trú</div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <div><label class="text-gray-400 block mb-0.5">Loại văn bản</label><select id="cd_loaiLenh" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"><option>Lệnh</option><option>Quyết định</option></select></div>
+                            <div><label class="text-gray-400 block mb-0.5">Số</label><input id="cd_soLenh" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                            <div><label class="text-gray-400 block mb-0.5">Ngày ban hành</label><input type="date" id="cd_ngayLenh" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                            <div><label class="text-gray-400 block mb-0.5">Đến hết ngày (chữ nếu có)</label><input id="cd_denNgayChu" placeholder="VD: ngày 20/12/2026" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                            <div class="col-span-2 md:col-span-4"><label class="text-gray-400 block mb-0.5">Cơ quan ra Lệnh/Quyết định</label><input id="cd_coQuan" placeholder="VD: Cơ quan CSĐT Công an TP …" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                            <div class="col-span-2 md:col-span-4"><label class="text-gray-400 block mb-0.5">Hành vi phạm tội (tội danh)</label><input id="cd_hanhVi" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                            <div class="col-span-2 md:col-span-4"><label class="text-gray-400 block mb-0.5">Nơi làm việc</label><input id="cd_noiLamViec" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                        </div>
+                        <input type="hidden" id="cd_soQDCB"><input type="hidden" id="cd_ngayQDCB">
+                        <div id="dtBoMau"></div>
+                    </div>
                 </div>
                 <div><label class="text-gray-400 block mb-0.5">Số hồ sơ (nếu có)</label><input id="dt_soHoSo" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
                 <div class="flex items-end gap-2">
@@ -1787,6 +1912,12 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
                 <select id="xoaDLPhamVi" onchange="doiPhamViXoaDL()" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
                     <option value="">-- Chọn khu vực cụ thể để xóa --</option>
                 </select>
+            </div>
+            <div class="bg-gray-900/60 border border-gray-700 rounded-lg p-2.5 space-y-1.5">
+                <p class="text-gray-300 font-semibold">Xóa kèm (tùy chọn):</p>
+                <label class="flex items-start gap-2 text-gray-300"><input type="checkbox" id="xoaDL_kv3" class="mt-0.5"> <span>Hồ sơ <b>đối tượng quản lý (KV3)</b> trong phạm vi đã chọn</span></label>
+                <label id="xoaDL_tvWrap" class="flex items-start gap-2 text-gray-300"><input type="checkbox" id="xoaDL_tv" class="mt-0.5"> <span>Khai báo <b>tạm vắng</b> (chỉ khi chọn <b>toàn bộ phường</b>)</span></label>
+                <p class="text-emerald-300/90 text-[11px]">💾 Trước khi xóa, máy tự tải về <b>file sao lưu</b> (hộ + KV3 + tạm vắng thuộc phạm vi xóa). Nếu không tải/ghi được file, việc xóa sẽ bị hủy.</p>
             </div>
             <div id="khungXacNhanXoaToanPhuong" class="hidden bg-rose-950/40 border border-rose-700/50 rounded-lg p-2.5 space-y-1.5">
                 <p class="text-rose-300 font-semibold">⚠️ Xóa TOÀN BỘ phường — gõ đúng tên phường để xác nhận:</p>
@@ -2815,6 +2946,7 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
             ghiNhatKy('Đăng nhập', 'Vai trò: ' + quyen.role);
             dangKyLangNgheQuyenCuaToi(user.email);
             kiemTraNhacSaoLuu();
+            setTimeout(() => { try { dangKyLangNgheDoiTuongNenTang(); } catch (e) { } }, 1500);
         }
 
         function khoiTaoCheDoFirebase() {
@@ -6338,7 +6470,7 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
                     <td class="p-2 text-blue-300 font-mono">${ho.hsct ? escHtml(ho.hsct) : '<span class="text-gray-500 italic">— (không áp dụng)</span>'}</td>
                     <td class="p-2 text-cyan-300 font-mono">${escHtml(cccdChuHo)}</td>
                     <td class="p-2 font-semibold text-white">${escHtml(ho.chuHo)}</td>
-                    <td class="p-2 text-gray-300">${escHtml(ho.diaChi)}${vietHuyHieuNhanDacBiet(ho)}</td>
+                    <td class="p-2 text-gray-300">${escHtml(ho.diaChi)}${vietHuyHieuNhanDacBiet(ho)}${dtHuyHieuHo(ho)}</td>
                     <td class="p-2"><span class="px-2 py-0.5 rounded text-[10px] border ${styleNV}">${dien}</span></td>
                     <td class="p-2 text-center"><span class="bg-blue-900/60 text-blue-300 px-2 rounded-full font-bold">${ho.thanhVien ? ho.thanhVien.length : 0}</span></td>
                     <td class="p-2 text-center"><button onclick="xemChiTiet(${originalIndex})" class="bg-blue-600 hover:bg-blue-700 px-2.5 py-1 rounded text-[11px] shadow">Chi tiết</button> <button onclick="chiDuongNhanhDenHo(${originalIndex})" title="Chỉ đường nhanh đến hộ này (cần xác nhận toạ độ trước)" class="bg-teal-700 hover:bg-teal-600 px-2 py-1 rounded text-[11px] shadow">🧭</button></td>
@@ -6446,6 +6578,7 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
                         <td class="p-1.5">
                             <input type="text" value="${tv.hoTen || ''}" onchange="capNhatTV(${i}, 'hoTen', this.value)" class="bg-transparent border-b border-gray-600 w-full text-white px-1">
                             <input type="text" placeholder="+ Nơi ở hiện tại (nếu khác nơi đăng ký)" value="${escHtml(tv.noiOHienTai || '')}" onchange="capNhatTV(${i}, 'noiOHienTai', this.value)" class="no-print bg-transparent text-[9px] text-cyan-300 placeholder-gray-600 w-full px-1 mt-0.5 border-none focus:outline-none focus:ring-0">
+                            <div id="dtChip_${i}" class="no-print">${dtChipNguoi(ho, tv, i)}</div>
                         </td>
                         <td class="p-1.5"><input type="text" value="${tv.quanHe || ''}" onchange="capNhatTV(${i}, 'quanHe', this.value)" class="bg-transparent border-b border-gray-600 w-full text-gray-300 px-1"></td>
                         <td class="p-1.5"><input type="text" value="${tv.ngaySinh || ''}" onchange="capNhatTV(${i}, 'ngaySinh', this.value)" class="bg-transparent border-b border-gray-600 w-full text-gray-400 px-1"></td>
@@ -6480,6 +6613,7 @@ table:has(>tbody#tableBody)>thead>tr{background:linear-gradient(180deg,#14284d,#
             }
             
             document.getElementById('detailModal').classList.remove('hidden');
+            try { dtVeKhungHo(); } catch (e) { }
             // BỔ SUNG INVALIDATE SIZE ĐỂ BẢN ĐỒ TRONG MODAL RENDER ĐÚNG KÍCH THƯỚC KHI HIỂN THỊ
             setTimeout(() => {
                 khoiTaoBanDoLeaflet();
@@ -8803,6 +8937,29 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
         function doiPhamViXoaDL() {
             const laToanPhuong = document.getElementById('xoaDLPhamVi').value === '__TOAN_PHUONG__';
             document.getElementById('khungXacNhanXoaToanPhuong').classList.toggle('hidden', !laToanPhuong);
+            const w = document.getElementById('xoaDL_tvWrap'), c = document.getElementById('xoaDL_tv');
+            if (w) { w.style.opacity = laToanPhuong && currentUser.role !== 'can_bo' ? '1' : '.45'; c.disabled = !(laToanPhuong && currentUser.role !== 'can_bo'); if (c.disabled) c.checked = false; }
+        }
+        // Lấy các bản ghi KV3 / tạm vắng thuộc phạm vi xóa (đọc từ Firestore); khu vực suy từ trường khuVuc, nếu thiếu thì từ nơi ở/địa chỉ
+        async function xoaDLLayPhuTroi(phamVi, tenPhuong, laToanPhuong, muonKV3, muonTV) {
+            const kq = { kv3: [], tv: [] };
+            if (!CHE_DO_FIREBASE) return kq;
+            if (muonKV3) {
+                const sn = await dbFirestore.collection('doi_tuong_quan_ly').where('phuong', '==', tenPhuong).get();
+                kq.kv3 = sn.docs.filter(d => { if (laToanPhuong) return true; const x = d.data(); return (x.khuVuc || layNhanKhuVucTuDiaChi(x.noiOHienTai || x.noiThuongTru || '', x.phuong) || 'Khu Vực 1') === phamVi; }).map(d => ({ ref: d.ref, id: d.id, data: d.data() }));
+            }
+            if (muonTV && laToanPhuong) {
+                const sn = await dbFirestore.collection('khai_bao_tam_vang').where('phuong', '==', tenPhuong).get();
+                kq.tv = sn.docs.map(d => ({ ref: d.ref, id: d.id, data: d.data() }));
+            }
+            return kq;
+        }
+        function xoaDLTaiSaoLuu(tenPhuong, phamViNhan, hoXoa, pt) {
+            const goi = { loai: "SAO_LUU_QUAN_LY_DIA_BAN", phienBan: 2, ngayXuat: new Date().toISOString(), phamVi: tenPhuong + ' - ' + phamViNhan + ' (sao lưu trước khi xóa)',
+                soLuongHo: hoXoa.length, duLieu: hoXoa, doiTuongKV3: pt.kv3.map(x => Object.assign({ id: x.id }, x.data)), khaiBaoTamVang: pt.tv.map(x => Object.assign({ id: x.id }, x.data)) };
+            const blob = new Blob([JSON.stringify(goi)], { type: 'application/json' }), a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download = 'SaoLuuTruocKhiXoa_' + boDauTiengViet(tenPhuong).replace(/\s+/g, '_') + '_' + new Date().toISOString().replace(/[:T]/g, '-').slice(0, 16) + '.json';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
         }
 
         async function thucHienXoaDuLieu() {
@@ -8819,9 +8976,23 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                 if (!confirm("Xác nhận xóa " + soHoBiXoa + " hộ thuộc " + phamVi + " (" + phuongDangXoaDL + ")? KHÔNG THỂ hoàn tác.")) return;
             }
 
+            const muonKV3 = !!(document.getElementById('xoaDL_kv3') && document.getElementById('xoaDL_kv3').checked);
+            const muonTV = !!(document.getElementById('xoaDL_tv') && document.getElementById('xoaDL_tv').checked && !document.getElementById('xoaDL_tv').disabled);
+            let phuTroi = { kv3: [], tv: [] };
+            try {
+                const hoXoa = laToanPhuong ? danhSachXoaDLHienTai.slice() : danhSachXoaDLHienTai.filter(h => (layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1') === phamVi);
+                phuTroi = await xoaDLLayPhuTroi(phamVi, phuongDangXoaDL, laToanPhuong, muonKV3, muonTV);
+                if (muonKV3 || muonTV) {
+                    if (!confirm('Sẽ xóa kèm: ' + (muonKV3 ? phuTroi.kv3.length + ' hồ sơ đối tượng KV3' : '') + (muonKV3 && muonTV ? ' và ' : '') + (muonTV ? phuTroi.tv.length + ' khai báo tạm vắng' : '') + '. Tiếp tục?')) return;
+                }
+                xoaDLTaiSaoLuu(phuongDangXoaDL, laToanPhuong ? 'toàn phường' : phamVi, hoXoa, phuTroi);
+                await new Promise(r => setTimeout(r, 1200));
+                if (!confirm('Máy đã tải file sao lưu (kiểm tra thanh tải xuống/thư mục Tải về).\n\nBấm OK CHỈ KHI đã thấy file. Bấm Hủy để dừng, chưa xóa gì.')) return;
+            } catch (err) { return alert('❌ Không chuẩn bị được bản sao lưu nên chưa xóa gì: ' + err.message); }
             try {
                 if (CHE_DO_FIREBASE) {
                     await xoaDuLieuPhuongTrenFirestore(laToanPhuong ? null : phamVi, phuongDangXoaDL);
+                    for (const nhom of [phuTroi.kv3, phuTroi.tv]) { for (let i = 0; i < nhom.length; i += 400) { const lo = dbFirestore.batch(); nhom.slice(i, i + 400).forEach(x => lo.delete(x.ref)); await lo.commit(); } }
                 } else {
                     danhSachHoGiaDinh = danhSachHoGiaDinh.filter(ho => {
                         const dungPhuong = (ho.phuong || "Phường Tân An") === phuongDangXoaDL;
@@ -8832,7 +9003,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                     localStorage.setItem("danhSachHoGiaDinhCacheGIS_V5", JSON.stringify(danhSachHoGiaDinh));
                     capNhatGiaoDienSauKhiTai();
                 }
-                ghiNhatKy('Xóa dữ liệu', phuongDangXoaDL + ' — ' + (laToanPhuong ? 'TOÀN BỘ PHƯỜNG' : phamVi));
+                ghiNhatKy('Xóa dữ liệu', phuongDangXoaDL + ' — ' + (laToanPhuong ? 'TOÀN BỘ PHƯỜNG' : phamVi) + (phuTroi.kv3.length ? ' + ' + phuTroi.kv3.length + ' KV3' : '') + (phuTroi.tv.length ? ' + ' + phuTroi.tv.length + ' tạm vắng' : ''));
                 document.getElementById('xoaDuLieuModal').classList.add('hidden');
                 alert("✅ Đã xóa xong.");
             } catch (err) {
@@ -9033,6 +9204,799 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                 </div>`).join('');
         }
 
+        // ================== LIÊN KẾT ĐỐI TƯỢNG (KV3) ↔ HỘ/NHÂN KHẨU + PHÂN NHÓM PHÁP LUẬT / NGHIỆP VỤ ==================
+        // Nhóm được suy RA TỪ DIỆN theo đúng danh mục đang dùng ở biểu mẫu KV3 (2 nhóm: "Quản lý theo quy định
+        // pháp luật" và "Quản lý theo yêu cầu nghiệp vụ"), nên không ai phải chọn nhóm bằng tay và không thể lệch nhau.
+        const DT_NHOM = {
+            phap_luat: { nhan: 'Quản lý theo quy định pháp luật', ngan: 'Pháp luật', icon: '⚖️', cls: 'pl' },
+            nghiep_vu: { nhan: 'Quản lý theo yêu cầu nghiệp vụ', ngan: 'Nghiệp vụ', icon: '🎯', cls: 'nv' }
+        };
+        let _dtNhomMap = null;
+        function dtNhomCuaDien(dien) {
+            if (!_dtNhomMap) {
+                _dtNhomMap = {};
+                document.querySelectorAll('#dt_dienDoiTuong optgroup').forEach(g => {
+                    const k = /pháp luật/i.test(g.label) ? 'phap_luat' : 'nghiep_vu';
+                    g.querySelectorAll('option').forEach(o => { _dtNhomMap[o.value || o.text] = k; });
+                });
+            }
+            return _dtNhomMap[dien] || '';
+        }
+        function dtNhomCuaBanGhi(d) { return dtNhomCuaDien(d && d.dienDoiTuong) || (d && d.nhom) || ''; }
+        function dtNhanNhom(k) { return k && DT_NHOM[k] ? DT_NHOM[k].icon + ' ' + DT_NHOM[k].ngan : 'Chưa phân nhóm'; }
+
+        // Gợi ý diện từ nội dung ghi chú (chỉ GỢI Ý — cán bộ xác nhận). Dùng văn bản đã bỏ dấu, chữ thường.
+        const DT_TU_KHOA = [
+            { re: /tha tu (truoc (thoi )?han|co dieu kien)/, dien: 'Tha tù trước thời hạn có điều kiện (thời gian thử thách)', luuY: 'Quản lý theo pháp luật trong thời gian thử thách; hết thử thách thì chuyển sang diện nghiệp vụ.' },
+            { re: /\b(tu tha|moi ra tu|vua ra tu|ra tu|tai hoa nhap|chap hanh xong an|dac xa|mai man tu)\b/, dien: 'Chấp hành xong án phạt tù / đặc xá trở về địa phương', luuY: 'Nếu người này đang được tha tù trước thời hạn có điều kiện (còn thời gian thử thách) thì chọn diện pháp luật tương ứng.' },
+            { re: /\ban treo\b/, dien: 'Án treo (trong thời gian thử thách)' },
+            { re: /(quan che|cam cu tru|cai tao khong giam giu)/, dien: 'Cải tạo không giam giữ / Cấm cư trú / Quản chế' },
+            { re: /cam di khoi noi cu tru/, dien: 'Cấm đi khỏi nơi cư trú' },
+            { re: /\btam giu\b/, dien: 'Tạm giữ' },
+            { re: /\btam giam\b/, dien: 'Tạm giam (thân nhân/hộ khai báo thay)' },
+            { re: /tam hoan xuat canh/, dien: 'Tạm hoãn xuất cảnh' },
+            { re: /\bbao linh\b/, dien: 'Bảo lĩnh' },
+            { re: /dat tien bao dam/, dien: 'Đặt tiền bảo đảm' },
+            { re: /\btai ngoai\b/, dien: 'Kết án phạt tù đang tại ngoại' },
+            { re: /(hoan|tam dinh chi) chap hanh an/, dien: 'Hoãn/tạm đình chỉ chấp hành án phạt tù' },
+            { re: /cai nghien (ma tuy )?tu nguyen/, dien: 'Cai nghiện ma túy tự nguyện tại gia đình, cộng đồng' },
+            { re: /(ma tuy|sau cai|nghien)/, dien: 'Sử dụng trái phép chất ma túy / quản lý sau cai nghiện tại nơi cư trú' },
+            { re: /giao duc tai (xa|phuong|dac khu)/, dien: 'Giáo dục tại xã, phường, đặc khu' },
+            { re: /(truong giao duong|co so giao duc bat buoc)/, dien: 'Chấp hành xong biện pháp giáo dưỡng/giáo dục bắt buộc trở về địa phương' },
+            { re: /(te nan xa hoi|mai dam|nghien hut)/, dien: 'Đối tượng tệ nạn xã hội' }
+        ];
+        function dtGoiYTuVanBan(text) {
+            const goc = String(text || '').trim().split(/\s+/).filter(Boolean);
+            if (!goc.length) return [];
+            const chuan = goc.map(w => boDauTiengViet(w)), t = chuan.join(' ');
+            const batDau = []; let pos = 0; chuan.forEach(w => { batDau.push(pos); pos += w.length + 1; });
+            const kq = [], da = new Set();
+            DT_TU_KHOA.forEach(r => {
+                const m = t.match(r.re);
+                if (m && !da.has(r.dien) && dtNhomCuaDien(r.dien)) {
+                    da.add(r.dien);
+                    let a = 0; for (let i = 0; i < batDau.length; i++) if (batDau[i] <= m.index) a = i;
+                    let b = a; for (let i = a; i < batDau.length; i++) if (batDau[i] < m.index + m[0].length) b = i;
+                    const hien = goc.slice(a, b + 1).join(' ').replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '');
+                    kq.push({ dien: r.dien, tuKhoa: hien || m[0], nhom: dtNhomCuaDien(r.dien), luuY: r.luuY || '' });
+                }
+            });
+            return kq;
+        }
+
+        // ---- so khớp hồ sơ KV3 với nhân khẩu/hộ ----
+        const dtChuanTen = s => boDauTiengViet(String(s || '')).replace(/\s+/g, ' ').trim();
+        const dtChuanSo = s => String(s || '').replace(/\D/g, '');
+        const dtNam = s => { const m = String(s || '').match(/(19|20)\d{2}/); return m ? m[0] : ''; };
+        function dtNgaySinhISO(s) {
+            s = String(s || '').trim();
+            let m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.]((19|20)\d{2})$/);
+            if (m) return m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0');
+            if (/^(19|20)\d{2}-\d{2}-\d{2}$/.test(s)) return s;
+            return '';
+        }
+        let _dtChiMucDT = null, _dtChiMucHo = null;
+        function dtChiMucDoiTuong() {
+            if (_dtChiMucDT && _dtChiMucDT.nguon === danhSachDoiTuong && _dtChiMucDT.n === danhSachDoiTuong.length) return _dtChiMucDT;
+            const x = { nguon: danhSachDoiTuong, n: danhSachDoiTuong.length, hoId: new Map(), cccd: new Map(), tenNam: new Map() };
+            const them = (m, k, d) => { if (!k) return; if (!m.has(k)) m.set(k, []); m.get(k).push(d); };
+            danhSachDoiTuong.forEach(d => {
+                them(x.hoId, d.hoId, d);
+                const c = dtChuanSo(d.soDinhDanh); if (c.length >= 9) them(x.cccd, c, d);
+                const n = dtChuanTen(d.hoTen), y = dtNam(d.sinhNgay); if (n && y) them(x.tenNam, n + '|' + y, d);
+            });
+            return (_dtChiMucDT = x);
+        }
+        function dtDoiTuongCuaNguoi(ho, tv) {
+            const x = dtChiMucDoiTuong(), kq = new Set();
+            const c = dtChuanSo(tv && tv.cccd);
+            if (c.length >= 9) (x.cccd.get(c) || []).forEach(d => kq.add(d));
+            const n = dtChuanTen(tv && tv.hoTen);
+            if (n) {
+                const y = dtNam(tv.ngaySinh); if (y) (x.tenNam.get(n + '|' + y) || []).forEach(d => kq.add(d));
+                if (ho && ho.id) (x.hoId.get(ho.id) || []).forEach(d => { if (dtChuanTen(d.hoTen) === n) kq.add(d); });
+            }
+            return [...kq];
+        }
+        function dtDoiTuongCuaHo(ho) {
+            const x = dtChiMucDoiTuong(), kq = new Set();
+            if (ho && ho.id) (x.hoId.get(ho.id) || []).forEach(d => kq.add(d));
+            ((ho && ho.thanhVien) || []).forEach(tv => dtDoiTuongCuaNguoi(ho, tv).forEach(d => kq.add(d)));
+            return [...kq];
+        }
+        function dtChiMucHo() {
+            if (_dtChiMucHo && _dtChiMucHo.nguon === danhSachHoGiaDinh && _dtChiMucHo.n === danhSachHoGiaDinh.length) return _dtChiMucHo;
+            const x = { nguon: danhSachHoGiaDinh, n: danhSachHoGiaDinh.length, id: new Map(), cccd: new Map(), tenNam: new Map() };
+            danhSachHoGiaDinh.forEach((h, idx) => {
+                if (h.id) x.id.set(h.id, idx);
+                (h.thanhVien || []).forEach(tv => {
+                    const c = dtChuanSo(tv.cccd); if (c.length >= 9 && !x.cccd.has(c)) x.cccd.set(c, idx);
+                    const n = dtChuanTen(tv.hoTen), y = dtNam(tv.ngaySinh); if (n && y && !x.tenNam.has(n + '|' + y)) x.tenNam.set(n + '|' + y, idx);
+                });
+            });
+            return (_dtChiMucHo = x);
+        }
+        function dtTimHoCuaDoiTuong(d) {
+            if (!d) return -1;
+            const x = dtChiMucHo();
+            if (d.hoId && x.id.has(d.hoId)) return x.id.get(d.hoId);
+            const c = dtChuanSo(d.soDinhDanh); if (c.length >= 9 && x.cccd.has(c)) return x.cccd.get(c);
+            const n = dtChuanTen(d.hoTen), y = dtNam(d.sinhNgay); if (n && y && x.tenNam.has(n + '|' + y)) return x.tenNam.get(n + '|' + y);
+            return -1;
+        }
+        function dtMoHoCuaDoiTuong(id) {
+            const d = danhSachDoiTuong.find(x => x.id === id); const idx = dtTimHoCuaDoiTuong(d);
+            if (idx < 0) return alert('Chưa tìm thấy hộ tương ứng. Kiểm tra CCCD/ngày sinh của đối tượng hoặc gắn từ chi tiết hộ.');
+            ['doiTuongFormModal', 'doiTuongModal', 'dashboardModal'].forEach(m => { const e = document.getElementById(m); if (e) e.classList.add('hidden'); });
+            const dr = document.getElementById('anDrillModal'); if (dr) dr.classList.add('hidden');
+            xemChiTiet(idx);
+        }
+
+        // ---- thời hạn quản lý ----
+        function dtSoNgayConLai(d) {
+            const s = d && d.denNgayQL; if (!s) return null;
+            const t = new Date(s + 'T00:00:00'); if (isNaN(t)) return null;
+            const h = new Date(); h.setHours(0, 0, 0, 0);
+            return Math.round((t - h) / 86400000);
+        }
+        const dtFmtNgay = s => { const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? m[3] + '/' + m[2] + '/' + m[1] : (s || ''); };
+
+        // ---- thống kê ----
+        function dtThongKe() {
+            const ds = (typeof anDoiTuongTrongPham === 'function' ? anDoiTuongTrongPham() : danhSachDoiTuong);
+            const r = { tong: ds.length, pl: [], nv: [], chuaPhanNhom: [], chuaGanHo: [], sapHet: [], daHet: [], theoDien: { phap_luat: {}, nghiep_vu: {} }, soHo: 0, hoNghi: [] };
+            const hoCo = new Set();
+            ds.forEach(d => {
+                const k = dtNhomCuaBanGhi(d);
+                if (k === 'phap_luat') { r.pl.push(d); (r.theoDien.phap_luat[d.dienDoiTuong] = r.theoDien.phap_luat[d.dienDoiTuong] || []).push(d); }
+                else if (k === 'nghiep_vu') { r.nv.push(d); (r.theoDien.nghiep_vu[d.dienDoiTuong] = r.theoDien.nghiep_vu[d.dienDoiTuong] || []).push(d); }
+                else r.chuaPhanNhom.push(d);
+                const idx = dtTimHoCuaDoiTuong(d);
+                if (idx < 0) r.chuaGanHo.push(d); else hoCo.add(idx);
+                const con = dtSoNgayConLai(d);
+                if (con !== null) { if (con < 0) r.daHet.push(d); else if (con <= 30) r.sapHet.push(d); }
+            });
+            r.soHo = hoCo.size;
+            try {
+                const x = dtChiMucDoiTuong();
+                (danhSachHoGiaDinh || []).forEach(h => {
+                    if (!h.ghiChu) return;
+                    const gy = dtGoiYTuVanBan(h.ghiChu);
+                    if (!gy.length) return;
+                    if (dtDoiTuongCuaHo(h).length === 0) r.hoNghi.push({ ho: h, goiY: gy });
+                });
+            } catch (e) { }
+            return r;
+        }
+        function dtDongDoiTuong(d) {
+            const idx = dtTimHoCuaDoiTuong(d), con = dtSoNgayConLai(d);
+            return [d.hoTen || '', dtNhanNhom(dtNhomCuaBanGhi(d)), d.dienDoiTuong || '', d.denNgayQL ? dtFmtNgay(d.denNgayQL) + (con !== null ? (con < 0 ? ' (đã hết)' : ' (còn ' + con + ' ngày)') : '') : '', d.khuVuc || '', d.noiOHienTai || '', idx >= 0 ? 'Đã gắn hộ' : 'Chưa gắn hộ'];
+        }
+        const DT_COT_DT = ['Họ tên', 'Nhóm quản lý', 'Diện đối tượng', 'Hết thời hạn quản lý', 'Khu vực', 'Nơi ở hiện tại', 'Liên kết hộ'];
+        function dtDangKyDS(tieuDe, ds) { return ds && ds.length ? anDangKy(tieuDe, DT_COT_DT, ds.map(dtDongDoiTuong)) : ''; }
+        function dtKpiNhomHtml(T) {
+            let h = '';
+            h += anKPI('⚖️ Quản lý theo pháp luật', anN(T.pl.length), { drill: dtDangKyDS('Đối tượng quản lý theo quy định pháp luật', T.pl), phu: 'án treo, tha tù có điều kiện, quản chế…' });
+            h += anKPI('🎯 Quản lý theo nghiệp vụ', anN(T.nv.length), { drill: dtDangKyDS('Đối tượng quản lý theo yêu cầu nghiệp vụ', T.nv), phu: 'chấp hành xong án, tệ nạn…' });
+            h += anKPI('Hộ có đối tượng', anN(T.soHo), { phu: 'hộ đã liên kết với hồ sơ KV3' });
+            h += anKPI('Đối tượng chưa gắn với hộ', anN(T.chuaGanHo.length), { drill: dtDangKyDS('Đối tượng KV3 chưa gắn với hộ cư trú', T.chuaGanHo), phu: T.chuaGanHo.length ? '▲ đối chiếu CCCD, ngày sinh' : '✓ đã gắn hết' });
+            const sapHetTatCa = T.daHet.concat(T.sapHet);
+            h += anKPI('Sắp/đã hết thời hạn quản lý', anN(sapHetTatCa.length), { drill: dtDangKyDS('Đối tượng sắp hết (30 ngày) hoặc đã hết thời hạn quản lý', sapHetTatCa), phu: 'thử thách, quản chế, giáo dục tại xã…' });
+            h += anKPI('Ghi chú nghi có đối tượng', anN(T.hoNghi.length), {
+                drill: T.hoNghi.length ? anDangKy('Hộ có ghi chú nhắc tới đối tượng nhưng CHƯA gắn diện quản lý',
+                    ['Chủ hộ', 'Địa chỉ', 'Từ khóa trong ghi chú', 'Gợi ý diện', 'Nhóm'],
+                    T.hoNghi.map(m => [m.ho.chuHo || '', m.ho.diaChi || '', m.goiY.map(g => g.tuKhoa).join(', '), m.goiY.map(g => g.dien).join('; '), m.goiY.map(g => DT_NHOM[g.nhom].ngan).join(', ')])) : '',
+                phu: T.hoNghi.length ? '▲ chưa gắn diện quản lý' : '✓ không có'
+            });
+            return h;
+        }
+        function dtTheNhomHtml(T) {
+            let h = '';
+            [['phap_luat', 'pl'], ['nghiep_vu', 'nv']].forEach(([k]) => {
+                const m = T.theoDien[k], ds = Object.entries(m).sort((a, b) => b[1].length - a[1].length);
+                const tong = (k === 'phap_luat' ? T.pl : T.nv).length;
+                h += anThe(DT_NHOM[k].icon + ' ' + DT_NHOM[k].nhan, 'Bấm vào một diện để xem danh sách',
+                    ds.length ? anThanhNgang(ds.map(([dien, v]) => ({ nhan: dien, v: v.length, drill: dtDangKyDS(dien, v) })), { tong, mau: 'var(--c5)' }) : '<p class="an-empty">Chưa có đối tượng nào ở nhóm này.</p>');
+            });
+            return h;
+        }
+
+        // ---- hiển thị trong chi tiết hộ ----
+        function dtHuyHieuHo(ho) {
+            try {
+                const ds = dtDoiTuongCuaHo(ho); if (!ds.length) return '';
+                const pl = ds.filter(d => dtNhomCuaBanGhi(d) === 'phap_luat').length, nv = ds.length - pl;
+                return (pl ? ` <span class="dt-chip pl" title="Hộ có ${pl} đối tượng quản lý theo pháp luật">⚖️ ${pl}</span>` : '') + (nv ? ` <span class="dt-chip nv" title="Hộ có ${nv} đối tượng quản lý theo nghiệp vụ / chưa phân nhóm">🎯 ${nv}</span>` : '');
+            } catch (e) { return ''; }
+        }
+        function dtChipNguoi(ho, tv, i) {
+            const ds = dtDoiTuongCuaNguoi(ho, tv);
+            if (!ds.length) return `<button type="button" onclick="dtMoGan(${i})" class="dt-them">＋ Gắn diện đối tượng quản lý</button>`;
+            return ds.map(d => { const k = dtNhomCuaBanGhi(d); return `<button type="button" onclick="dtMoGan(${i})" class="dt-chip ${k ? DT_NHOM[k].cls : ''}" title="${escHtml(d.dienDoiTuong || '')}">${dtNhanNhom(k)} · ${escHtml(d.dienDoiTuong || '')}</button>`; }).join(' ');
+        }
+        function dtVeKhungHo() {
+            if (currentSelectedHoIndex === null) return;
+            const ho = danhSachHoGiaDinh[currentSelectedHoIndex]; if (!ho) return;
+            (ho.thanhVien || []).forEach((tv, i) => { const e = document.getElementById('dtChip_' + i); if (e) e.innerHTML = dtChipNguoi(ho, tv, i); });
+            const kh = document.getElementById('dtKhungHo'); if (!kh) return;
+            const ds = dtDoiTuongCuaHo(ho);
+            let h = '';
+            if (ds.length) {
+                h += '<div class="dt-tt"><b>Hộ có ' + ds.length + ' đối tượng quản lý:</b><ul>' + ds.map(d => {
+                    const k = dtNhomCuaBanGhi(d), con = dtSoNgayConLai(d);
+                    return `<li><span class="dt-chip ${k ? DT_NHOM[k].cls : ''}">${dtNhanNhom(k)}</span> ${escHtml(d.hoTen || '')} — ${escHtml(d.dienDoiTuong || '')}` +
+                        (d.denNgayQL ? ` <span class="${con !== null && con < 0 ? 'dt-do' : (con !== null && con <= 30 ? 'dt-vang' : '')}">· đến ${dtFmtNgay(d.denNgayQL)}${con !== null ? (con < 0 ? ' (đã hết)' : ' (còn ' + con + ' ngày)') : ''}</span>` : '') +
+                        ` <button type="button" class="dt-link" onclick="dtMoKV3(\'${d.id}\')">Mở hồ sơ KV3 ▸</button></li>`;
+                }).join('') + '</ul></div>';
+            } else {
+                const gy = dtGoiYTuVanBan((document.getElementById('editGhiChu') || {}).value);
+                if (gy.length) h += '<div class="dt-gy">📌 Ghi chú của hộ có nhắc: <b>' + escHtml(gy.map(g => '“' + g.tuKhoa + '”').join(', ')) + '</b> — chưa gắn diện quản lý.' +
+                    gy.map(g => `<div class="dt-gy-d"><span class="dt-chip ${DT_NHOM[g.nhom].cls}">${DT_NHOM[g.nhom].icon} ${DT_NHOM[g.nhom].ngan}</span> ${escHtml(g.dien)}` +
+                        (g.luuY ? `<div class="dt-ly">${escHtml(g.luuY)}</div>` : '') +
+                        ` <button type="button" class="dt-link" onclick="dtMoGan(null, '${g.dien.replace(/'/g, "\\'")}')">Gắn diện này ▸</button></div>`).join('') + '</div>';
+            }
+            kh.innerHTML = h;
+        }
+        function dtMoKV3(id) {
+            ['detailModal'].forEach(m => { const e = document.getElementById(m); if (e) e.classList.add('hidden'); });
+            moFormDoiTuong(id);
+        }
+
+        // ---- hộp thoại "Gắn diện đối tượng quản lý" ----
+        function dtMoGan(tvIndex, dienGoiY) {
+            if (currentSelectedHoIndex === null) return;
+            const ho = danhSachHoGiaDinh[currentSelectedHoIndex]; if (!ho) return;
+            const tvs = ho.thanhVien || []; if (!tvs.length) return alert('Hộ chưa có nhân khẩu để gắn.');
+            const sel = document.getElementById('dtg_tv');
+            sel.innerHTML = tvs.map((tv, i) => `<option value="${i}">${i + 1}. ${escHtml(tv.hoTen || '(chưa có tên)')}${tv.ngaySinh ? ' — ' + escHtml(tv.ngaySinh) : ''}</option>`).join('');
+            sel.value = String(tvIndex !== null && tvIndex !== undefined ? tvIndex : 0);
+            const dd = document.getElementById('dtg_dien');
+            dd.innerHTML = document.getElementById('dt_dienDoiTuong').innerHTML;
+            dd.value = '';
+            ['dtg_tu', 'dtg_den', 'dtg_qd'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('dtg_hs').innerText = '';
+            if (dienGoiY) dd.value = dienGoiY;
+            document.getElementById('dtgModal').classList.remove('hidden');
+            dtGanDoiNguoi(dienGoiY);
+        }
+        function dtGanDoiNguoi(dienGoiY) {
+            const ho = danhSachHoGiaDinh[currentSelectedHoIndex], i = parseInt(document.getElementById('dtg_tv').value, 10), tv = (ho.thanhVien || [])[i];
+            const co = tv ? dtDoiTuongCuaNguoi(ho, tv)[0] : null;
+            const dd = document.getElementById('dtg_dien');
+            if (co && !dienGoiY) {
+                dd.value = co.dienDoiTuong || '';
+                document.getElementById('dtg_tu').value = co.tuNgayQL || '';
+                document.getElementById('dtg_den').value = co.denNgayQL || '';
+                document.getElementById('dtg_qd').value = co.quyetDinh || '';
+            }
+            document.getElementById('dtg_hs').innerHTML = co ? '📎 Người này <b>đã có hồ sơ KV3</b> — lưu sẽ cập nhật diện/thời hạn và ghi lại lịch sử đổi diện.' : '🆕 Chưa có hồ sơ KV3 — lưu sẽ <b>tạo hồ sơ KV3 mới</b> từ thông tin nhân khẩu rồi liên kết với hộ này.';
+            dtGanDoiDien();
+        }
+        function dtGanDoiDien() {
+            const k = dtNhomCuaDien(document.getElementById('dtg_dien').value);
+            const e = document.getElementById('dtg_nhom');
+            if (!k) { e.className = 'dt-nhomhien'; e.innerText = 'Chọn diện để xem thuộc nhóm nào.'; return; }
+            e.className = 'dt-nhomhien ' + DT_NHOM[k].cls;
+            e.innerText = DT_NHOM[k].icon + ' Thuộc nhóm: ' + DT_NHOM[k].nhan;
+        }
+        async function dtLuuGan(moKV3) {
+            if (currentUser.role === 'can_bo_du_lieu_tp') return alert('👁️ Tài khoản Cán bộ dữ liệu PC06 chỉ được XEM, không có quyền sửa hồ sơ đối tượng.');
+            if (!dbFirestore) return alert('Quản lý đối tượng chỉ khả dụng khi đã kết nối máy chủ.');
+            const ho = danhSachHoGiaDinh[currentSelectedHoIndex]; if (!ho) return;
+            const i = parseInt(document.getElementById('dtg_tv').value, 10), tv = (ho.thanhVien || [])[i];
+            const dien = document.getElementById('dtg_dien').value;
+            if (!tv || !(tv.hoTen || '').trim()) return alert('Nhân khẩu này chưa có họ tên.');
+            if (!dien) return alert('Vui lòng chọn Diện đối tượng.');
+            const tu = document.getElementById('dtg_tu').value, den = document.getElementById('dtg_den').value;
+            if (tu && den && den < tu) return alert('Ngày hết thời hạn không thể trước ngày bắt đầu.');
+            const nhom = dtNhomCuaDien(dien), bay = new Date().toISOString(), email = (currentUser.email || '').toLowerCase();
+            const cu = dtDoiTuongCuaNguoi(ho, tv)[0] || null;
+            const noiO = tv.noiOHienTai || ho.diaChi || '';
+            const ts = (typeof firebase !== 'undefined' && firebase.firestore) ? firebase.firestore.FieldValue.serverTimestamp() : new Date();
+            const chung = { dienDoiTuong: dien, nhom, tuNgayQL: tu, denNgayQL: den, quyetDinh: document.getElementById('dtg_qd').value.trim(), hoId: ho.id || '', capNhatLuc: ts, capNhatBoi: email };
+            let duLieu, id = null;
+            if (cu) {
+                id = cu.id; duLieu = Object.assign({}, chung);
+                if ((cu.dienDoiTuong || '') !== dien) duLieu.lichSuDien = (cu.lichSuDien || []).concat([{ tu: cu.dienDoiTuong || '', den: dien, nhom, luc: bay, boi: email }]);
+            } else {
+                duLieu = Object.assign({
+                    phuong: khuVucHienTai, hoTen: (tv.hoTen || '').trim(), gioiTinh: tv.gioiTinh || 'Nam', sinhNgay: dtNgaySinhISO(tv.ngaySinh),
+                    quocTich: 'Việt Nam', danToc: tv.danToc || '', tonGiao: tv.tonGiao || '', soDinhDanh: (tv.cccd || '').trim(), queQuan: tv.queQuan || '',
+                    noiThuongTru: ho.diaChi || '', noiOHienTai: noiO, soDienThoai: tv.sdt || '', ngheNghiep: tv.ngheNghiep || '',
+                    canBoQuanLy: [], nguoiTao: email, anhBase64: '',
+                    khuVuc: (typeof layNhanKhuVucTuDiaChi === 'function' ? layNhanKhuVucTuDiaChi(noiO, khuVucHienTai) : '') || donViMacDinhTheoLoaiHinh(khuVucHienTai),
+                    lichSuDien: [{ tu: '', den: dien, nhom, luc: bay, boi: email }]
+                }, chung);
+            }
+            try {
+                if (id) { await dbFirestore.collection('doi_tuong_quan_ly').doc(id).set(duLieu, { merge: true }); }
+                else { const r = await dbFirestore.collection('doi_tuong_quan_ly').add(duLieu); id = r && r.id; }
+                ghiNhatKy('Gắn diện đối tượng quản lý (' + (nhom === 'phap_luat' ? 'pháp luật' : 'nghiệp vụ') + ')', (tv.hoTen || '') + ' — ' + dien, ho.id);
+                // cập nhật ngay bản nhớ tạm để giao diện phản ánh liền, không chờ máy chủ đẩy về
+                if (cu) Object.assign(cu, duLieu, { capNhatLuc: null }); else danhSachDoiTuong.push(Object.assign({ id: id || ('tam_' + Date.now()) }, duLieu, { capNhatLuc: null }));
+                _dtChiMucDT = null;
+                document.getElementById('dtgModal').classList.add('hidden');
+                dtVeKhungHo();
+                if (moKV3 && id) dtMoKV3(id);
+            } catch (err) { alert('❌ Lỗi lưu: ' + (err.message || err.code)); }
+        }
+        function dtFormDoiDien() {
+            const e = document.getElementById('dt_nhomHienThi'); if (!e) return;
+            const k = dtNhomCuaDien(document.getElementById('dt_dienDoiTuong').value);
+            e.className = 'dt-nhomhien' + (k ? ' ' + DT_NHOM[k].cls : '');
+            e.innerText = k ? DT_NHOM[k].icon + ' Thuộc nhóm: ' + DT_NHOM[k].nhan : 'Chọn diện để xem thuộc nhóm nào.';
+            try { const kc = document.getElementById('dtCD'); kc.classList.toggle('hidden', document.getElementById('dt_dienDoiTuong').value !== CD_DIEN); dtVeBoMau(); } catch (e2) { }
+        }
+        function dtLamMoiLienKet() { try { _dtChiMucDT = null; _dtChiMucHo = null; if (!document.getElementById('detailModal').classList.contains('hidden')) dtVeKhungHo(); } catch (e) { } }
+
+        // ================== BỘ MẪU VĂN BẢN: CẤM ĐI KHỎI NƠI CƯ TRÚ ==================
+        // Căn cứ: Thông tư của Bộ Công an quy định quản lý, theo dõi người bị cấm đi khỏi nơi cư trú (mẫu CĐ1–CĐ13
+        // ban hành kèm Thông tư, ngày 15/5/2026) và Luật Thi hành tạm giữ, tạm giam và cấm đi khỏi nơi cư trú
+        // (Luật số 128/2025/QH15). Thể thức văn bản theo Nghị định 30/2020/NĐ-CP. Số Thông tư để trong phần
+        // "Thông tin đơn vị & cán bộ" (sửa được) để không phải đổi code khi cần chỉnh.
+        const CD_DIEN = 'Cấm đi khỏi nơi cư trú';
+        const CD_LUAT = 'Luật Thi hành tạm giữ, tạm giam và cấm đi khỏi nơi cư trú';
+        const CD_KEY_CH = 'cdCauHinhV1_';
+        function cdCauHinhMacDinh() {
+            const p = khuVucHienTai || '', ten = xsTenNgan(), laTanAn = p === 'Phường Tân An';
+            const laAdmin = (typeof ADMIN_EMAILS !== 'undefined') && currentUser && ADMIN_EMAILS.includes((currentUser.email || '').toLowerCase());
+            return {
+                capTren: laTanAn ? 'CÔNG AN TP CẦN THƠ' : 'CÔNG AN ……………', donVi: 'CÔNG AN ' + p.toUpperCase(), tenPhuong: xsPhThuong(), tp: laTanAn ? 'Cần Thơ' : '……',
+                diaDanh: ten, truSo: laTanAn ? 'số 02 Nguyễn Tri Phương, phường Tân An, thành phố Cần Thơ' : '', truongCA: '',
+                canBoTen: laTanAn && laAdmin ? 'Nguyễn Văn Thảo' : '', capBac: laTanAn && laAdmin ? 'Đại úy' : '', chucVu: laTanAn && laAdmin ? 'Cán bộ' : 'Cán bộ',
+                khuVucPT: '', toCSKV: 'TỔ CẢNH SÁT KHU VỰC', ttSo: '59/2026/TT-BCA', ttNgay: '15/5/2026', maCa: xsMaCa()
+            };
+        }
+        function cdCauHinh() {
+            let luu = {}; try { luu = JSON.parse(localStorage.getItem(CD_KEY_CH + (khuVucHienTai || '')) || '{}'); } catch (e) { }
+            return Object.assign(cdCauHinhMacDinh(), luu);
+        }
+        const CD_O = s => escHtml(String(s == null ? '' : s));
+        const cdTr = (s, g) => (s && String(s).trim()) ? CD_O(String(s).trim()) : (g || '……………………');
+        function cdDMY(s) { const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? m[3] + '/' + m[2] + '/' + m[1] : String(s || ''); }
+        function cdGio(t, tien) {
+            const m = String(t || '').match(/^(\d{1,2}):(\d{2})$/);
+            return (tien === false ? '' : '') + (m ? m[1].padStart(2, '0') + ' giờ ' + m[2] + ' phút' : '…… giờ …… phút');
+        }
+        const cdXung = g => g === 'Nữ' ? 'Bà' : 'Ông';
+        const cdThongTu = ch => 'Thông tư số ' + ch.ttSo + ' ngày ' + ch.ttNgay + ' của Bộ trưởng Bộ Công an quy định quản lý, theo dõi người bị cấm đi khỏi nơi cư trú';
+
+        // ---- ngữ cảnh: gộp hồ sơ KV3 (đang hiển thị trên form) + lệnh cấm + cấu hình + dữ liệu nhập thêm ----
+        function cdBanGhiTuForm() {
+            const g = k => { const e = document.getElementById('dt_' + k); return e ? (e.value || '').trim() : ''; };
+            const id = document.getElementById('dtId').value;
+            const goc = id ? (danhSachDoiTuong.find(x => x.id === id) || {}) : {};
+            const d = Object.assign({}, goc);
+            ['hoTen', 'gioiTinh', 'tenGoiKhac', 'sinhNgay', 'quocTich', 'danToc', 'tonGiao', 'soDinhDanh', 'ngayCap', 'noiCap', 'noiThuongTru', 'noiOHienTai', 'ngheNghiep', 'dienDoiTuong', 'tuNgayQL', 'denNgayQL'].forEach(k => { d[k] = g(k); });
+            d.id = id; d.cd = cdDocForm(goc.cd);
+            return d;
+        }
+        function cdDocForm(cu) {
+            const cd = Object.assign({}, cu || {});
+            const g = k => { const e = document.getElementById('cd_' + k); return e ? (e.value || '').trim() : ''; };
+            ['loaiLenh', 'soLenh', 'ngayLenh', 'coQuan', 'hanhVi', 'denNgayChu', 'noiLamViec', 'soQDCB', 'ngayQDCB'].forEach(k => { if (document.getElementById('cd_' + k)) cd[k] = g(k); });
+            return cd;
+        }
+        function cdNapForm(d) {
+            const cd = (d && d.cd) || {};
+            ['loaiLenh', 'soLenh', 'ngayLenh', 'coQuan', 'hanhVi', 'denNgayChu', 'noiLamViec', 'soQDCB', 'ngayQDCB'].forEach(k => { const e = document.getElementById('cd_' + k); if (e) e.value = cd[k] || (k === 'loaiLenh' ? 'Lệnh' : ''); });
+        }
+        function cdBoiCanh(d, v) {
+            const ch = cdCauHinh(), cd = d.cd || {};
+            const c = {
+                ch, v: v || {}, d, cd, hoTen: (d.hoTen || '').trim(), gt: d.gioiTinh || 'Nam', ngaySinh: cdDMY(d.sinhNgay), tenKhac: d.tenGoiKhac || '', thuongTru: d.noiThuongTru || '', noiO: d.noiOHienTai || '',
+                quocTich: d.quocTich || 'Việt Nam', danToc: d.danToc || '', tonGiao: d.tonGiao || '', ngheNghiep: d.ngheNghiep || '', noiLamViec: cd.noiLamViec || '', cccd: d.soDinhDanh || '', ngayCap: cdDMY(d.ngayCap), noiCap: d.noiCap || '',
+                hanhVi: cd.hanhVi || '', loaiLenh: cd.loaiLenh || 'Lệnh', soLenh: cd.soLenh || '', ngayLenh: cdDMY(cd.ngayLenh), coQuan: cd.coQuan || '', tu: cdDMY(d.tuNgayQL), den: cdDMY(d.denNgayQL), denChu: cd.denNgayChu || ''
+            };
+            c.xung = cdXung(c.gt);
+            c.ca = 'Công an ' + ch.tenPhuong;           // "Công an phường Tân An"
+            c.maCa = ch.maCa;
+            c.thoiHan = 'Thời hạn cấm đi khỏi nơi cư trú kể từ ngày ' + cdTr(c.tu, '……/……/……') + (c.denChu ? ' đến ' + CD_O(c.denChu) : (c.den ? ' đến ngày ' + CD_O(c.den) : ' đến ngày ……/……/……'));
+            c.theoLenh = 'Theo ' + c.loaiLenh + ' số: ' + cdTr(c.soLenh) + ' ngày ' + cdTr(c.ngayLenh, '……/……/……') + ' của ' + cdTr(c.coQuan);
+            c.canCuTT = 'Căn cứ khoản 1 Điều 4 ' + cdThongTu(ch) + '.';
+            return c;
+        }
+
+        // ---- thành phần dùng chung của văn bản ----
+        const cdDuongKe = pc => `<table align="center" width="${pc}%" style="border-collapse:collapse;margin:0 auto"><tr><td style="border-top:1px solid #000;font-size:1pt;line-height:1pt;height:1pt;padding:0">&nbsp;</td></tr></table>`;
+        function cdMaMau(c, ma) { return `<p align="right" style="text-align:right;margin:0 0 4pt 0;font-size:10pt;line-height:110%">Mẫu ${CD_O(ma)}<br>BH theo TT số ${CD_O(c.ch.ttSo)}<br>ngày ${CD_O(c.ch.ttNgay)}</p>`; }
+        function cdQuocHieu() { return `<p align="center" style="text-align:center;margin:0"><b style="font-size:12pt">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b></p><p align="center" style="text-align:center;margin:0"><b style="font-size:13pt;border-bottom:1px solid #000">Độc lập - Tự do - Hạnh phúc</b></p>`; }
+        function cdDauHC(c, o) {
+            // o: {kyHieu, so, ngay, toCSKV, boSo}
+            const left = `${CD_O(o.capTren || c.ch.capTren)}<br><b>${CD_O(o.donVi || c.ch.donVi)}</b>${o.toCSKV ? '<br><b>' + CD_O(c.ch.toCSKV) + '</b>' : ''}${cdDuongKe(45)}`;
+            const ngay = o.ngay ? xsNgayChu(o.ngay) : 'ngày …… tháng …… năm ……';
+            return `<table class="dau"><tr><td width="40%" align="center" valign="top" style="font-size:12pt">${left}</td><td width="60%" align="center" valign="top"><b style="font-size:12pt;white-space:nowrap">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><table align="center" style="border-collapse:collapse;margin:0 auto"><tr><td style="border-bottom:1px solid #000;padding:0 2pt 1pt 2pt;font-size:13pt;white-space:nowrap"><b>Độc lập - Tự do - Hạnh phúc</b></td></tr></table></td></tr><tr><td align="center" valign="top" style="font-size:13pt;padding-top:4pt">${o.boSo ? '&nbsp;' : 'Số: ' + (o.so ? CD_O(o.so) : '.............') + '/' + CD_O(o.kyHieu)}</td><td align="center" valign="top" style="font-size:13pt;padding-top:4pt"><i>${CD_O(c.ch.diaDanh)}, ${ngay}</i></td></tr></table>`;
+        }
+        function cdTieuDe(ten, trichYeu, kyDuong) {
+            return `<p align="center" style="text-align:center;margin:12pt 0 0 0"><b style="font-size:14pt">${ten}</b></p>` + (trichYeu ? `<p align="center" style="text-align:center;margin:0"><b style="font-size:13pt">${trichYeu}</b></p>` : '') + (kyDuong ? cdDuongKe(kyDuong) : '') + '<p style="margin:0;font-size:6pt">&nbsp;</p>';
+        }
+        const cdP = s => `<p class="tl">${s}</p>`, cdPL = s => `<p style="text-align:left;margin:0 0 3pt 0">${s}</p>`;
+        function cdKhoi(c, o) {
+            o = o || {};
+            const r3 = (a, b, d) => `<tr><td width="46%">${a}</td><td width="30%">${b}</td><td width="24%">${d}</td></tr>`;
+            const r1 = a => `<tr><td colspan="3">${a}</td></tr>`;
+            const r2 = (a, b) => `<tr><td colspan="2">${a}</td><td>${b}</td></tr>`;
+            let h = `<table class="kh" style="width:100%;border-collapse:collapse;text-align:left">`;
+            h += r3('Họ và tên: ' + (o.dam === false ? cdTr(c.hoTen) : '<b>' + cdTr(c.hoTen) + '</b>'), 'Ngày sinh: ' + cdTr(c.ngaySinh, '……/……/……'), 'Giới tính: ' + cdTr(c.gt, '……'));
+            h += r1('Tên gọi khác: ' + CD_O(c.tenKhac));
+            h += r1('Nơi thường trú: ' + cdTr(c.thuongTru));
+            h += r1('Nơi ở hiện tại: ' + cdTr(c.noiO));
+            if (o.quocTich !== false) h += r3('Quốc tịch: ' + cdTr(c.quocTich, '……'), 'Dân tộc: ' + cdTr(c.danToc, '……'), 'Tôn giáo: ' + cdTr(c.tonGiao, '……'));
+            if (o.ngheNghiep !== false) h += `<tr><td colspan="2">Nghề nghiệp: ${cdTr(c.ngheNghiep)}</td><td>Nơi làm việc: ${CD_O(c.noiLamViec)}</td></tr>`;
+            h += r3('Số CCCD/CC/Hộ chiếu: ' + cdTr(c.cccd, '…………………'), 'Ngày cấp: ' + cdTr(c.ngayCap, '……/……/……'), 'Nơi cấp: ' + cdTr(c.noiCap, '………'));
+            if (o.hanhVi !== false) h += r1('Hành vi phạm tội: ' + cdTr(c.hanhVi));
+            if (o.thoiHan !== false) { h += r1(c.thoiHan); h += r1(c.theoLenh); }
+            return h + '</table>';
+        }
+        function cdKhoiNgan(c) {
+            const r3 = (a, b, d) => `<tr><td width="46%">${a}</td><td width="30%">${b}</td><td width="24%">${d}</td></tr>`;
+            return `<table class="kh" style="width:100%;border-collapse:collapse;text-align:left">` + r3('Họ và tên: <b>' + cdTr(c.hoTen) + '</b>', 'Ngày sinh: ' + cdTr(c.ngaySinh, '……/……/……'), 'Giới tính: ' + cdTr(c.gt, '……')) +
+                `<tr><td colspan="3">Tên gọi khác: ${CD_O(c.tenKhac)}</td></tr><tr><td colspan="3">Nơi thường trú: ${cdTr(c.thuongTru)}</td></tr><tr><td colspan="3">Nơi ở hiện tại: ${cdTr(c.noiO)}</td></tr>` +
+                r3('Số CCCD/CC/Hộ chiếu: ' + cdTr(c.cccd, '…………………'), 'Ngày cấp: ' + cdTr(c.ngayCap, '……/……/……'), 'Nơi cấp: ' + cdTr(c.noiCap, '………')) + '</table>';
+        }
+        function cdKyPhai(c, chucDanh, noiNhan, tenKy) {
+            const nn = noiNhan ? `<b><i style="font-size:12pt">Nơi nhận:</i></b><br><span style="font-size:11pt">${noiNhan.map(x => '- ' + x).join('<br>')}</span>` : '';
+            return `<table class="ky" style="page-break-inside:avoid"><tr><td width="50%" valign="top" style="text-align:left">${nn}</td><td width="50%" align="center" valign="top"><b>${chucDanh}</b><br><i style="font-size:12pt">(Ký, ghi rõ họ tên, đóng dấu)</i></td></tr><tr><td></td><td align="center" valign="bottom" height="70" style="height:70pt"><b>${tenKy ? CD_O(tenKy) : ''}</b></td></tr></table>`;
+        }
+        function cdKyCot(cot, cao) {
+            return `<table class="ky" style="page-break-inside:avoid"><tr>${cot.map(x => `<td width="${Math.floor(100 / cot.length)}%" align="center" valign="top"><b>${x.tieu}</b><br><i style="font-size:12pt">${x.ghi || '(Ký, ghi rõ họ tên)'}</i></td>`).join('')}</tr><tr><td colspan="${cot.length}" height="${cao || 64}" style="height:${cao || 64}pt">&nbsp;</td></tr><tr>${cot.map(x => `<td align="center" valign="top"><b>${x.ten ? CD_O(x.ten) : ''}</b></td>`).join('')}</tr></table>`;
+        }
+        const cdTruongCA = c => 'TRƯỞNG ' + c.ch.donVi.replace(/^CÔNG AN\s*/i, 'CÔNG AN ');
+        const cdChucTruong = c => 'TRƯỞNG CÔNG AN ' + String(c.ch.tenPhuong || '').toUpperCase().split(' ')[0];
+        const cdBienBanKet = c => `<p class="tl">Biên bản lập xong vào hồi ${cdGio(c.v.gioXong)} cùng ngày, đã đọc cho những người có tên trên nghe, công nhận đúng và cùng ký tên dưới đây. Biên bản được lưu hồ sơ quản lý, theo dõi người bị cấm đi khỏi nơi cư trú./.</p>`;
+
+        // ---- danh mục mẫu ----
+        // gd: 1 = mở hồ sơ & phân công, 2 = trong thời gian quản lý, 3 = kết thúc quản lý
+        const cdText = (k, nhan, mac, rong) => ({ k, nhan, loai: 'text', mac, rong });
+        const cdArea = (k, nhan, mac) => ({ k, nhan, loai: 'area', mac, rong: true });
+        const cdDate = (k, nhan, mac) => ({ k, nhan, loai: 'date', mac });
+        const cdTime = (k, nhan, mac) => ({ k, nhan, loai: 'time', mac });
+        const cdChk = (k, nhan, mac) => ({ k, nhan, loai: 'chk', mac });
+        const cdSel = (k, nhan, opts, mac) => ({ k, nhan, loai: 'sel', opts, mac });
+        const cdHomNay = () => xsIso(csHomNay());
+        const cdQDCB = c => (c.cd.soQDCB || '') ;
+        const cdThucHienQD = c => `Thực hiện Quyết định số ${c.cd.soQDCB ? CD_O(c.cd.soQDCB) : '……'}/QĐ-${c.maCa}, ${c.cd.ngayQDCB ? xsNgayChu(c.cd.ngayQDCB) : 'ngày …… tháng …… năm ……'} về việc phân công cán bộ quản lý, theo dõi người bị cấm đi khỏi nơi cư trú`;
+        const cdNoiNhanLuu = (...them) => them.concat(['Lưu: Hồ sơ QLTDNBCĐKNCT']);
+
+        const CD_MAU = [
+            { id: 'CD2', ma: 'CĐ2', gd: 1, ten: 'Thông báo người bị CĐKNCT không cư trú trên địa bàn', kyHieu: 'TB', mauTT: true,
+              truong: [cdText('kinhGui', 'Kính gửi', c => c.coQuan || '', true), cdDate('ngayNhan', 'Ngày nhận Lệnh/Quyết định', () => cdHomNay()), cdArea('ketQua', 'Kết quả kiểm tra, xác minh', c => `Qua kiểm tra, xác minh, ${c.xung.toLowerCase() === 'bà' ? 'bà' : 'ông'} ${c.hoTen || '……'} không cư trú tại địa chỉ ${c.thuongTru || '……'} do ……………, hiện tại đang cư trú tại địa chỉ ${c.noiO || '……'} nhưng chưa đủ điều kiện đăng ký thường trú, tạm trú.`)],
+              build: c => cdMaMau(c, 'CĐ2') + cdDauHC(c, { kyHieu: 'TB-' + c.maCa, so: c.v.so, ngay: c.v.ngay }) + cdTieuDe('THÔNG BÁO', 'Về việc người bị cấm đi khỏi nơi cư trú không cư trú trên địa bàn') +
+                  `<p align="center" style="text-align:center">Kính gửi: ${cdTr(c.v.kinhGui)}</p>` +
+                  cdP(`Ngày ${cdDMY(c.v.ngayNhan) || '……/……/……'}, ${CD_O(c.ca)} nhận được ${CD_O(c.loaiLenh)} số: ${cdTr(c.soLenh)} ngày ${cdTr(c.ngayLenh, '……/……/……')} của ${cdTr(c.coQuan)} về việc áp dụng biện pháp cấm đi khỏi nơi cư trú đối với:`) + cdKhoi(c, { thoiHan: false }) +
+                  cdP(CD_O(c.v.ketQua)) + cdP(`${CD_O(c.ca)}, thành phố ${CD_O(c.ch.tp)} thông báo để ${cdTr(c.v.kinhGui)} biết./.`) + cdKyPhai(c, cdChucTruong(c), ['Như trên', 'Lưu: HS'], c.ch.truongCA) },
+
+            { id: 'CD1', ma: 'CĐ1', gd: 1, ten: 'Quyết định phân công cán bộ quản lý, theo dõi', kyHieu: 'QĐ', mauTT: true, truong: [],
+              build: c => cdMaMau(c, 'CĐ1') + cdDauHC(c, { kyHieu: 'QĐ-' + c.maCa, so: c.v.so, ngay: c.v.ngay }) + cdTieuDe('QUYẾT ĐỊNH', 'Phân công cán bộ quản lý, theo dõi người bị cấm đi khỏi nơi cư trú', 35) +
+                  `<p align="center" style="text-align:center"><b>TRƯỞNG CÔNG AN ${CD_O(String(c.ch.tenPhuong).toUpperCase())}</b></p>` + cdP(c.canCuTT) +
+                  `<p align="center" style="text-align:center"><b>QUYẾT ĐỊNH:</b></p>` + cdP('<b>Điều 1.</b> Phân công đồng chí:') +
+                  cdPL('Họ và tên: ' + cdTr(c.ch.canBoTen)) + `<table style="width:100%;border-collapse:collapse"><tr><td width="50%">Cấp bậc: ${cdTr(c.ch.capBac, '………')}</td><td>Chức vụ: ${cdTr(c.ch.chucVu, '………')}</td></tr></table>` +
+                  cdPL('Đơn vị công tác: ' + CD_O(c.ca) + ', thành phố ' + cdTr(c.ch.tp)) + cdP('Thực hiện việc quản lý, theo dõi và kiểm tra, xác minh đối với người bị cấm đi khỏi nơi cư trú sau:') + cdKhoi(c) +
+                  cdP('<b>Điều 2.</b> Quyết định này có hiệu lực kể từ ngày ký. Những người có tên tại Điều 1 chịu trách nhiệm thi hành Quyết định này./.') + cdKyPhai(c, cdChucTruong(c), cdNoiNhanLuu('Như Điều 1'), c.ch.truongCA) },
+
+            { id: 'BCDX1', ma: 'Báo cáo đề xuất', gd: 1, ten: 'Báo cáo đề xuất phân công quản lý, theo dõi', kyHieu: 'BC-ĐX', mauTT: false, truong: [],
+              build: c => cdDauHC(c, { kyHieu: 'BC-ĐX', so: c.v.so, ngay: c.v.ngay }) + cdTieuDe('BÁO CÁO ĐỀ XUẤT', 'Về việc phân công quản lý, theo dõi người bị cấm đi khỏi nơi cư trú') +
+                  `<p align="center" style="text-align:center">Kính gửi: Trưởng ${CD_O(c.ca)}, thành phố ${cdTr(c.ch.tp)}</p>` + cdP(c.canCuTT) + cdP(cdThucHienQD(c) + ', đối với:') + cdKhoi(c) +
+                  cdP('Căn cứ vào chức năng, nhiệm vụ, cán bộ được phân công quản lý kính đề xuất Trưởng ' + CD_O(c.ca) + ' ký Quyết định quản lý, theo dõi người bị cấm đi khỏi nơi cư trú theo quy định.') +
+                  cdKyCot([{ tieu: 'DUYỆT CỦA<br>TRƯỞNG ' + CD_O(c.ca.toUpperCase().replace('CÔNG AN', 'CÔNG AN')), ghi: '' }, { tieu: 'CÁN BỘ ĐỀ XUẤT', ghi: '', ten: c.ch.canBoTen }], 60) },
+
+            { id: 'QDQL', ma: 'Quyết định quản lý', gd: 1, ten: 'Quyết định phân công quản lý, theo dõi (theo đề xuất của CSKV)', kyHieu: 'QĐ', mauTT: false, truong: [],
+              build: c => cdDauHC(c, { kyHieu: 'QĐ-' + c.maCa, so: c.v.so, ngay: c.v.ngay }) + cdTieuDe('QUYẾT ĐỊNH', 'Phân công quản lý, theo dõi người bị cấm đi khỏi nơi cư trú', 35) +
+                  `<p align="center" style="text-align:center"><b>TRƯỞNG CÔNG AN ${CD_O(String(c.ch.tenPhuong).toUpperCase())}</b></p>` + cdP(c.canCuTT) + cdP(cdThucHienQD(c) + ';') +
+                  cdP('Xét Báo cáo đề xuất của đồng chí Cảnh sát khu vực được phân công quản lý, theo dõi người bị cấm đi khỏi nơi cư trú;') + `<p align="center" style="text-align:center"><b>QUYẾT ĐỊNH:</b></p>` +
+                  cdP('<b>Điều 1.</b> Phân công cán bộ quản lý, theo dõi đối với:') + cdKhoi(c, { thoiHan: false }) + cdPL(c.thoiHan) + cdPL(c.theoLenh) + cdP('Thời hạn quản lý người bị cấm đi khỏi nơi cư trú theo ' + CD_O(c.loaiLenh === 'Lệnh' ? 'Lệnh' : 'Quyết định') + '.') +
+                  cdP('<b>Điều 2.</b> Quyết định này có hiệu lực kể từ ngày ký.') + cdKyPhai(c, cdChucTruong(c), cdNoiNhanLuu('Như Điều 1'), c.ch.truongCA) },
+
+            { id: 'KH', ma: 'Kế hoạch', gd: 1, ten: 'Kế hoạch quản lý, giám sát, giáo dục, giúp đỡ của CSKV', kyHieu: '', mauTT: false,
+              truong: [cdText('khuVucPT', 'Khu vực phụ trách', c => c.ch.khuVucPT || '')],
+              build: c => cdDauHC(c, { boSo: true, toCSKV: true, donVi: c.ch.donVi, capTren: c.ch.donVi, ngay: c.v.ngay }).replace(/<b>[^<]*<\/b>(?=<br><b>)/, '') + cdTieuDe('KẾ HOẠCH', 'Quản lý, giám sát, giáo dục, giúp đỡ người bị cấm đi khỏi nơi cư trú') +
+                  cdP('Căn cứ ' + CD_O(cdThongTu(c.ch)) + ';') + cdP(`${c.v.khuVucPT ? CD_O(c.v.khuVucPT) : 'Cảnh sát khu vực ……'} xây dựng kế hoạch quản lý, giám sát, giáo dục, giúp đỡ người bị cấm đi khỏi nơi cư trú trên địa bàn phụ trách cụ thể như sau:`) +
+                  '<p style="text-align:left;margin:6pt 0 3pt 0"><b>I. MỤC ĐÍCH, YÊU CẦU</b></p>' +
+                  cdP('- Quản lý chặt chẽ biến động cư trú, sinh hoạt của đối tượng nhằm bảo đảm công tác thi hành biện pháp cấm đi khỏi nơi cư trú tuân thủ đúng pháp luật.') +
+                  cdP('- Kết hợp chặt chẽ giữa biện pháp quản lý hành chính, pháp luật với các biện pháp giáo dục, thuyết phục, cảm hóa dựa trên tình hình thực tiễn của đối tượng và xã hội.') +
+                  cdP('- Phát huy sức mạnh của hệ thống chính trị cơ sở (Tổ dân phố, ban điều hành khu vực, đoàn thể) và gia đình trong việc giám sát, hỗ trợ đối tượng ổn định tư tưởng, cuộc sống.') +
+                  '<p style="text-align:left;margin:6pt 0 3pt 0"><b>II. NỘI DUNG VÀ BIỆN PHÁP THỰC HIỆN</b></p><p style="text-align:left;margin:3pt 0"><b>1. Biện pháp quản lý hành chính, pháp luật</b></p>' +
+                  cdP('- Kiểm tra, đối chiếu thông tin đối tượng qua giấy tờ cá nhân hoặc Cơ sở dữ liệu quốc gia về dân cư, ứng dụng VNeID và yêu cầu đối tượng viết giấy cam đoan chấp hành nghĩa vụ.') +
+                  cdP('- Thực hiện quản lý, theo dõi thông qua các hoạt động đăng ký thường trú, tạm trú, khai báo tạm vắng, lưu trú trên địa bàn phường.') +
+                  cdP('- Trực tiếp tiến hành điểm danh, kiểm diện hoặc đề xuất Trưởng Công an phường triệu tập đối tượng đến trụ sở làm việc nếu có thông tin đối tượng đi khỏi nơi cư trú không xin phép, vi phạm cam kết.') +
+                  cdP('- Trường hợp đối tượng vắng mặt tại nơi cư trú có lý do chính đáng và được người ra lệnh cấm đồng ý, CSKV thực hiện giải quyết tạm vắng, cập nhật thông tin vào phần mềm nghiệp vụ, Cơ sở dữ liệu quốc gia về dân cư và thông báo cho Công an nơi đến phối hợp quản lý.') +
+                  '<p style="text-align:left;margin:6pt 0 3pt 0"><b>2. Biện pháp giáo dục, giúp đỡ</b></p>' +
+                  cdP('- Định kỳ gặp gỡ đối tượng tại nơi cư trú để nắm bắt diễn biến tư tưởng, tâm lý, tuyên truyền, giải thích pháp luật giúp người bị cấm đi khỏi nơi cư trú nhận thức rõ sai lầm và tránh tái phạm.') +
+                  cdP('- Phối hợp với Tổ dân phố, Mặt trận Tổ quốc khu vực theo dõi, giám sát, quản lý, động viên, giúp đỡ. Thường xuyên liên lạc, vận động thân nhân, gia đình theo dõi sát sao lịch trình sinh hoạt, nhắc nhở đối tượng chấp hành quy định không rời khỏi địa bàn.') +
+                  '<p style="text-align:left;margin:6pt 0 3pt 0"><b>III. TỔ CHỨC THỰC HIỆN</b></p>' +
+                  cdP('Cảnh sát khu vực chịu trách nhiệm triển khai nghiêm túc các biện pháp nêu trong kế hoạch này ngay sau khi được Trưởng Công an phường phê duyệt.') +
+                  cdP('Ghi chép sổ tay CSKV đầy đủ lịch trình, nội dung gặp gỡ giáo dục đối tượng; kịp thời báo cáo chỉ huy những khó khăn, vướng mắc trong quá trình thực tiễn quản lý tại cơ sở để có hướng xử lý.') +
+                  cdKyCot([{ tieu: 'PHÊ DUYỆT BCH ' + CD_O(c.ca.toUpperCase()) + '<br>TRƯỞNG CÔNG AN ' + CD_O(String(c.ch.tenPhuong).toUpperCase().split(' ')[0]), ghi: '', ten: c.ch.truongCA }, { tieu: 'CẢNH SÁT KHU VỰC', ghi: '', ten: c.ch.canBoTen }], 60) },
+
+            { id: 'CD5', ma: 'CĐ5', gd: 1, ten: 'Giấy triệu tập người bị CĐKNCT', kyHieu: 'GTT', mauTT: true,
+              truong: [cdDate('ngayHen', 'Ngày phải có mặt', () => cdHomNay()), cdTime('gioHen', 'Giờ phải có mặt', () => '08:00'), cdText('diaDiem', 'Địa điểm', c => c.ch.truSo ? c.ca + ', thành phố ' + c.ch.tp + ' ' + c.ch.truSo : '', true),
+                  cdChk('coDaiDien', 'Cùng người đại diện (14–<18 tuổi, nhược điểm tâm thần/thể chất)', () => false), cdText('noiDung', 'Nội dung làm việc', c => `làm việc về ${c.loaiLenh} cấm đi khỏi nơi cư trú số ${c.soLenh || '……'} ngày ${c.ngayLenh || '……/……/……'} của ${c.coQuan || '……'}`, true),
+                  cdText('canBoLamViec', 'Cán bộ làm việc', c => ((c.ch.capBac ? c.ch.capBac + ' ' : '') + c.ch.canBoTen).trim(), true)],
+              build: c => cdMaMau(c, 'CĐ5') + cdDauHC(c, { kyHieu: 'GTT-' + c.maCa, so: c.v.so, ngay: c.v.ngay }) + cdTieuDe('GIẤY TRIỆU TẬP', '') +
+                  cdP(CD_O(c.ca) + ' triệu tập người bị cấm đi khỏi nơi cư trú sau:') + cdKhoi(c, { thoiHan: false }) +
+                  cdP(`Đúng ${cdGio(c.v.gioHen)}, ${xsNgayChu(c.v.ngayHen)} phải có mặt tại ${cdTr(c.v.diaDiem)}${c.v.coDaiDien ? ' cùng người đại diện' : ''} để ${cdTr(c.v.noiDung)}.`) +
+                  cdP(`Khi đến mang theo Giấy triệu tập này, CCCD/CC/Hộ chiếu bản cứng hoặc bản điện tử trên VNeID và gặp đồng chí ${cdTr(c.v.canBoLamViec)} để làm việc.`) +
+                  cdP('Người bị cấm đi khỏi nơi cư trú không có mặt đúng thời gian trên mà không có lý do chính đáng sẽ bị xử lý theo quy định của pháp luật./.') +
+                  cdKyPhai(c, cdChucTruong(c), ['Người bị cấm đi khỏi nơi cư trú', 'Lưu: Hồ sơ QLTDNBCĐKNCT'], c.ch.truongCA) +
+                  `<p style="margin-top:10pt;font-size:12pt">${c.xung} ${CD_O(c.hoTen || '……')} đã nhận được giấy triệu tập vào ngày …… tháng …… năm ${new Date().getFullYear()}</p>` },
+
+            { id: 'CD3', ma: 'CĐ3', gd: 1, ten: 'Biên bản người bị CĐKNCT đến trình diện', kyHieu: '', mauTT: true,
+              truong: [cdDate('ngayLam', 'Ngày lập biên bản', () => cdHomNay()), cdTime('gioLam', 'Hồi (giờ)', () => ''), cdTime('gioXong', 'Lập xong hồi', () => ''), cdText('diaDiem', 'Địa điểm', c => c.ch.truSo || '', true),
+                  cdText('truongCA', 'Ông/bà (Trưởng Công an)', c => c.ch.truongCA || '', true), cdText('canBoGhi', 'Ông/bà (Cán bộ làm việc)', c => c.ch.canBoTen || '', true), cdText('chucDanhCB', 'Chức danh cán bộ', c => 'Cảnh sát khu vực ' + (c.ch.khuVucPT || '').replace(/^Cảnh sát khu vực\s*/i, ''), true),
+                  cdText('daiDien', 'Người đại diện (nếu có)', () => '', true),
+                  cdArea('dap1', 'Trả lời 1 (sức khỏe, nghề nghiệp, lý do làm việc)', c => `Tôi ${c.hoTen || '……'} xin khai: tình trạng sức khỏe của tôi hiện tại bình thường, đầu óc minh mẫn, đảm bảo làm việc được với cơ quan ${c.ca}. Tôi hiện đang ${c.ngheNghiep ? 'làm ' + c.ngheNghiep.toLowerCase() : '……'}${c.noiLamViec ? ' tại ' + c.noiLamViec : ''}. Do tôi đang bị ${c.coQuan || '……'} cấm đi khỏi nơi cư trú và nhận được giấy triệu tập của ${c.ca} để làm việc về ${c.loaiLenh === 'Lệnh' ? 'Lệnh' : 'Quyết định'} áp dụng biện pháp cấm đi khỏi nơi cư trú đối với tôi.`),
+                  cdArea('dap2', 'Trả lời 2 (đã được tống đạt, giải thích quyền và nghĩa vụ)', c => `Tôi ${c.hoTen || '……'} xin khai: tôi đã được ${c.coQuan || '……'} tống đạt ${c.loaiLenh} áp dụng biện pháp cấm đi khỏi nơi cư trú số ${c.soLenh || '……'} ngày ${c.ngayLenh || '……/……/……'} và khi làm việc với ${c.ca} theo giấy triệu tập đến làm việc thì tôi đã được ${c.ca} giải thích cụ thể về quyền và nghĩa vụ của người bị cấm đi khỏi nơi cư trú theo Điều 41 ${CD_LUAT}.`),
+                  cdArea('dap3', 'Trả lời 3 (ý kiến, cam đoan)', c => `Tôi ${c.hoTen || '……'} xin khai: về giấy triệu tập hoặc ${c.loaiLenh} áp dụng biện pháp cấm đi khỏi nơi cư trú tôi không có ý kiến gì. Tôi xin cam đoan sẽ chấp hành nghiêm về quyền và nghĩa vụ của người bị cấm đi khỏi nơi cư trú, nếu tôi vi phạm tôi sẽ chịu xử lý nghiêm theo quy định của pháp luật.`)],
+              build: c => cdMaMau(c, 'CĐ3') + cdQuocHieu() + cdTieuDe('BIÊN BẢN', 'Về việc người bị cấm đi khỏi nơi cư trú đến trình diện') +
+                  cdP(`Hôm nay, vào hồi ${cdGio(c.v.gioLam)} ${xsNgayChu(c.v.ngayLam)} tại ${cdTr(c.v.diaDiem)}.`) + '<p style="text-align:left;margin:0 0 3pt 0"><b>Chúng tôi gồm có:</b></p>' +
+                  `<table style="width:100%;border-collapse:collapse;text-align:left"><tr><td width="55%">- Ông/bà: ${cdTr(c.v.truongCA)}</td><td>- Trưởng ${CD_O(c.ca)}</td></tr><tr><td>- Ông/bà: ${cdTr(c.v.canBoGhi)}</td><td>- ${cdTr(c.v.chucDanhCB)}</td></tr><tr><td>- Ông/bà: ${cdTr(c.v.daiDien)}</td><td>- Người đại diện (nếu có)</td></tr></table>` +
+                  cdP('Tiến hành làm việc với người bị cấm đi khỏi nơi cư trú sau:') + cdKhoi(c) + '<p align="center" style="text-align:center;margin:8pt 0 3pt 0"><b>NỘI DUNG</b></p>' +
+                  cdP('<b>HỎI:</b>') + cdP(`${c.xung} ${CD_O(c.hoTen || '……')} cho biết: tình trạng sức khỏe hiện tại thế nào? Nghề nghiệp? Lý do làm việc với ${CD_O(c.ca)}?`) + cdP('<b>ĐÁP:</b>') + cdP(CD_O(c.v.dap1)) +
+                  cdP('<b>HỎI:</b>') + cdP(`${c.xung} ${CD_O(c.hoTen || '……')} cho biết: đã được tống đạt ${CD_O(c.loaiLenh)} cấm đi khỏi nơi cư trú chưa? Khi đến cơ quan ${CD_O(c.ca)} có giải thích về quyền và nghĩa vụ của người bị cấm đi khỏi nơi cư trú không?`) + cdP('<b>ĐÁP:</b>') + cdP(CD_O(c.v.dap2)) +
+                  cdP('<b>HỎI:</b>') + cdP(`${c.xung} ${CD_O(c.hoTen || '……')} cho biết: có ý kiến gì về giấy triệu tập hoặc ${CD_O(c.loaiLenh)} cấm đi khỏi nơi cư trú không? Cam đoan của bản thân về quyền và nghĩa vụ của người bị cấm đi khỏi nơi cư trú thế nào?`) + cdP('<b>ĐÁP:</b>') + cdP(CD_O(c.v.dap3)) +
+                  cdBienBanKet(c) + cdKyCot([{ tieu: 'CÁN BỘ GHI BIÊN BẢN', ten: c.v.canBoGhi }, { tieu: 'TRƯỞNG ' + CD_O(c.ca.toUpperCase()), ghi: '(Ký, ghi rõ họ tên, đóng dấu)', ten: c.v.truongCA }], 56) +
+                  cdKyCot(c.v.daiDien ? [{ tieu: 'NGƯỜI ĐẠI DIỆN', ten: c.v.daiDien }, { tieu: 'NGƯỜI BỊ CẤM ĐI KHỎI NƠI CƯ TRÚ', ten: c.hoTen }] : [{ tieu: '&nbsp;' }, { tieu: 'NGƯỜI BỊ CẤM ĐI KHỎI NƠI CƯ TRÚ', ten: c.hoTen }], 56) },
+
+            { id: 'CD4', ma: 'CĐ4', gd: 1, ten: 'Giấy cam đoan của người bị CĐKNCT', kyHieu: '', mauTT: true,
+              truong: [cdDate('ngayLam', 'Ngày cam đoan', () => cdHomNay()), cdTime('gioLam', 'Hồi (giờ)', () => ''), cdText('daiDien', 'Người đại diện (nếu có)', () => '', true)],
+              build: c => cdMaMau(c, 'CĐ4') + cdQuocHieu() + cdTieuDe('GIẤY CAM ĐOAN', 'Việc chấp hành nghĩa vụ trong thời hạn cấm đi khỏi nơi cư trú') +
+                  `<p align="center" style="text-align:center">Kính gửi: ${CD_O(c.ca)}, thành phố ${cdTr(c.ch.tp)}</p>` +
+                  `<table class="kh" style="width:100%;border-collapse:collapse;text-align:left"><tr><td width="46%">Tên tôi là: <b>${cdTr(c.hoTen)}</b></td><td width="30%">Ngày sinh: ${cdTr(c.ngaySinh, '……/……/……')}</td><td>Giới tính: ${cdTr(c.gt, '……')}</td></tr><tr><td colspan="3">Tên gọi khác: ${CD_O(c.tenKhac)}</td></tr><tr><td colspan="3">Nơi thường trú: ${cdTr(c.thuongTru)}</td></tr><tr><td colspan="3">Nơi ở hiện tại: ${cdTr(c.noiO)}</td></tr><tr><td colspan="2">Nghề nghiệp: ${cdTr(c.ngheNghiep)}</td><td>Nơi làm việc: ${CD_O(c.noiLamViec)}</td></tr><tr><td width="46%">Số CCCD/CC/Hộ chiếu: ${cdTr(c.cccd, '…………………')}</td><td>Ngày cấp: ${cdTr(c.ngayCap, '……/……/……')}</td><td>Nơi cấp: ${cdTr(c.noiCap, '………')}</td></tr><tr><td colspan="3">${c.thoiHan}</td></tr><tr><td colspan="3">${c.theoLenh}</td></tr></table>` +
+                  cdP(`Hồi ${cdGio(c.v.gioLam)} ${xsNgayChu(c.v.ngayLam)}, tại ${CD_O(c.ca)}, thành phố ${cdTr(c.ch.tp)}, tôi xin cam đoan thực hiện các nghĩa vụ theo quy định như sau:`) +
+                  cdP('1. Chấp hành nghiêm chỉnh cam kết tuân thủ pháp luật, thực hiện đầy đủ nghĩa vụ công dân, nội quy, quy chế của nơi cư trú, nơi làm việc;') +
+                  cdP('2. Chịu sự quản lý, theo dõi của Trưởng Công an cấp xã nơi người bị cấm đi khỏi nơi cư trú đang cư trú;') +
+                  cdP('3. Có mặt theo giấy triệu tập, trừ trường hợp vì lý do bất khả kháng hoặc do trở ngại khách quan;') +
+                  cdP('4. Thực hiện nghĩa vụ đã cam đoan theo quy định của Bộ luật Tố tụng hình sự;') +
+                  cdP('5. Không thực hiện hành vi vi phạm pháp luật theo quy định của pháp luật về xử lý vi phạm hành chính và pháp luật về hình sự;') +
+                  cdP('6. Không đi khỏi nơi cư trú nếu không được cơ quan đã ra lệnh cấm đi khỏi nơi cư trú cho phép, trừ trường hợp vì lý do bất khả kháng hoặc do trở ngại khách quan.') +
+                  cdP('Tôi xin chịu trách nhiệm trước pháp luật về nội dung cam đoan trên đây./.') +
+                  `<p align="right" style="text-align:right;margin:8pt 0 0 0"><i>${CD_O(c.ch.diaDanh)}, ${xsNgayChu(c.v.ngayLam)}</i></p>` +
+                  cdKyCot(c.v.daiDien ? [{ tieu: 'NGƯỜI ĐẠI DIỆN', ten: c.v.daiDien }, { tieu: 'NGƯỜI CAM ĐOAN', ten: c.hoTen }] : [{ tieu: '&nbsp;' }, { tieu: 'NGƯỜI CAM ĐOAN', ten: c.hoTen }], 56) },
+
+            { id: 'CD13', ma: 'CĐ13', gd: 2, ten: 'Phiếu điểm danh, kiểm diện', kyHieu: '', mauTT: true,
+              truong: [{ k: 'soDong', nhan: 'Số dòng', loai: 'text', mac: () => '20' }],
+              build: c => cdMaMau(c, 'CĐ13') + `<p align="center" style="text-align:center;margin:10pt 0 6pt 0"><b style="font-size:14pt">PHIẾU ĐIỂM DANH, KIỂM DIỆN</b></p><p align="center" style="text-align:center;margin:0 0 8pt 0">Họ và tên: <b>${cdTr(c.hoTen)}</b></p>` +
+                  `<table border="1" cellspacing="0" cellpadding="3" style="width:100%;border-collapse:collapse;font-size:12pt"><tr style="text-align:center;font-weight:bold"><td width="16%">Ngày, tháng, năm</td><td width="9%">Có mặt</td><td width="9%">Vắng mặt</td><td width="40%">Lý do vắng mặt</td><td width="26%">Ghi chú</td></tr>` +
+                  Array.from({ length: Math.max(1, Math.min(60, parseInt(c.v.soDong, 10) || 20)) }, () => '<tr style="height:20pt"><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>').join('') + '</table>' },
+
+            { id: 'CD6', ma: 'CĐ6', gd: 2, ten: 'Biên bản người bị CĐKNCT vi phạm nghĩa vụ', kyHieu: '', mauTT: true,
+              truong: [cdText('lan', 'Lần thứ', () => '1'), cdDate('ngayLam', 'Ngày lập biên bản', () => cdHomNay()), cdTime('gioLam', 'Hồi (giờ)', () => ''), cdTime('gioXong', 'Lập xong hồi', () => ''), cdText('diaDiem', 'Địa điểm', c => c.ch.truSo || '', true),
+                  cdText('truongCA', 'Ông/bà (Trưởng Công an)', c => c.ch.truongCA || '', true), cdText('canBoGhi', 'Cán bộ lập biên bản', c => c.ch.canBoTen || '', true), cdText('chucDanhCB', 'Chức danh cán bộ', c => 'Cảnh sát khu vực ' + (c.ch.khuVucPT || '').replace(/^Cảnh sát khu vực\s*/i, ''), true),
+                  cdText('nguoi3', 'Ông/bà (người đại diện gia đình/chứng kiến)', () => '', true),
+                  cdArea('noiDung', 'I. Nội dung vi phạm', () => ''), cdArea('xuLy', 'II. Hình thức xử lý (nhắc nhở, kiểm điểm, thông báo cho cơ quan ra lệnh hoặc đề nghị thay đổi biện pháp ngăn chặn)', () => 'Không.')],
+              build: c => cdMaMau(c, 'CĐ6') + cdQuocHieu() + cdTieuDe('BIÊN BẢN', 'Về việc người bị cấm đi khỏi nơi cư trú vi phạm nghĩa vụ<br>(Lần thứ ' + cdTr(c.v.lan, '……') + ')') +
+                  cdP(`Hôm nay, vào hồi ${cdGio(c.v.gioLam)} ${xsNgayChu(c.v.ngayLam)} tại ${cdTr(c.v.diaDiem)}.`) + '<p style="text-align:left;margin:0 0 3pt 0"><b>Chúng tôi gồm có:</b></p>' +
+                  `<table style="width:100%;border-collapse:collapse;text-align:left"><tr><td width="55%">- Ông/bà: ${cdTr(c.v.truongCA)}</td><td>- Trưởng ${CD_O(c.ca)}</td></tr><tr><td>- Ông/bà: ${cdTr(c.v.canBoGhi)}</td><td>- ${cdTr(c.v.chucDanhCB)}</td></tr><tr><td>- Ông/bà: ${cdTr(c.v.nguoi3)}</td><td>- Đại diện gia đình/người đại diện/người chứng kiến</td></tr></table>` +
+                  cdP('Tiến hành lập biên bản về việc người bị cấm đi khỏi nơi cư trú vi phạm nghĩa vụ:') + cdKhoi(c) +
+                  '<p style="text-align:left;margin:6pt 0 3pt 0"><b>I. NỘI DUNG VI PHẠM</b></p>' + String(c.v.noiDung || '').split(/\n+/).filter(x => x.trim()).map(x => cdP(CD_O(x))).join('') || cdP('……………………') +
+                  '<p style="text-align:left;margin:6pt 0 3pt 0"><b>II. HÌNH THỨC XỬ LÝ VI PHẠM</b> <i>(Nhắc nhở, kiểm điểm, thông báo cho cơ quan ra lệnh cấm đi khỏi nơi cư trú hoặc đề nghị thay đổi biện pháp ngăn chặn)</i></p>' + String(c.v.xuLy || '').split(/\n+/).filter(x => x.trim()).map(x => cdP(CD_O(x))).join('') +
+                  cdBienBanKet(c) + cdKyCot([{ tieu: 'CÁN BỘ LẬP BIÊN BẢN', ten: c.v.canBoGhi }, { tieu: 'TRƯỞNG ' + CD_O(c.ca.toUpperCase()), ghi: '(Ký, ghi rõ họ tên, đóng dấu)', ten: c.v.truongCA }], 56) +
+                  cdKyCot([{ tieu: 'ĐẠI DIỆN GIA ĐÌNH/NGƯỜI CHỨNG KIẾN', ten: c.v.nguoi3 }, { tieu: 'NGƯỜI BỊ CẤM ĐI KHỎI NƠI CƯ TRÚ', ten: c.hoTen }], 56) },
+
+            { id: 'CD7', ma: 'CĐ7', gd: 2, ten: 'Thông báo người bị CĐKNCT vi phạm nghĩa vụ / bị bắt', kyHieu: 'TB', mauTT: true,
+              truong: [cdSel('loaiViec', 'Về việc người bị CĐKNCT', ['vi phạm nghĩa vụ', 'bị bắt'], () => 'vi phạm nghĩa vụ'), cdText('kinhGui', 'Kính gửi (cơ quan ra lệnh hoặc Trưởng Công an cấp xã nơi quản lý)', c => c.coQuan || '', true),
+                  cdArea('viPham', 'Đã vi phạm', () => ''), cdSel('de', 'Đề nghị', ['biết', 'đề nghị thay đổi biện pháp ngăn chặn đối với người bị cấm đi khỏi nơi cư trú'], () => 'biết')],
+              build: c => cdMaMau(c, 'CĐ7') + cdDauHC(c, { kyHieu: 'TB-' + c.maCa, so: c.v.so, ngay: c.v.ngay }) + cdTieuDe('THÔNG BÁO', 'Về việc người bị cấm đi khỏi nơi cư trú ' + CD_O(c.v.loaiViec)) +
+                  `<p align="center" style="text-align:center">Kính gửi: ${cdTr(c.v.kinhGui)}</p>` + cdP(CD_O(c.ca) + ' thông báo về việc:') + cdKhoi(c) +
+                  '<p style="text-align:left;margin:4pt 0 3pt 0">Đã vi phạm:</p>' + String(c.v.viPham || '').split(/\n+/).filter(x => x.trim()).map(x => cdP(CD_O(x))).join('') +
+                  cdP(`${CD_O(c.ca)} thông báo để ${cdTr(c.v.kinhGui)} ${c.v.de === 'biết' ? 'biết' : CD_O(c.v.de)}./.`) + cdKyPhai(c, cdChucTruong(c), ['Như trên', 'Lưu: Hồ sơ QLTDNBCĐKNCT'], c.ch.truongCA) },
+
+            { id: 'CD8', ma: 'CĐ8', gd: 2, ten: 'Thông báo người bị CĐKNCT vắng mặt / thay đổi nơi làm việc', kyHieu: 'TB', mauTT: true,
+              truong: [cdSel('loaiViec', 'Về việc người bị CĐKNCT', ['vắng mặt tại nơi cư trú', 'thay đổi nơi làm việc', 'thay đổi nơi lao động', 'thay đổi nơi học tập'], () => 'vắng mặt tại nơi cư trú'),
+                  cdText('kinhGui', 'Kính gửi: Trưởng Công an (xã/phường/đặc khu nơi làm việc, tạm trú, lưu trú)', () => '', true), cdText('noiMoi', 'Nơi tạm trú, lưu trú/làm việc/lao động/học tập mới', () => '', true), cdDate('vangTu', 'Vắng mặt từ ngày', () => ''), cdDate('vangDen', 'Đến ngày', () => '')],
+              build: c => cdMaMau(c, 'CĐ8') + cdDauHC(c, { kyHieu: 'TB-' + c.maCa, so: c.v.so, ngay: c.v.ngay }) + cdTieuDe('THÔNG BÁO', 'Về việc người bị cấm đi khỏi nơi cư trú ' + CD_O(c.v.loaiViec)) +
+                  `<p align="center" style="text-align:center">Kính gửi: Trưởng ${cdTr(c.v.kinhGui)}</p>` + cdP(CD_O(c.ca) + ' thông báo về việc người bị cấm đi khỏi nơi cư trú ' + CD_O(c.v.loaiViec) + ':') + cdKhoi(c) +
+                  cdPL('Nơi tạm trú, lưu trú/làm việc/lao động/học tập mới: ' + cdTr(c.v.noiMoi)) + cdPL('Thời gian vắng mặt tại nơi cư trú kể từ ngày ' + cdTr(cdDMY(c.v.vangTu), '……/……/……') + ' đến ngày ' + cdTr(cdDMY(c.v.vangDen), '……/……/……')) +
+                  cdP(`${CD_O(c.ca)} thông báo để Trưởng ${cdTr(c.v.kinhGui)} biết, phối hợp quản lý, theo dõi./.`) + cdKyPhai(c, cdChucTruong(c), ['Như trên', 'Lưu: Hồ sơ QLNBCĐKNCT'], c.ch.truongCA) },
+
+            { id: 'CD9', ma: 'CĐ9', gd: 2, ten: 'Thông báo người bị CĐKNCT không đến trình báo', kyHieu: 'TB', mauTT: true,
+              truong: [cdText('kinhGui', 'Kính gửi: Trưởng Công an (xã/phường/đặc khu quản lý, theo dõi)', () => '', true), cdText('soTBGoc', 'Căn cứ Thông báo số', () => ''), cdDate('ngayTBGoc', 'ngày', () => ''), cdText('noiTam', 'Nơi tạm trú/lưu trú', () => '', true),
+                  cdDate('tamTu', 'Thời gian tạm trú/lưu trú từ ngày', () => ''), cdDate('tamDen', 'đến ngày', () => ''), cdText('lyDo', 'Lý do tạm trú/lưu trú', () => '', true), cdDate('ngayKhongDen', 'Đến ngày … vẫn không đến trình báo', () => cdHomNay())],
+              build: c => cdMaMau(c, 'CĐ9') + cdDauHC(c, { kyHieu: 'TB-' + c.maCa, so: c.v.so, ngay: c.v.ngay }) + cdTieuDe('THÔNG BÁO', 'Về việc người bị cấm đi khỏi nơi cư trú không đến trình báo') +
+                  `<p align="center" style="text-align:center">Kính gửi: Trưởng ${cdTr(c.v.kinhGui)}</p>` + cdP(`Căn cứ Thông báo số ${cdTr(c.v.soTBGoc, '……')} ngày ${cdTr(cdDMY(c.v.ngayTBGoc), '……/……/……')} của Trưởng ${cdTr(c.v.kinhGui)} về việc người bị cấm đi khỏi nơi cư trú có lai lịch sau vắng mặt tại nơi cư trú:`) + cdKhoi(c, { thoiHan: false }) +
+                  cdPL('Nơi tạm trú/lưu trú: ' + cdTr(c.v.noiTam)) + cdPL('Thời gian tạm trú/lưu trú kể từ ngày ' + cdTr(cdDMY(c.v.tamTu), '……/……/……') + ' đến ngày ' + cdTr(cdDMY(c.v.tamDen), '……/……/……')) + cdPL('Lý do tạm trú/lưu trú: ' + cdTr(c.v.lyDo)) +
+                  cdP(`Tuy nhiên, đến ngày ${cdTr(cdDMY(c.v.ngayKhongDen), '……/……/……')}, ${c.xung.toLowerCase()} ${CD_O(c.hoTen || '……')} không đến ${CD_O(c.ca)} để trình báo.`) +
+                  cdP(`${CD_O(c.ca)} thông báo để Trưởng ${cdTr(c.v.kinhGui)} biết, xác minh, xử lý theo quy định./.`) + cdKyPhai(c, cdChucTruong(c), ['Như trên', 'Lưu: Hồ sơ QLTDNBCĐKNCT'], c.ch.truongCA) },
+
+            { id: 'CD10', ma: 'CĐ10', gd: 2, ten: 'Giấy xác nhận tạm trú, lưu trú của người bị CĐKNCT', kyHieu: 'GXN', mauTT: true,
+              truong: [cdText('kinhGui', 'Kính gửi: Trưởng Công an cấp xã nơi quản lý', () => '', true), cdText('soTBGoc', 'Căn cứ Thông báo số', () => ''), cdDate('ngayTBGoc', 'ngày', () => ''), cdText('noiTam', 'Nơi tạm trú/lưu trú', () => '', true),
+                  cdDate('di', 'Được tạm thời đi khỏi nơi cư trú từ ngày', () => ''), cdDate('den', 'đến ngày', () => ''), cdDate('trinhBao', 'Ngày đã đến trình báo', () => ''), cdDate('hetHan', 'Ngày hết thời hạn tạm trú/lưu trú', () => '')],
+              build: c => cdMaMau(c, 'CĐ10') + cdDauHC(c, { kyHieu: 'GXN-' + c.maCa, so: c.v.so, ngay: c.v.ngay }) + cdTieuDe('GIẤY XÁC NHẬN', '') +
+                  `<p align="center" style="text-align:center">Kính gửi: Trưởng ${cdTr(c.v.kinhGui)}</p>` + cdP(`Căn cứ Thông báo số ${cdTr(c.v.soTBGoc, '……')} ngày ${cdTr(cdDMY(c.v.ngayTBGoc), '……/……/……')} của Trưởng ${cdTr(c.v.kinhGui)} về việc người bị cấm đi khỏi nơi cư trú vắng mặt tại nơi cư trú, ${CD_O(c.ca)} xác nhận người bị cấm đi khỏi nơi cư trú:`) + cdKhoiNgan(c) +
+                  cdPL('Được tạm thời đi khỏi nơi cư trú kể từ ngày ' + cdTr(cdDMY(c.v.di), '……/……/……') + ' đến ngày ' + cdTr(cdDMY(c.v.den), '……/……/……')) + cdPL('Nơi tạm trú/lưu trú: ' + cdTr(c.v.noiTam)) +
+                  cdP(`Ngày ${cdTr(cdDMY(c.v.trinhBao), '……/……/……')}, ${c.xung.toLowerCase()} ${CD_O(c.hoTen || '……')} đã đến ${CD_O(c.ca)} trình báo. Đến ngày ${cdTr(cdDMY(c.v.hetHan), '……/……/……')}, ${c.xung.toLowerCase()} ${CD_O(c.hoTen || '……')} hết thời hạn tạm trú/lưu trú.`) + cdKyPhai(c, cdChucTruong(c), ['Như trên', 'Lưu: ' + '……'], c.ch.truongCA) },
+
+            { id: 'CD11', ma: 'CĐ11', gd: 2, ten: 'Bản nhận xét về việc chấp hành nghĩa vụ', kyHieu: 'BNX', mauTT: true,
+              truong: [cdDate('tuNgay', 'Nhận xét từ ngày', () => { const d = csHomNay(); d.setMonth(d.getMonth() - 1); return xsIso(d); }), cdDate('denNgay', 'đến ngày', () => cdHomNay()),
+                  cdArea('viPham', 'Nội dung vi phạm trong kỳ (nếu có — để trống nếu chấp hành đầy đủ)', () => ''),
+                  cdArea('chung', '2. Đánh giá, nhận xét chung', c => `Quá trình bị cấm đi khỏi nơi cư trú, ${c.hoTen || '……'} chấp hành tốt các nội dung trong ${CD_LUAT}.`),
+                  cdText('canBo', 'Cán bộ quản lý', c => c.ch.canBoTen || '', true), cdText('noiNhan', 'Nơi nhận thêm: Công an cấp xã nơi quản lý, theo dõi (nếu có)', () => '', true)],
+              build: c => cdMaMau(c, 'CĐ11') + cdDauHC(c, { kyHieu: 'BNX-' + c.maCa, so: c.v.so, ngay: c.v.ngay }) + cdTieuDe('BẢN NHẬN XÉT', 'Về việc chấp hành nghĩa vụ của người bị cấm đi khỏi nơi cư trú<br>(Từ ngày ' + cdTr(cdDMY(c.v.tuNgay), '……/……/……') + ' đến ngày ' + cdTr(cdDMY(c.v.denNgay), '……/……/……') + ')') +
+                  cdP(CD_O(c.ca) + ', thành phố ' + cdTr(c.ch.tp) + ' nhận xét về việc chấp hành nghĩa vụ của người bị cấm đi khỏi nơi cư trú sau:') + cdKhoi(c) +
+                  '<p align="center" style="text-align:center;margin:8pt 0 3pt 0"><b>NỘI DUNG NHẬN XÉT</b></p><p style="text-align:left;margin:3pt 0"><b>1. Việc chấp hành nghĩa vụ</b></p>' +
+                  cdP('- Chấp hành nghiêm chỉnh cam kết tuân thủ pháp luật, thực hiện đầy đủ nghĩa vụ công dân, nội quy, quy chế của nơi cư trú, nơi làm việc;') +
+                  cdP('- Chịu sự quản lý, theo dõi của Trưởng ' + CD_O(c.ca) + ' nơi người bị cấm đi khỏi nơi cư trú đang cư trú;') + cdP('- Có mặt theo giấy triệu tập;') +
+                  cdP('- Thực hiện nghĩa vụ đã cam đoan theo quy định của Bộ luật Tố tụng hình sự;') +
+                  cdP('- Trong quá trình bị cấm đi khỏi nơi cư trú không thực hiện hành vi vi phạm pháp luật theo quy định của pháp luật về xử lý vi phạm hành chính và pháp luật về hình sự;') +
+                  cdP('- Trong quá trình bị cấm đi khỏi nơi cư trú không đi khỏi nơi cư trú nếu không được cơ quan đã ra lệnh cấm đi khỏi nơi cư trú cho phép, trừ trường hợp vì lý do bất khả kháng hoặc do trở ngại khách quan.') +
+                  (String(c.v.viPham || '').trim() ? '<p style="text-align:left;margin:3pt 0"><i>Nội dung chưa chấp hành/vi phạm:</i></p>' + String(c.v.viPham).split(/\n+/).filter(x => x.trim()).map(x => cdP(CD_O(x))).join('') : '') +
+                  '<p style="text-align:left;margin:6pt 0 3pt 0"><b>2. Đánh giá, nhận xét chung</b></p>' + cdP(CD_O(c.v.chung)) +
+                  cdKyCot([{ tieu: 'CÁN BỘ QUẢN LÝ', ten: c.v.canBo }, { tieu: 'TRƯỞNG ' + CD_O(c.ca.toUpperCase()), ghi: '(Ký, ghi rõ họ tên, đóng dấu)', ten: c.ch.truongCA }], 56) +
+                  `<p style="font-size:11pt;margin-top:6pt"><b><i style="font-size:12pt">Nơi nhận:</i></b><br>${c.v.noiNhan ? '- ' + CD_O(c.v.noiNhan) + '<br>' : '- Công an cấp xã nơi quản lý, theo dõi (nếu có);<br>'}- Lưu: Hồ sơ QLNBCĐKNCT.</p>` },
+
+            { id: 'CD12', ma: 'CĐ12', gd: 2, ten: 'Thông báo người bị CĐKNCT chết', kyHieu: 'TB', mauTT: true,
+              truong: [cdText('kinhGui', 'Kính gửi (cơ quan ra lệnh cấm đi khỏi nơi cư trú)', c => c.coQuan || '', true), cdDate('ngayChet', 'Chết vào ngày', () => ''), cdTime('gioChet', 'Hồi (giờ)', () => ''), cdText('soCT', 'Giấy chứng tử số', () => ''), cdDate('ngayCT', 'ngày cấp', () => ''), cdText('noiCT', 'của (nơi cấp)', () => '', true)],
+              build: c => cdMaMau(c, 'CĐ12') + cdDauHC(c, { kyHieu: 'TB-' + c.maCa, so: c.v.so, ngay: c.v.ngay }) + cdTieuDe('THÔNG BÁO', 'Về việc người bị cấm đi khỏi nơi cư trú chết') +
+                  `<p align="center" style="text-align:center">Kính gửi: ${cdTr(c.v.kinhGui)}</p>` + cdP('Căn cứ khoản 5 Điều 39 ' + CD_LUAT + '.') + cdP(CD_O(c.ca) + ' thông báo về việc người bị cấm đi khỏi nơi cư trú chết:') + cdKhoi(c) +
+                  cdPL(`Đã chết vào hồi ${cdGio(c.v.gioChet)}, ngày ${cdTr(cdDMY(c.v.ngayChet), '……/……/……')}`) + cdPL(`Giấy chứng tử số ${cdTr(c.v.soCT, '……')} ngày ${cdTr(cdDMY(c.v.ngayCT), '……/……/……')} của ${cdTr(c.v.noiCT)}`) +
+                  cdP(`${CD_O(c.ca)} thông báo để ${cdTr(c.v.kinhGui)} biết và xử lý theo thẩm quyền./.`) + cdKyPhai(c, cdChucTruong(c), ['Như trên', 'Lưu: Hồ sơ QLTDNBCĐKNCT'], c.ch.truongCA) },
+
+            { id: 'BCDX2', ma: 'Báo cáo đề xuất', gd: 3, ten: 'Báo cáo đề xuất kết thúc quản lý, theo dõi', kyHieu: 'BC-ĐX', mauTT: false,
+              truong: [cdText('lyDo', 'Lý do (câu "Đến nay …")', () => 'thời hạn quản lý đã hết', true)],
+              build: c => cdDauHC(c, { kyHieu: 'BC-ĐX', so: c.v.so, ngay: c.v.ngay }) + cdTieuDe('BÁO CÁO ĐỀ XUẤT', 'Về việc kết thúc quản lý, theo dõi người bị cấm đi khỏi nơi cư trú') +
+                  `<p align="center" style="text-align:center">Kính gửi: Trưởng ${CD_O(c.ca)}, thành phố ${cdTr(c.ch.tp)}</p>` + cdP(c.canCuTT) + cdP(cdThucHienQD(c) + ', đối với:') + cdKhoi(c) +
+                  cdP(`Đến nay ${CD_O(c.v.lyDo)}, do đó cán bộ được phân công quản lý kính đề xuất Trưởng ${CD_O(c.ca)} ký Quyết định kết thúc quản lý, theo dõi người bị cấm đi khỏi nơi cư trú theo quy định.`) +
+                  cdKyCot([{ tieu: 'DUYỆT CỦA<br>TRƯỞNG ' + CD_O(c.ca.toUpperCase()), ghi: '' }, { tieu: 'CÁN BỘ ĐỀ XUẤT', ghi: '', ten: c.ch.canBoTen }], 60) },
+
+            { id: 'QDKT', ma: 'Quyết định kết thúc', gd: 3, ten: 'Quyết định kết thúc quản lý, theo dõi', kyHieu: 'QĐ', mauTT: false,
+              truong: [cdText('lyDo', 'Lý do kết thúc', c => 'Hết thời hạn cấm đi khỏi nơi cư trú theo ' + (c.loaiLenh === 'Lệnh' ? 'Lệnh' : 'Quyết định') + '.', true)],
+              build: c => cdDauHC(c, { kyHieu: 'QĐ-' + c.maCa, so: c.v.so, ngay: c.v.ngay }) + cdTieuDe('QUYẾT ĐỊNH', 'Kết thúc quản lý, theo dõi người có ' + CD_O(c.loaiLenh) + ' cấm đi khỏi nơi cư trú', 35) +
+                  `<p align="center" style="text-align:center"><b>TRƯỞNG CÔNG AN ${CD_O(String(c.ch.tenPhuong).toUpperCase())}</b></p>` + cdP(c.canCuTT) + cdP(cdThucHienQD(c) + ';') +
+                  cdP('Xét Báo cáo đề xuất của đồng chí Cảnh sát khu vực được phân công quản lý, theo dõi người bị cấm đi khỏi nơi cư trú;') + `<p align="center" style="text-align:center"><b>QUYẾT ĐỊNH:</b></p>` +
+                  cdP('<b>Điều 1.</b> Kết thúc quản lý, theo dõi đối với:') + cdKhoi(c) + cdPL('Lý do kết thúc: ' + cdTr(c.v.lyDo)) + cdP('<b>Điều 2.</b> Quyết định này có hiệu lực kể từ ngày ký.') + cdKyPhai(c, cdChucTruong(c), cdNoiNhanLuu('Như Điều 1'), c.ch.truongCA) }
+        ];
+        const CD_GD = { 1: '1. Mở hồ sơ và phân công', 2: '2. Trong thời gian quản lý, theo dõi', 3: '3. Kết thúc quản lý' };
+        const DT_BO_MAU = { [CD_DIEN]: { ten: 'Cấm đi khỏi nơi cư trú', mau: CD_MAU, gd: CD_GD } };
+
+        function cdHtml(mau, d, v, choWord) {
+            const c = cdBoiCanh(d, v);
+            const body = mau.build(c);
+            const tenFile = mau.ma + ' ' + mau.ten;
+            return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>${CD_O(tenFile)}</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+<style>
+/* Thể thức theo Nghị định 30/2020/NĐ-CP: A4; lề trên 20mm, dưới 20mm, trái 30mm, phải 20mm; Times New Roman 13; số trang ở giữa lề trên từ trang 2 */
+@page WordSection1 { size: 21.0cm 29.7cm; margin: 2.0cm 2.0cm 2.0cm 3.0cm; mso-header-margin: 1.0cm; mso-footer-margin: 1.0cm; ${choWord ? 'mso-header: h1; mso-first-header: fh1; mso-title-page: yes;' : ''} }
+div.WordSection1 { page: WordSection1; }
+body { font-family: "Times New Roman", serif; font-size: 13pt; }
+p { margin: 0 0 6pt 0; line-height: 112%; }
+p.tl { text-align: justify; text-indent: 1.27cm; }
+table.dau, table.ky, table.kh { width: 100%; border-collapse: collapse; }
+table.dau td, table.kh td { font-family: "Times New Roman", serif; padding: 0 2pt; }
+table.kh td { font-size: 13pt; padding: 1pt 2pt; }
+table.ky { margin-top: 6pt; }
+table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2pt; }
+</style></head>
+<body><div class="WordSection1">${body}</div>${choWord ? `
+<div style="mso-element:header" id="h1"><p align="center" style="text-align:center;margin:0"><span style="mso-field-code:' PAGE '"><span style="mso-no-proof:yes">2</span></span></p></div>
+<div style="mso-element:header" id="fh1"><p style="margin:0">&nbsp;</p></div>` : ''}</body></html>`;
+        }
+
+        // ---- giao diện: bảng bộ mẫu trong biểu mẫu KV3 ----
+        function dtBoMauCuaDien(dien) { return DT_BO_MAU[dien] || null; }
+        function dtVeBoMau(d) {
+            const el = document.getElementById('dtBoMau'); if (!el) return;
+            const dien = document.getElementById('dt_dienDoiTuong').value, bo = dtBoMauCuaDien(dien), id = document.getElementById('dtId').value;
+            if (!dien) { el.innerHTML = ''; return; }
+            if (!bo) { el.innerHTML = '<div class="cd-bm"><div class="cd-bm-t">📄 Bộ mẫu văn bản</div><p class="cd-gc">Diện này chưa có bộ mẫu văn bản dùng chung. Khi có mẫu của diện này, gửi cho quản trị để bổ sung vào bộ mẫu.</p></div>'; return; }
+            if (!id) { el.innerHTML = `<div class="cd-bm"><div class="cd-bm-t">📄 Bộ mẫu văn bản — ${CD_O(bo.ten)}</div><p class="cd-gc">Bấm <b>Lưu</b> hồ sơ trước, sau đó mở lại hồ sơ để lập văn bản (có sẵn ${bo.mau.length} mẫu).</p></div>`; return; }
+            const goc = danhSachDoiTuong.find(x => x.id === id) || {};
+            let h = `<div class="cd-bm"><div class="cd-bm-t">📄 Bộ mẫu văn bản — ${CD_O(bo.ten)} <button type="button" class="dt-link" onclick="cdMoCauHinh()">⚙️ Thông tin đơn vị &amp; cán bộ</button></div>`;
+            [1, 2, 3].forEach(gd => {
+                const ds = bo.mau.filter(m => m.gd === gd); if (!ds.length) return;
+                h += `<div class="cd-gd">${CD_O(bo.gd[gd])}</div><div class="cd-luoi">` + ds.map(m => `<button type="button" class="cd-nut" onclick="cdMoLap('${m.id}')"><span class="cd-ma">${CD_O(m.ma)}</span> ${CD_O(m.ten)}</button>`).join('') + '</div>';
+            });
+            const vb = (goc.vanBan || []).slice().reverse();
+            if (vb.length) h += '<div class="cd-gd">Văn bản đã lập</div><ul class="cd-ls">' + vb.slice(0, 12).map(x => `<li>${CD_O(cdDMY(x.ngay) || '')} — <b>${CD_O(x.ma)}</b> ${CD_O(x.ten)}${x.so ? ' · số ' + CD_O(x.so) : ''}</li>`).join('') + '</ul>';
+            el.innerHTML = h + '</div>';
+        }
+
+        // ---- hộp thoại lập văn bản ----
+        let cdMauHienTai = null;
+        function cdVeTruong(mau, d) {
+            const c = cdBoiCanh(d, {});
+            const chung = [{ k: 'so', nhan: 'Số văn bản (để trống nếu chưa có)', loai: 'text', mac: () => '' }, { k: 'ngay', nhan: 'Ngày ban hành/lập', loai: 'date', mac: () => cdHomNay() }];
+            const ds = (mau.kyHieu === '' && ['CD3', 'CD4', 'CD6', 'CD13'].includes(mau.id) ? [] : (mau.id === 'KH' ? [chung[1]] : chung)).concat(mau.truong);
+            return ds.map(t => {
+                let val = t.mac ? t.mac(c) : ''; const id = 'cdv_' + t.k;
+                let inp;
+                if (t.loai === 'area') inp = `<textarea id="${id}" rows="4" class="cd-o">${CD_O(val)}</textarea>`;
+                else if (t.loai === 'chk') inp = `<label class="cd-chk"><input type="checkbox" id="${id}"${val ? ' checked' : ''}> ${CD_O(t.nhan)}</label>`;
+                else if (t.loai === 'sel') inp = `<select id="${id}" class="cd-o">${t.opts.map(o => `<option${o === val ? ' selected' : ''}>${CD_O(o)}</option>`).join('')}</select>`;
+                else inp = `<input type="${t.loai === 'date' ? 'date' : t.loai === 'time' ? 'time' : 'text'}" id="${id}" class="cd-o" value="${CD_O(val)}">`;
+                return t.loai === 'chk' ? `<div class="cd-f cd-r">${inp}</div>` : `<div class="cd-f${t.rong || t.loai === 'area' ? ' cd-r' : ''}"><label for="${id}">${CD_O(t.nhan)}</label>${inp}</div>`;
+            }).join('');
+        }
+        function cdDocV(mau) {
+            const v = {}; const ds = [{ k: 'so', loai: 'text' }, { k: 'ngay', loai: 'date' }].concat(mau.truong);
+            ds.forEach(t => { const e = document.getElementById('cdv_' + t.k); if (e) v[t.k] = t.loai === 'chk' ? e.checked : (e.value || '').trim(); });
+            return v;
+        }
+        let cdDangVe = null;
+        function cdMoLap(id) {
+            const bo = dtBoMauCuaDien(document.getElementById('dt_dienDoiTuong').value); if (!bo) return;
+            const mau = bo.mau.find(m => m.id === id); if (!mau) return;
+            if (!document.getElementById('dtId').value) return alert('Hãy lưu hồ sơ trước khi lập văn bản.');
+            if (!(document.getElementById('dt_hoTen').value || '').trim()) return alert('Hồ sơ chưa có họ tên.');
+            cdMauHienTai = mau; const d = cdBanGhiTuForm();
+            document.getElementById('cdvTieuDe').innerText = mau.ma + ' — ' + mau.ten;
+            document.getElementById('cdvTruong').innerHTML = cdVeTruong(mau, d);
+            const kt = mau.gd === 3;
+            const kk = document.getElementById('cdvKetThuc'); kk.classList.toggle('hidden', !kt);
+            if (kt) {
+                document.getElementById('cdv_ketThuc').checked = false;
+                const s = document.getElementById('cdv_chuyenDien'); s.innerHTML = '<option value="">(Không đổi diện)</option>' + document.getElementById('dt_dienDoiTuong').innerHTML.replace('<option value="">-- Chọn diện đối tượng --</option>', '');
+                s.value = '';
+            }
+            document.getElementById('cdvModal').classList.remove('hidden');
+            document.getElementById('cdvTruong').oninput = cdVePreview; document.getElementById('cdvTruong').onchange = cdVePreview;
+            cdVePreview();
+        }
+        function cdVePreview() {
+            clearTimeout(cdDangVe);
+            cdDangVe = setTimeout(() => {
+                if (!cdMauHienTai) return;
+                const f = document.getElementById('cdvXem'); if (!f) return;
+                try { f.srcdoc = cdHtml(cdMauHienTai, cdBanGhiTuForm(), cdDocV(cdMauHienTai), false); } catch (e) { f.srcdoc = '<p style="font:14px sans-serif;color:#b00">Lỗi dựng xem trước: ' + CD_O(e.message) + '</p>'; }
+            }, 150);
+        }
+        async function cdXuat(kieu) {
+            const mau = cdMauHienTai; if (!mau) return;
+            const d = cdBanGhiTuForm(), v = cdDocV(mau), html = cdHtml(mau, d, v, kieu !== 'in');
+            const tenFile = (mau.ma + '_' + boDauTiengViet(d.hoTen || '').replace(/[^\w]+/g, '_')).replace(/_+$/, '').replace(/Đ/g, 'D');
+            if (kieu === 'in') {
+                const w = window.open('', '_blank'); if (!w) return alert('Trình duyệt đang chặn cửa sổ bật lên (pop-up). Hãy cho phép rồi bấm lại.');
+                w.document.write(html); w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 500);
+            } else {
+                const blob = new Blob(['﻿', html], { type: 'application/msword' }), url = URL.createObjectURL(blob), a = document.createElement('a');
+                a.href = url; a.download = tenFile + '.doc'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 2500);
+            }
+            await cdGhiNhan(mau, d, v);
+        }
+        // Ghi vào hồ sơ: nhật ký văn bản đã lập; số/ngày QĐ phân công cán bộ (CĐ1); kết thúc quản lý + đổi diện (nếu được chọn)
+        async function cdGhiNhan(mau, d, v) {
+            ghiNhatKy('Lập văn bản ' + mau.ma + ' (cấm đi khỏi nơi cư trú)', mau.ten + ' — ' + (d.hoTen || ''));
+            if (!dbFirestore || !d.id || currentUser.role === 'can_bo_du_lieu_tp') return;
+            const goc = danhSachDoiTuong.find(x => x.id === d.id); if (!goc) return;
+            const ts = (typeof firebase !== 'undefined' && firebase.firestore) ? firebase.firestore.FieldValue.serverTimestamp() : new Date();
+            const email = (currentUser.email || '').toLowerCase();
+            const upd = { vanBan: (goc.vanBan || []).concat([{ ma: mau.ma, ten: mau.ten, so: v.so || '', ngay: v.ngay || '', luc: new Date().toISOString(), boi: email }]), capNhatLuc: ts, capNhatBoi: email };
+            const cdMoi = Object.assign({}, goc.cd || {});
+            if (mau.id === 'CD1' && v.ngay) { if (v.so) cdMoi.soQDCB = v.so; cdMoi.ngayQDCB = v.ngay; }
+            if (mau.gd === 3 && document.getElementById('cdv_ketThuc') && document.getElementById('cdv_ketThuc').checked) {
+                cdMoi.ketThuc = true; cdMoi.ngayKetThuc = v.ngay || cdHomNay();
+                const dienMoi = document.getElementById('cdv_chuyenDien').value;
+                if (dienMoi && dienMoi !== goc.dienDoiTuong) {
+                    upd.dienDoiTuong = dienMoi; upd.nhom = dtNhomCuaDien(dienMoi);
+                    upd.lichSuDien = (goc.lichSuDien || []).concat([{ tu: goc.dienDoiTuong || '', den: dienMoi, nhom: upd.nhom, luc: new Date().toISOString(), boi: email }]);
+                }
+            }
+            upd.cd = cdMoi;
+            try {
+                await dbFirestore.collection('doi_tuong_quan_ly').doc(d.id).set(upd, { merge: true });
+                Object.assign(goc, upd, { capNhatLuc: null }); _dtChiMucDT = null;
+                if (upd.dienDoiTuong) { document.getElementById('dt_dienDoiTuong').value = upd.dienDoiTuong; dtFormDoiDien(); }
+                cdNapForm(goc); dtVeBoMau(goc);
+                if (mau.gd === 3 && upd.dienDoiTuong) alert('✅ Đã ghi nhận kết thúc quản lý và chuyển diện sang: ' + upd.dienDoiTuong);
+            } catch (err) { alert('⚠️ Đã tạo văn bản nhưng chưa ghi được nhật ký vào hồ sơ: ' + (err.message || err.code)); }
+        }
+
+        // ---- thông tin đơn vị & cán bộ ----
+        const CD_CH_TRUONG = [['capTren', 'Cơ quan chủ quản (in hoa)'], ['donVi', 'Tên đơn vị (in hoa)'], ['tenPhuong', 'Tên đơn vị trong câu văn (VD: phường Tân An)'], ['tp', 'Thành phố/tỉnh'], ['diaDanh', 'Địa danh ghi ở ngày tháng'], ['truSo', 'Địa chỉ trụ sở'],
+            ['truongCA', 'Họ tên Trưởng Công an'], ['canBoTen', 'Họ tên cán bộ CSKV'], ['capBac', 'Cấp bậc'], ['chucVu', 'Chức vụ'], ['khuVucPT', 'Khu vực phụ trách (VD: Cảnh sát khu vực 7)'], ['toCSKV', 'Tên tổ (in hoa)'], ['maCa', 'Ký hiệu đơn vị trong số văn bản (VD: CAP)'], ['ttSo', 'Số Thông tư căn cứ'], ['ttNgay', 'Ngày ban hành Thông tư']];
+        function cdMoCauHinh() {
+            const ch = cdCauHinh();
+            document.getElementById('cdchTruong').innerHTML = CD_CH_TRUONG.map(([k, n]) => `<div class="cd-f"><label for="cdch_${k}">${CD_O(n)}</label><input id="cdch_${k}" class="cd-o" value="${CD_O(ch[k] || '')}"></div>`).join('');
+            document.getElementById('cdchModal').classList.remove('hidden');
+        }
+        function cdLuuCauHinh() {
+            const o = {}; CD_CH_TRUONG.forEach(([k]) => { o[k] = (document.getElementById('cdch_' + k).value || '').trim(); });
+            try { localStorage.setItem(CD_KEY_CH + (khuVucHienTai || ''), JSON.stringify(o)); } catch (e) { return alert('Không lưu được trên trình duyệt này.'); }
+            document.getElementById('cdchModal').classList.add('hidden');
+            if (!document.getElementById('cdvModal').classList.contains('hidden') && cdMauHienTai) cdMoLap(cdMauHienTai.id);
+        }
+
         // ================== QUẢN LÝ ĐỐI TƯỢNG (KV3) ==================
         let danhSachDoiTuong = [];
         let huyLangNgheDoiTuong = null;
@@ -9054,6 +10018,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                 capNhatBoLocDienDoiTuong();
                 renderDanhSachDoiTuong();
                 renderDashboardKV3Box();
+                try { dtLamMoiLienKet(); } catch (e) { }
             }, err => {
                 const elModal = document.getElementById('noiDungDanhSachDoiTuong');
                 if (elModal) elModal.innerHTML = '<p class="text-rose-400 p-3">❌ Lỗi tải danh sách đối tượng: ' + escHtml(err.message) + '</p>';
@@ -9086,11 +10051,13 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             const dienLoc = document.getElementById('locDienDoiTuong').value;
             let ds = danhSachDoiTuong;
             if (dienLoc) ds = ds.filter(d => d.dienDoiTuong === dienLoc);
+            const nhomLoc = (document.getElementById('locNhomDoiTuong') || {}).value;
+            if (nhomLoc) ds = ds.filter(d => dtNhomCuaBanGhi(d) === nhomLoc);
             if (tuKhoa) ds = ds.filter(d => [d.hoTen, d.dienDoiTuong, d.soHoSo, d.noiOHienTai].some(t => t && boDauTiengViet(t).includes(tuKhoa)));
             if (ds.length === 0) { el.innerHTML = '<p class="text-gray-500 p-3">Chưa có đối tượng nào trong danh sách.</p>'; return; }
             el.innerHTML = `<table class="w-full text-left border-collapse">
                 <thead><tr class="text-gray-400 border-b border-gray-700">
-                    <th class="p-1.5">TT</th><th class="p-1.5"></th><th class="p-1.5">Họ và tên đối tượng</th><th class="p-1.5">Diện đối tượng</th>
+                    <th class="p-1.5">TT</th><th class="p-1.5"></th><th class="p-1.5">Họ và tên đối tượng</th><th class="p-1.5">Nhóm</th><th class="p-1.5">Diện đối tượng</th>
                     <th class="p-1.5">Nơi ở hiện tại</th><th class="p-1.5">Cán bộ quản lý hiện tại</th><th class="p-1.5"></th>
                 </tr></thead>
                 <tbody>${ds.map((d, i) => {
@@ -9099,10 +10066,11 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                         <td class="p-1.5">${i + 1}</td>
                         <td class="p-1.5">${d.anhBase64 ? `<img src="${d.anhBase64}" class="w-8 h-8 rounded object-cover border border-gray-700">` : `<div class="w-8 h-8 rounded bg-gray-800 flex items-center justify-center text-gray-600 text-[10px]">—</div>`}</td>
                         <td class="p-1.5 text-white font-medium">${escHtml(d.hoTen || '')}</td>
-                        <td class="p-1.5 text-rose-300">${escHtml(d.dienDoiTuong || '')}</td>
+                        <td class="p-1.5">${(() => { const k = dtNhomCuaBanGhi(d); return `<span class="dt-chip ${k ? DT_NHOM[k].cls : ''}">${dtNhanNhom(k)}</span>`; })()}</td>
+                        <td class="p-1.5 text-rose-300">${escHtml(d.dienDoiTuong || '')}${(() => { const c = dtSoNgayConLai(d); return d.denNgayQL ? `<div class="text-[11px] ${c !== null && c < 0 ? 'dt-do' : (c !== null && c <= 30 ? 'dt-vang' : 'text-gray-400')}">đến ${dtFmtNgay(d.denNgayQL)}${c !== null ? (c < 0 ? ' (đã hết)' : ' (còn ' + c + ' ngày)') : ''}</div>` : ''; })()}</td>
                         <td class="p-1.5">${escHtml(d.noiOHienTai || '')}</td>
                         <td class="p-1.5">${escHtml(cbHienTai)}</td>
-                        <td class="p-1.5 text-right"><button onclick="event.stopPropagation(); moFormDoiTuong('${d.id}')" class="text-rose-400 hover:text-rose-300">Chi tiết ▸</button></td>
+                        <td class="p-1.5 text-right whitespace-nowrap">${dtTimHoCuaDoiTuong(d) >= 0 ? `<button onclick="event.stopPropagation(); dtMoHoCuaDoiTuong('${d.id}')" class="dt-link">🏠 Hộ</button>` : '<span class="text-gray-500 text-[11px]">chưa gắn hộ</span>'} <button onclick="event.stopPropagation(); moFormDoiTuong('${d.id}')" class="text-rose-400 hover:text-rose-300">Chi tiết ▸</button></td>
                     </tr>`;
                 }).join('')}</tbody></table>`;
         }
@@ -9160,12 +10128,13 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             const truong = ['dienDoiTuong', 'soHoSo', 'hoTen', 'gioiTinh', 'tenGoiKhac', 'sinhNgay', 'queQuan', 'quocTich',
                 'danToc', 'tonGiao', 'soDinhDanh', 'ngayCap', 'noiCap', 'noiThuongTru', 'noiOHienTai', 'soDienThoai',
                 'trinhDoHocVan', 'ngheNghiep', 'hoTenCha', 'giayToCha', 'hoTenMe', 'giayToMe', 'nguoiGiamHo', 'giayToGiamHo',
-                'vợChong', 'giayToVoChong', 'tienAnTienSu', 'bieuHienHoatDong', 'dacDiemMoiQuanHe', 'thayDoiKhac'];
+                'vợChong', 'giayToVoChong', 'tienAnTienSu', 'bieuHienHoatDong', 'dacDiemMoiQuanHe', 'thayDoiKhac', 'quyetDinh', 'tuNgayQL', 'denNgayQL', 'hoId'];
             truong.forEach(t => {
                 const elInput = document.getElementById('dt_' + t);
                 if (elInput) elInput.value = d ? (d[t] || (t === 'quocTich' && !d.id ? 'Việt Nam' : '')) : (t === 'quocTich' ? 'Việt Nam' : '');
             });
             document.getElementById('dt_gioiTinh').value = d ? (d.gioiTinh || 'Nam') : 'Nam';
+            try { cdNapForm(d); dtFormDoiDien(); document.getElementById('dt_btnMoHo').classList.toggle('hidden', !(d && dtTimHoCuaDoiTuong(d) >= 0)); } catch (e) { }
             // Nạp lại ảnh đã lưu (nếu có) khi mở hồ sơ cũ; xóa sạch khi thêm mới
             document.getElementById('dt_anhBase64').value = (d && d.anhBase64) ? d.anhBase64 : '';
             const elAnh = document.getElementById('dt_anhXemTruoc');
@@ -9268,7 +10237,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             const truong = ['dienDoiTuong', 'soHoSo', 'hoTen', 'gioiTinh', 'tenGoiKhac', 'sinhNgay', 'queQuan', 'quocTich',
                 'danToc', 'tonGiao', 'soDinhDanh', 'ngayCap', 'noiCap', 'noiThuongTru', 'noiOHienTai', 'soDienThoai',
                 'trinhDoHocVan', 'ngheNghiep', 'hoTenCha', 'giayToCha', 'hoTenMe', 'giayToMe', 'nguoiGiamHo', 'giayToGiamHo',
-                'vợChong', 'giayToVoChong', 'tienAnTienSu', 'bieuHienHoatDong', 'dacDiemMoiQuanHe', 'thayDoiKhac'];
+                'vợChong', 'giayToVoChong', 'tienAnTienSu', 'bieuHienHoatDong', 'dacDiemMoiQuanHe', 'thayDoiKhac', 'quyetDinh', 'tuNgayQL', 'denNgayQL', 'hoId'];
             const duLieu = { phuong: khuVucHienTai, canBoQuanLy: dtCanBoQuanLyTam, capNhatLuc: firebase.firestore.FieldValue.serverTimestamp(), capNhatBoi: currentUser.email.toLowerCase() };
             // SỬA LỖ HỔNG BẢO MẬT NGHIÊM TRỌNG ĐÃ PHÁT HIỆN: hồ sơ KV3 trước đây CHỈ lưu "phuong", hoàn toàn
             // KHÔNG lưu "khuVuc" — khiến CSKV chỉ được giao phụ trách 1 khu vực vẫn nhìn thấy TOÀN BỘ đối
@@ -9279,6 +10248,13 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             duLieu.khuVuc = layNhanKhuVucTuDiaChi(dtNoiO, khuVucHienTai) || donViMacDinhTheoLoaiHinh(khuVucHienTai);
             truong.forEach(t => { const elInput = document.getElementById('dt_' + t); if (elInput) duLieu[t] = elInput.value.trim ? elInput.value.trim() : elInput.value; });
             duLieu.anhBase64 = document.getElementById('dt_anhBase64').value || '';
+            duLieu.nhom = dtNhomCuaDien(duLieu.dienDoiTuong);
+            if (duLieu.dienDoiTuong === CD_DIEN) { const g0 = document.getElementById('dtId').value ? danhSachDoiTuong.find(x => x.id === document.getElementById('dtId').value) : null; duLieu.cd = cdDocForm(g0 && g0.cd); }
+            {
+                const idCu = document.getElementById('dtId').value, cuBg = idCu ? danhSachDoiTuong.find(x => x.id === idCu) : null;
+                if (!cuBg || (cuBg.dienDoiTuong || '') !== duLieu.dienDoiTuong) duLieu.lichSuDien = ((cuBg && cuBg.lichSuDien) || []).concat([{ tu: cuBg ? (cuBg.dienDoiTuong || '') : '', den: duLieu.dienDoiTuong, nhom: duLieu.nhom, luc: new Date().toISOString(), boi: currentUser.email.toLowerCase() }]);
+                if (!duLieu.hoId) { const ix = dtTimHoCuaDoiTuong(duLieu); if (ix >= 0) duLieu.hoId = danhSachHoGiaDinh[ix].id || ''; }
+            }
             try {
                 const id = document.getElementById('dtId').value;
                 if (id) { await dbFirestore.collection('doi_tuong_quan_ly').doc(id).set(duLieu, { merge: true }); }
@@ -10265,11 +11241,11 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
 
             const wb = new ExcelJS.Workbook();
             const ws = wb.addWorksheet("Muc_Luc_KV3");
-            let d1 = dungSheetBieuMauChuan(ws, { soCot: 4, tieuDe: "MỤC LỤC ĐỐI TƯỢNG QUẢN LÝ", maBieuMau: "KV3", donVi: "Công an " + khuVucHienTai });
+            let d1 = dungSheetBieuMauChuan(ws, { soCot: 5, tieuDe: "MỤC LỤC ĐỐI TƯỢNG QUẢN LÝ", maBieuMau: "KV3", donVi: "Công an " + khuVucHienTai });
             veBangDuLieuCoKhung(ws, d1, [
                 { tieuDe: "TT", rong: 6, canGiua: true }, { tieuDe: "Họ và tên đối tượng", rong: 26 },
-                { tieuDe: "Diện đối tượng", rong: 46 }, { tieuDe: "Trang/Mã hồ sơ", rong: 18 }
-            ], ds.map((d, i) => [i + 1, d.hoTen || '', d.dienDoiTuong || '', d.soHoSo || d.id || '']));
+                { tieuDe: "Nhóm quản lý", rong: 30 }, { tieuDe: "Diện đối tượng", rong: 46 }, { tieuDe: "Trang/Mã hồ sơ", rong: 18 }
+            ], ds.map((d, i) => [i + 1, d.hoTen || '', (DT_NHOM[dtNhomCuaBanGhi(d)] || {}).nhan || 'Chưa phân nhóm', d.dienDoiTuong || '', d.soHoSo || d.id || '']));
 
             // Sheet chi tiết đầy đủ 19 trường cho từng đối tượng — tiện in/lưu hồ sơ giấy song song
             const ws2 = wb.addWorksheet("Chi_Tiet_KV3");
@@ -11162,10 +12138,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
             if (!ds || !ds.length) return '';
             return anDangKy(tieuDe, AN_COT_COSO, ds.map(c => { const g = csTinhTrangGiay(c), k = csTinhTrangKiemTra(c); return [c.ten || '', c.loai || '', c.diaChi || '', c.khuVuc || '', g.nhan, k ? k.nhan : '–']; }));
         }
-        function anDKDoiTuong(tieuDe, ds) {
-            if (!ds || !ds.length) return '';
-            return anDangKy(tieuDe, ['Họ tên', 'Diện đối tượng', 'Số hồ sơ', 'Khu vực', 'Nơi ở hiện tại'], ds.map(d => [d.hoTen || '', d.dienDoiTuong || '', d.soHoSo || '', d.khuVuc || '', d.noiOHienTai || '']));
-        }
+        function anDKDoiTuong(tieuDe, ds) { return dtDangKyDS(tieuDe, ds); }
 
         // ---- nhận định tự động (quy tắc tham khảo — CSKV vẫn đối chiếu thực tế địa bàn) ----
         function anNhanDinh(M, ex) {
@@ -11295,7 +12268,9 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
             h += anKPI('Cơ sở cần xử lý', anN(coSo.canXuLy.length), { drill: anDKCoSo('Cơ sở cần xử lý', coSo.canXuLy), phu: coSo.canXuLy.length ? '▲ cần xử lý' : '✓ ổn' });
             h += anKPI('Sự vụ đang xử lý', anDash.suVu === null ? '–' : anN(anDash.suVu), { phu: 'Nhật ký địa bàn' });
             h += anKPI('Hộ có người nước ngoài', anN(M.L.nuocNgoai.length), { drill: anDKHo('Hộ có nhân khẩu quốc tịch nước ngoài', M.L.nuocNgoai), phu: 'theo quốc tịch đã ghi' });
+            h += dtKpiNhomHtml(dtThongKe());
             h += '</div><div class="an-g2">';
+            h += dtTheNhomHtml(dtThongKe());
             const theoDien = {};
             dt.forEach(d => { const k = d.dienDoiTuong || 'Chưa phân loại'; (theoDien[k] = theoDien[k] || []).push(d); });
             h += anThe('Đối tượng KV3 theo diện', 'Bấm vào một diện để xem danh sách',
@@ -11587,7 +12562,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
         //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
         // ======================================================================================================
-        const PHIEN_BAN_APP = '2026.10.23';
+        const PHIEN_BAN_APP = '2026.10.26';
         const SB_NHOM = [
             { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
             { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
