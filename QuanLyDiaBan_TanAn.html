@@ -1155,6 +1155,9 @@ button.dt-chip{cursor:pointer}
                                 <select id="inputPhuongCSKV" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"></select></div>
                             <div class="rb-f"><label for="inputKhuVucCSKV">Khu vực phụ trách <span class="text-gray-500">(chỉ với Cảnh sát khu vực)</span></label>
                                 <input type="text" id="inputKhuVucCSKV" placeholder="Phường: VD Khu Vực 3, Khu Vực 4 — Xã: VD Ấp 3, Khóm 2" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"></div>
+                            <div class="rb-f hidden" id="khungOCSKV"><label for="inputOCSKV">Ô phụ trách <span class="text-gray-500">(tùy chọn — để trống = phụ trách cả khu vực)</span></label>
+                                <input type="text" id="inputOCSKV" placeholder="VD: Ô 1 (nhiều ô cách nhau dấu phẩy). Hai CSKV cùng khu vực: gán mỗi người một Ô" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm"></div>
+                            <button type="button" onclick="moGanO()" class="text-[12px] text-sky-300 hover:text-sky-200 underline">🧭 Gán Ô cho hộ đã có…</button>
                             <input type="hidden" id="inputLoaiHinhDonViCSKV" value="">
                             <button onclick="themPhanQuyenCSKV()" class="btn-chinh w-full rounded px-3 py-2.5 font-bold text-sm">💾 Lưu / cập nhật tài khoản này</button>
                         </div>
@@ -1671,6 +1674,20 @@ button.dt-chip{cursor:pointer}
                 <button onclick="document.getElementById('cdchModal').classList.add('hidden')" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded">Đóng</button>
                 <button onclick="cdLuuCauHinh()" class="btn-chinh px-4 py-2 rounded font-bold">💾 Lưu</button>
             </div>
+        </div>
+    </div>
+    <div id="ganOModal" class="fixed inset-0 bg-black/85 hidden flex items-center justify-center p-3 z-[80]">
+        <div class="glass-card w-full max-w-md rounded-xl shadow-2xl p-4 space-y-2 text-sm">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2"><h3 class="font-bold">🧭 Gán Ô cho hộ</h3>
+                <button onclick="document.getElementById('ganOModal').classList.add('hidden')" class="text-gray-300 hover:text-white font-bold text-xl">&times;</button></div>
+            <p class="text-gray-400 text-[12px]">Dùng khi hộ chưa có Ô hoặc nhập nhầm Ô. Lọc theo khu vực và từ khóa trong địa chỉ (VD tên đường), rồi gán.</p>
+            <label class="block text-gray-300">Khu vực</label><select id="gOKV" onchange="gOXem()" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></select>
+            <label class="block text-gray-300">Từ khóa trong địa chỉ (tùy chọn)</label><input id="gOTuKhoa" oninput="gOXem()" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+            <label class="flex gap-2 items-center text-gray-300"><input type="checkbox" id="gOChiChuaGan" onchange="gOXem()"> Chỉ hộ chưa có Ô</label>
+            <p id="gOSo" class="text-emerald-300 font-semibold"></p><p id="gOMau" class="text-gray-400 text-[12px]"></p>
+            <label class="block text-gray-300">Gán vào Ô</label><input id="gOTen" placeholder="VD: Ô 1" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white">
+            <p id="gOKetQua" class="text-emerald-300"></p>
+            <div class="flex justify-end gap-2 border-t border-gray-700 pt-2"><button onclick="document.getElementById('ganOModal').classList.add('hidden')" class="bg-gray-700 px-4 py-2 rounded">Đóng</button><button onclick="gOThucHien()" class="btn-chinh px-4 py-2 rounded font-bold">Gán Ô</button></div>
         </div>
     </div>
     <!-- ============ QUẢN LÝ ĐỐI TƯỢNG (KV3) — modal danh sách / mục lục ============ -->
@@ -2585,6 +2602,80 @@ button.dt-chip{cursor:pointer}
             const phamViKV = currentUser.khuVucPhuTrach.map(k => k.toLowerCase());
             return ds.filter(h => phamViKV.includes((layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || "Khu Vực 1").toLowerCase()));
         }
+        // ================== PHẠM VI Ô (tầng dưới khu vực) ==================
+        // Admin gán "Ô" cho CSKV trong Phân quyền (tùy chọn). CSKV có Ô: mọi hồ sơ họ tạo tự mang Ô của họ, và máy chủ
+        // (Security Rules) chỉ cho họ đọc/ghi hồ sơ có đúng khuVuc + Ô được giao. CSKV không gán Ô: như trước (cả khu vực).
+        function cskvCoO() { return !!(currentUser && currentUser.role === 'can_bo' && Array.isArray(currentUser.oPhuTrach) && currentUser.oPhuTrach.length > 0); }
+        function layODangNhap() {
+            if (!cskvCoO()) return '';
+            const ds = currentUser.oPhuTrach; if (ds.length === 1) return ds[0];
+            let c = ''; try { c = sessionStorage.getItem('oDangChon_' + currentUser.email) || ''; } catch (e) { }
+            if (!ds.includes(c)) {
+                c = (prompt('Bạn phụ trách nhiều Ô: ' + ds.join(', ') + '\n\nNhập Ô cho các hồ sơ MỚI sắp lưu (gõ đúng tên):', ds[0]) || '').trim();
+                if (!ds.includes(c)) c = ds[0];
+                try { sessionStorage.setItem('oDangChon_' + currentUser.email, c); } catch (e) { }
+            }
+            return c;
+        }
+        // Gắn Ô cho bản ghi sắp lưu: CSKV có Ô -> giữ Ô cũ của bản ghi (nếu có) hoặc Ô đang nhập; vai trò khác -> không đụng.
+        function dongDauPhamViO(obj, bgCu) {
+            if (cskvCoO()) obj.o = (bgCu && bgCu.o) || obj.o || layODangNhap();
+            return obj;
+        }
+        // Thu hẹp truy vấn Firestore đúng phạm vi CSKV (khu vực + Ô) — BẮT BUỘC để Security Rules chấp nhận truy vấn.
+        function apDungPhamViCSKV(q) {
+            if (currentUser && currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length > 0) {
+                q = q.where('khuVuc', 'in', currentUser.khuVucPhuTrach.slice(0, 10));
+                if (cskvCoO()) q = q.where('o', 'in', currentUser.oPhuTrach.slice(0, 10));
+            }
+            return q;
+        }
+        function trongPhamViGiaoCSKV(b) {
+            if (!currentUser || currentUser.role !== 'can_bo') return true;
+            if (currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length && !currentUser.khuVucPhuTrach.includes(b.khuVuc)) return false;
+            if (cskvCoO() && !currentUser.oPhuTrach.includes(b.o)) return false;
+            return true;
+        }
+        // Cảnh báo nhẹ: tài khoản mật khẩu chưa xác minh email (không chặn thao tác)
+        function canhBaoEmailChuaXacMinh() {
+            try {
+                if (!CHE_DO_FIREBASE || typeof authFirebase === 'undefined' || !authFirebase.currentUser) return;
+                const u = authFirebase.currentUser;
+                if (u.emailVerified || !(u.providerData || []).some(p => p.providerId === 'password')) return;
+                if (document.getElementById('barXacMinhEmail')) return;
+                const b = document.createElement('div'); b.id = 'barXacMinhEmail';
+                b.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:90;background:#5a4208;color:#fff3c4;border:1px solid #b8860b;border-radius:10px;padding:8px 12px;font-size:13px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between';
+                b.innerHTML = '<span>⚠️ Email <b>' + escHtml(u.email) + '</b> chưa được xác minh — hãy xác minh để bảo vệ tài khoản.</span><span><button id="bxmGui" style="background:#b8860b;color:#fff;border-radius:6px;padding:4px 10px;font-weight:700">Gửi thư xác minh</button> <button id="bxmDa" style="background:#374151;color:#fff;border-radius:6px;padding:4px 10px">Đã xác minh</button> <button id="bxmDong" style="color:#fde68a;padding:4px 6px">✕</button></span>';
+                document.body.appendChild(b);
+                document.getElementById('bxmGui').onclick = async () => { try { await u.sendEmailVerification(); alert('Đã gửi thư xác minh tới ' + u.email + '. Mở thư (kể cả mục Thư rác), bấm liên kết rồi quay lại bấm "Đã xác minh".'); } catch (e) { alert('Chưa gửi được: ' + (e.code || e.message)); } };
+                document.getElementById('bxmDa').onclick = async () => { try { await u.reload(); } catch (e) { } if (authFirebase.currentUser && authFirebase.currentUser.emailVerified) { b.remove(); alert('✅ Email đã được xác minh.'); } else alert('Chưa thấy xác minh. Hãy bấm liên kết trong thư rồi thử lại.'); };
+                document.getElementById('bxmDong').onclick = () => b.remove();
+            } catch (e) { }
+        }
+        // Công cụ Admin: gán/đổi Ô cho nhiều hộ cùng lúc (lọc theo khu vực + từ khóa địa chỉ)
+        function moGanO() {
+            if (currentUser.role !== 'admin' && currentUser.role !== 'chi_huy' && currentUser.role !== 'can_bo_du_lieu') return alert('Chỉ Admin/Chỉ huy/Cán bộ dữ liệu mới gán Ô hàng loạt.');
+            const kvs = [...new Set(danhSachHoGiaDinh.map(h => h.khuVuc || layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1'))].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
+            document.getElementById('gOKV').innerHTML = kvs.map(k => `<option>${escHtml(k)}</option>`).join('');
+            document.getElementById('gOTuKhoa').value = ''; document.getElementById('gOTen').value = ''; document.getElementById('gOKetQua').innerText = '';
+            document.getElementById('ganOModal').classList.remove('hidden'); gOXem();
+        }
+        function gOLoc() {
+            const kv = document.getElementById('gOKV').value, kw = boDauTiengViet(document.getElementById('gOTuKhoa').value.trim()).toLowerCase(), chiChua = document.getElementById('gOChiChuaGan').checked;
+            return danhSachHoGiaDinh.filter(h => (h.khuVuc || layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1') === kv && (!kw || boDauTiengViet(h.diaChi || '').toLowerCase().includes(kw)) && (!chiChua || !h.o));
+        }
+        function gOXem() { const ds = gOLoc(); document.getElementById('gOSo').innerText = ds.length + ' hộ khớp'; document.getElementById('gOMau').innerHTML = ds.slice(0, 6).map(h => escHtml(h.diaChi || '') + (h.o ? ' <span class="text-amber-300">[' + escHtml(h.o) + ']</span>' : '')).join('<br>') + (ds.length > 6 ? '<br>…' : ''); }
+        async function gOThucHien() {
+            const ten = document.getElementById('gOTen').value.trim(); if (!ten) return alert('Nhập tên Ô cần gán (đúng như đã nhập trong Phân quyền).');
+            const ds = gOLoc(); if (!ds.length) return alert('Không có hộ nào khớp.');
+            if (!confirm('Gán Ô "' + ten + '" cho ' + ds.length + ' hộ?')) return;
+            try {
+                for (let i = 0; i < ds.length; i += 400) { const lo = dbFirestore.batch(); ds.slice(i, i + 400).forEach(h => { lo.update(dbFirestore.collection('households').doc(h.id), { o: ten }); h.o = ten; }); await lo.commit(); }
+                ghiNhatKy('Gán Ô hàng loạt', ten + ' — ' + ds.length + ' hộ');
+                document.getElementById('gOKetQua').innerText = '✅ Đã gán Ô "' + ten + '" cho ' + ds.length + ' hộ.'; gOXem();
+            } catch (err) { alert('❌ Lỗi gán Ô: ' + (err.message || err.code)); }
+        }
+
         let currentSelectedHoIndex = null;
         let currentUser = { email: "", role: "can_bo", scope: "Khu Vực" };
         let tamEmailDangNhap = "";
@@ -2848,7 +2939,7 @@ button.dt-chip{cursor:pointer}
                 // Đồng bộ lại quyền/phường/khu vực mới nhất từ danh sách phân quyền hiện có trên máy
                 const quyen = xacDinhQuyenTuEmail(currentUser.email);
                 currentUser.role = quyen.role;
-                currentUser.khuVucPhuTrach = quyen.khuVucPhuTrach;
+                currentUser.khuVucPhuTrach = quyen.khuVucPhuTrach; currentUser.oPhuTrach = quyen.oPhuTrach || null;
                 currentUser.phuongPhuTrach = quyen.phuongPhuTrach;
                 if (currentUser.phuongPhuTrach && currentUser.phuongPhuTrach.length > 0 && DANH_MUC_HANH_CHINH[currentUser.phuongPhuTrach[0]]) {
                     khuVucHienTai = currentUser.phuongPhuTrach[0];
@@ -2908,6 +2999,7 @@ button.dt-chip{cursor:pointer}
                 const doiKhac = currentUser.role !== vaiTroMoi || JSON.stringify(currentUser.phuongPhuTrach) !== JSON.stringify(phuongMoi);
                 currentUser.role = vaiTroMoi;
                 currentUser.khuVucPhuTrach = khuVucMoi;
+                currentUser.oPhuTrach = (vaiTroMoi === 'can_bo' && rec && rec.o && rec.o.length) ? rec.o : null;
                 currentUser.phuongPhuTrach = phuongMoi;
                 if (doiKhac) {
                     // SỬA LỖI GỐC: trước đây so khớp TUYỆT ĐỐI phuongMoi[0] với khóa trong DANH_MUC_HANH_CHINH —
@@ -2930,7 +3022,8 @@ button.dt-chip{cursor:pointer}
         let taiKhoanChoXacThuc2FA = null; // Giữ tạm thông tin tài khoản Admin trong lúc chờ nhập mã 2FA (dùng chung toàn cục)
 
         function kichHoatSauDangNhapFirebase(user, quyen) {
-            currentUser = { email: user.email, uid: user.uid, role: quyen.role, khuVucPhuTrach: quyen.khuVucPhuTrach, phuongPhuTrach: quyen.phuongPhuTrach };
+            setTimeout(() => { try { canhBaoEmailChuaXacMinh(); } catch (e) { } }, 2500);
+            currentUser = { email: user.email, uid: user.uid, role: quyen.role, khuVucPhuTrach: quyen.khuVucPhuTrach, oPhuTrach: quyen.oPhuTrach || null, phuongPhuTrach: quyen.phuongPhuTrach };
             // SỬA LỖI GỐC (giống dangKyLangNgheQuyenCuaToi ở trên): dùng resolvePhuongChuan thay vì so khớp
             // tuyệt đối, để không bị "rơi" về mặc định Phường Tân An khi hồ sơ quyền ghi theo tên phường cũ.
             const phuongDangNhapTraDuoc = currentUser.phuongPhuTrach && currentUser.phuongPhuTrach.length > 0 ? resolvePhuongChuan(currentUser.phuongPhuTrach[0]) : null;
@@ -3286,7 +3379,7 @@ button.dt-chip{cursor:pointer}
                 // (mọi khu vực, giống phạm vi dữ liệu của Chỉ huy) nhưng KHÔNG có các quyền mang tính "chỉ huy"
                 // (xóa dữ liệu hàng loạt, quản lý phân quyền người khác, đặt lại 2FA người khác, xem toàn TP).
                 if (rec.vaiTro === 'can_bo_du_lieu') return Object.assign({ role: 'can_bo_du_lieu', khuVucPhuTrach: null, phuongPhuTrach: phuongChuan ? [phuongChuan] : null }, thongTin2FA);
-                return Object.assign({ role: 'can_bo', khuVucPhuTrach: rec.khuVuc || null, phuongPhuTrach: phuongChuan ? [phuongChuan] : null }, thongTin2FA);
+                return Object.assign({ role: 'can_bo', khuVucPhuTrach: rec.khuVuc || null, oPhuTrach: (rec.o && rec.o.length ? rec.o : null), phuongPhuTrach: phuongChuan ? [phuongChuan] : null }, thongTin2FA);
             } catch (err) {
                 console.error("Lỗi tra cứu quyền Firestore:", err);
                 return { role: 'chua_cap_quyen', khuVucPhuTrach: null, phuongPhuTrach: null };
@@ -3305,8 +3398,7 @@ button.dt-chip{cursor:pointer}
             const elNK = document.getElementById('statNhanKhau'), elHo = document.getElementById('statHoGiaDinh');
             if (elNK) elNK.innerText = '...'; if (elHo) elHo.innerText = '...';
             let laLanDauTien = true;
-            huyLangNgheHoGiaDinh = dbFirestore.collection('households')
-                .where('phuong', '==', khuVucHienTai)
+            huyLangNgheHoGiaDinh = apDungPhamViCSKV(dbFirestore.collection('households').where('phuong', '==', khuVucHienTai))
                 .onSnapshot(snap => {
                     laLanDauTien = false;
                     danhSachHoGiaDinh = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
@@ -3339,6 +3431,7 @@ button.dt-chip{cursor:pointer}
             // Luôn tính và lưu tường minh trường "khuVuc" (không chỉ suy luận từ địa chỉ ở phía client) — để
             // Security Rules trên máy chủ có thể kiểm tra được, phục vụ phân quyền XÓA đúng khu vực cho CSKV.
             ho.khuVuc = layNhanKhuVucTuDiaChi(ho.diaChi, ho.phuong) || 'Khu Vực 1';
+            dongDauPhamViO(ho);
             const { id, ...duLieu } = ho;
             if (id) {
                 await dbFirestore.collection('households').doc(id).set(duLieu);
@@ -3364,12 +3457,14 @@ button.dt-chip{cursor:pointer}
                 if (ho.hsct) hoTheoHsct[ho.hsct] = ho;
                 (ho.thanhVien || []).forEach(tv => { if (tv.cccd) hoTheoCccd[tv.cccd] = ho; });
             });
-            let soHoCapNhat = 0, soHoTaoMoi = 0;
+            let soHoCapNhat = 0, soHoTaoMoi = 0, soNgoaiPhamVi = 0;
 
             for (let i = 0; i < danhSachMoi.length; i += CO_LO) {
                 const lo = dbFirestore.batch();
                 danhSachMoi.slice(i, i + CO_LO).forEach(hoMoi => {
                     hoMoi.khuVuc = layNhanKhuVucTuDiaChi(hoMoi.diaChi, hoMoi.phuong) || 'Khu Vực 1';
+                    if (currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length && !currentUser.khuVucPhuTrach.includes(hoMoi.khuVuc)) { soNgoaiPhamVi++; return; }
+                    dongDauPhamViO(hoMoi);
                     let hoTrung = (hoMoi.hsct && hoTheoHsct[hoMoi.hsct]) || null;
                     if (!hoTrung) {
                         for (const tv of (hoMoi.thanhVien || [])) {
@@ -3403,14 +3498,14 @@ button.dt-chip{cursor:pointer}
                 });
                 await lo.commit();
             }
-            return { soHoCapNhat, soHoTaoMoi };
+            return { soHoCapNhat, soHoTaoMoi, soNgoaiPhamVi };
         }
 
         // Xóa toàn bộ hộ của phường đang chọn trên Firestore (dùng cho nút "🗑️ Xóa DL")
         // khuVucCanXoa = null -> xóa toàn bộ phường; nếu có giá trị -> chỉ xóa đúng khu vực đó (lọc theo địa
         // chỉ, vì Firestore không lưu sẵn trường "khuVuc" riêng — khu vực được suy ra từ "diaChi").
         async function xoaDuLieuPhuongTrenFirestore(khuVucCanXoa, tenPhuong) {
-            const snap = await dbFirestore.collection('households').where('phuong', '==', tenPhuong || khuVucHienTai).get();
+            const snap = await apDungPhamViCSKV(dbFirestore.collection('households').where('phuong', '==', tenPhuong || khuVucHienTai)).get();
             const CO_LO = 400;
             const docs = khuVucCanXoa
                 ? snap.docs.filter(d => (layNhanKhuVucTuDiaChi(d.data().diaChi, d.data().phuong) || 'Khu Vực 1') === khuVucCanXoa)
@@ -3620,7 +3715,7 @@ button.dt-chip{cursor:pointer}
             // khoản được cấp vai trò này ở CHẾ ĐỘ LOCAL (không Firebase) bị rơi thẳng xuống "chưa cấp quyền",
             // dù đã được Admin cấp đúng vai trò.
             if (rec && rec.vaiTro === 'can_bo_du_lieu') return { role: 'can_bo_du_lieu', khuVucPhuTrach: null, phuongPhuTrach: phuongChuanLocal ? [phuongChuanLocal] : null };
-            if (rec && rec.vaiTro === 'can_bo') return { role: 'can_bo', khuVucPhuTrach: rec.khuVuc || null, phuongPhuTrach: phuongChuanLocal ? [phuongChuanLocal] : null };
+            if (rec && rec.vaiTro === 'can_bo') return { role: 'can_bo', khuVucPhuTrach: rec.khuVuc || null, oPhuTrach: (rec.o && rec.o.length ? rec.o : null), phuongPhuTrach: phuongChuanLocal ? [phuongChuanLocal] : null };
             // KHÔNG có trong danh sách phân quyền -> "khách lạ" -> deny-by-default, KHÔNG được xem dữ liệu nào cả
             return { role: 'chua_cap_quyen', khuVucPhuTrach: null, phuongPhuTrach: null };
         }
@@ -3714,7 +3809,7 @@ button.dt-chip{cursor:pointer}
 
         function hoanTatDangNhap() {
             const quyen = xacDinhQuyenTuEmail(tamEmailDangNhap);
-            currentUser = { email: tamEmailDangNhap, role: quyen.role, khuVucPhuTrach: quyen.khuVucPhuTrach, phuongPhuTrach: quyen.phuongPhuTrach };
+            currentUser = { email: tamEmailDangNhap, role: quyen.role, khuVucPhuTrach: quyen.khuVucPhuTrach, oPhuTrach: quyen.oPhuTrach || null, phuongPhuTrach: quyen.phuongPhuTrach };
             if (currentUser.phuongPhuTrach && currentUser.phuongPhuTrach.length > 0 && DANH_MUC_HANH_CHINH[currentUser.phuongPhuTrach[0]]) {
                 khuVucHienTai = currentUser.phuongPhuTrach[0]; // Tự mở đúng phường được phân công khi đăng nhập
             }
@@ -4028,6 +4123,7 @@ button.dt-chip{cursor:pointer}
             const oKV = document.getElementById('inputKhuVucCSKV');
             const oPhuong = document.getElementById('inputPhuongCSKV');
             oKV.classList.toggle('hidden', vaiTro !== 'can_bo');
+            { const kO = document.getElementById('khungOCSKV'); if (kO) kO.classList.toggle('hidden', vaiTro !== 'can_bo'); }
             // "can_bo_du_lieu_tp" cũng KHÔNG gắn với 1 phường cụ thể (xem toàn TP), giống chi_huy_tp -> ẩn ô Phường
             oPhuong.classList.toggle('hidden', vaiTro === 'chi_huy_tp' || vaiTro === 'can_bo_du_lieu_tp');
             if (vaiTro !== 'can_bo') oKV.value = '';
@@ -4046,6 +4142,7 @@ button.dt-chip{cursor:pointer}
             const sdt = document.getElementById('inputSdtCSKV').value.trim();
             const phuong = document.getElementById('inputPhuongCSKV').value;
             const khuVucRaw = document.getElementById('inputKhuVucCSKV').value.trim();
+            const oRaw = (document.getElementById('inputOCSKV') || { value: '' }).value.trim();
             if (!email) return alert("Vui lòng nhập Email tài khoản.");
             // THEO YÊU CẦU: bắt buộc đầy đủ thông tin như 1 Form đúng nghĩa — tránh tái diễn tình trạng có
             // tài khoản được cấp quyền mà không rõ là ai/đơn vị nào (đã xảy ra thực tế, phải rà soát xóa sau).
@@ -4063,7 +4160,8 @@ button.dt-chip{cursor:pointer}
             const loaiHinhDonVi = document.getElementById('inputLoaiHinhDonViCSKV') ? document.getElementById('inputLoaiHinhDonViCSKV').value : '';
             // trangThai: 'da_duyet' — đánh dấu KHÔNG còn nằm trong danh sách "chờ duyệt" nữa (dùng để lọc
             // đúng danh sách chờ duyệt trong panel bên dưới, tách biệt với danh sách đã có vai trò).
-            const banGhi = { email, vaiTro, hoTen, donVi, chucVu, sdt, loaiHinhDonVi, phuong: khongCanPhuong ? null : phuong, khuVuc, trangThai: 'da_duyet' };
+            const o = vaiTro === 'can_bo' ? [...new Set(oRaw.split(',').map(x => x.trim()).filter(Boolean))] : [];
+            const banGhi = { email, vaiTro, hoTen, donVi, chucVu, sdt, loaiHinhDonVi, phuong: khongCanPhuong ? null : phuong, khuVuc, o, trangThai: 'da_duyet' };
 
             if (CHE_DO_FIREBASE) {
                 try {
@@ -4079,6 +4177,7 @@ button.dt-chip{cursor:pointer}
             }
             document.getElementById('inputEmailCSKV').value = '';
             document.getElementById('inputKhuVucCSKV').value = '';
+            if (document.getElementById('inputOCSKV')) document.getElementById('inputOCSKV').value = '';
             document.getElementById('inputHoTenCSKV').value = '';
             document.getElementById('inputDonViCSKV').value = '';
             document.getElementById('inputChucVuCSKV').value = '';
@@ -4091,7 +4190,7 @@ button.dt-chip{cursor:pointer}
             const nhanVaiTro = v => v === 'chi_huy_tp' ? 'Chỉ huy cấp Thành phố' : (v === 'can_bo_du_lieu_tp' ? 'Cán bộ dữ liệu PC06 (chỉ xem)' : (v === 'chi_huy' ? 'Chỉ huy phường' : (v === 'can_bo_du_lieu' ? 'Cán bộ dữ liệu phường' : 'Cảnh sát khu vực')));
             const rows = [["Họ Tên", "Chức Vụ", "Đơn Vị Công Tác", "SĐT Liên Hệ", "Email", "Vai Trò Hệ Thống", "Phường Phụ Trách", "Khu Vực Phụ Trách"]];
             danhSachPhanQuyen.forEach(r => {
-                rows.push([r.hoTen || '', r.chucVu || '', r.donVi || '', r.sdt || '', r.email, nhanVaiTro(r.vaiTro), r.phuong || 'Tất cả các phường', (r.khuVuc || []).join(', ')]);
+                rows.push([r.hoTen || '', r.chucVu || '', r.donVi || '', r.sdt || '', r.email, nhanVaiTro(r.vaiTro), r.phuong || 'Tất cả các phường', (r.khuVuc || []).join(', ') + ((r.o || []).length ? ' › ' + r.o.join(', ') : '')]);
             });
             const ws = XLSX.utils.aoa_to_sheet(rows);
             ws['!cols'] = [{ wch: 22 }, { wch: 20 }, { wch: 26 }, { wch: 16 }, { wch: 26 }, { wch: 20 }, { wch: 18 }, { wch: 22 }];
@@ -4196,7 +4295,7 @@ button.dt-chip{cursor:pointer}
                 else if (r.vaiTro === 'can_bo_du_lieu_tp') chip = '<span class="rb-chip" style="background:#0d3b4a;color:#a8e8f7">👁️ Cán bộ dữ liệu PC06 — chỉ xem toàn bộ</span>';
                 else if (r.vaiTro === 'chi_huy') chip = '<span class="rb-chip" style="background:#4a3a08;color:#fbe7a6">Chỉ huy — ' + escHtml(r.phuong || '?') + '</span>';
                 else if (r.vaiTro === 'can_bo_du_lieu') chip = '<span class="rb-chip" style="background:#3f1d52;color:#ecc9ff">Cán bộ dữ liệu — ' + escHtml(r.phuong || '?') + '</span>';
-                else chip = '<span class="rb-chip" style="background:#0f4430;color:#b6f0d3">' + escHtml(r.phuong || '?') + (r.khuVuc && r.khuVuc.length ? ' — ' + escHtml(r.khuVuc.join(', ')) : '') + '</span>';
+                else chip = '<span class="rb-chip" style="background:#0f4430;color:#b6f0d3">' + escHtml(r.phuong || '?') + (r.khuVuc && r.khuVuc.length ? ' — ' + escHtml(r.khuVuc.join(', ')) : '') + (r.o && r.o.length ? ' › ' + escHtml(r.o.join(', ')) : '') + '</span>';
                 const chip2FA = (r.vaiTro && !admin) ? (r.totpSecret ? '<span class="rb-chip" style="background:#0f4430;color:#b6f0d3">🔐 Đã bật 2FA</span>' : '<span class="rb-chip" style="background:#5a1a1a;color:#ffd5d5">⚠️ Chưa bật 2FA</span>') : '';
                 const ct = [r.chucVu, r.donVi].filter(Boolean).map(escHtml).join(' — ');
                 const gio = rbacFmtGio(rbacThoiGian(r));
@@ -4223,6 +4322,7 @@ button.dt-chip{cursor:pointer}
             document.getElementById('inputChucVuCSKV').value = r.chucVu || '';
             document.getElementById('inputSdtCSKV').value = r.sdt || '';
             document.getElementById('inputKhuVucCSKV').value = (r.khuVuc || []).join(', ');
+            if (document.getElementById('inputOCSKV')) document.getElementById('inputOCSKV').value = (r.o || []).join(', ');
             // "Loại hình đơn vị" (Phường/Xã) đã tự khai báo ở cổng chặn được mang theo vào form cấp quyền.
             const oLoaiHinh = document.getElementById('inputLoaiHinhDonViCSKV');
             if (oLoaiHinh) oLoaiHinh.value = r.loaiHinhDonVi || '';
@@ -4301,7 +4401,7 @@ button.dt-chip{cursor:pointer}
                     if (currentUser.role !== 'admin') {
                         const quyen = xacDinhQuyenTuEmail(currentUser.email);
                         currentUser.role = quyen.role;
-                        currentUser.khuVucPhuTrach = quyen.khuVucPhuTrach;
+                        currentUser.khuVucPhuTrach = quyen.khuVucPhuTrach; currentUser.oPhuTrach = quyen.oPhuTrach || null;
                         currentUser.phuongPhuTrach = quyen.phuongPhuTrach;
                         if (currentUser.phuongPhuTrach && currentUser.phuongPhuTrach.length > 0 && DANH_MUC_HANH_CHINH[currentUser.phuongPhuTrach[0]]) {
                             khuVucHienTai = currentUser.phuongPhuTrach[0];
@@ -5271,9 +5371,9 @@ button.dt-chip{cursor:pointer}
             if (currentUser.role === 'can_bo_du_lieu_tp') return alert("👁️ Tài khoản Cán bộ dữ liệu PC06 chỉ được XEM, không có quyền xóa/hoàn tác dữ liệu.");
             if (!CHE_DO_FIREBASE) return alert("Tính năng này cần kết nối máy chủ.");
             try {
-                const snap = await dbFirestore.collection('households')
+                const snap = await apDungPhamViCSKV(dbFirestore.collection('households')
                     .where('phuong', '==', khuVucHienTai)
-                    .where('nguoiTao', '==', currentUser.email)
+                    .where('nguoiTao', '==', currentUser.email))
                     .get();
                 if (snap.empty) return alert("Không tìm thấy hộ nào do chính tài khoản " + currentUser.email + " nhập qua Excel tại " + khuVucHienTai + " — có thể chưa từng nhập, hoặc dữ liệu đã được người khác chỉnh sửa lại (không còn thuộc lần nhập của bạn).");
 
@@ -5646,6 +5746,7 @@ button.dt-chip{cursor:pointer}
                     const ghiChuChanDoan = canhBaoCotThieu.length > 0
                         ? `\n\n🔎 CHẨN ĐOÁN CỘT: Không dò được tiêu đề của các cột sau trong file — ${canhBaoCotThieu.join('; ')}. Nếu file CÓ các cột này nhưng phần mềm không nhận ra, hãy kiểm tra lại đúng chính tả tiêu đề dòng đầu tiên của file.`
                         : `\n\n🔎 CHẨN ĐOÁN CỘT: Đã dò được đầy đủ các cột quan trọng (HSCT, Chủ hộ, Quan hệ, CCCD, Phường/Xã).`;
+                    if (ketQuaLuu.soNgoaiPhamVi) alert('⚠️ Đã BỎ QUA ' + ketQuaLuu.soNgoaiPhamVi + ' hộ có địa chỉ thuộc khu vực/ô ngoài phạm vi bạn được giao phụ trách (không được phép nhập).');
                     alert(`✅ Đã xử lý ${danhSachMoi.length} hộ trong file — ${ketQuaLuu.soHoTaoMoi} hộ MỚI, ${ketQuaLuu.soHoCapNhat} hộ ĐÃ CÓ SẴN được cập nhật lại đúng diện cư trú/thông tin mới nhất (không tạo trùng lặp).${ghiChuKV}${ghiChuPhuong}${ghiChuCCCD}${ghiChuChanDoan}`);
                 } catch (err) {
                     if (err.code === 'permission-denied' || /permission/i.test(err.message || '')) {
@@ -8848,12 +8949,13 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                 await dbFirestore.collection('permissions').doc(emailCu).update({
                     vaiTro: firebase.firestore.FieldValue.delete(),
                     phuong: firebase.firestore.FieldValue.delete(),
-                    khuVuc: firebase.firestore.FieldValue.delete()
+                    khuVuc: firebase.firestore.FieldValue.delete(),
+                    o: firebase.firestore.FieldValue.delete()
                 });
                 // 2) Gán ĐÚNG phạm vi đó cho tài khoản MỚI — giữ lại thông tin cá nhân họ đã tự khai báo
                 //    trước đó (nếu có) bằng merge, chỉ ghi đè phần vaiTro/phuong/khuVuc.
                 await dbFirestore.collection('permissions').doc(emailMoi).set({
-                    email: emailMoi, vaiTro: banGhiCu.vaiTro, phuong: banGhiCu.phuong || null, khuVuc: banGhiCu.khuVuc || []
+                    email: emailMoi, vaiTro: banGhiCu.vaiTro, phuong: banGhiCu.phuong || null, khuVuc: banGhiCu.khuVuc || [], o: banGhiCu.o || []
                 }, { merge: true });
                 // 3) Ghi biên bản bàn giao vào Nhật Ký địa bàn của đúng phường đó — có ngày, từ ai, đến ai, ghi chú
                 if (banGhiCu.phuong) {
@@ -8945,7 +9047,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             const kq = { kv3: [], tv: [] };
             if (!CHE_DO_FIREBASE) return kq;
             if (muonKV3) {
-                const sn = await dbFirestore.collection('doi_tuong_quan_ly').where('phuong', '==', tenPhuong).get();
+                const sn = await apDungPhamViCSKV(dbFirestore.collection('doi_tuong_quan_ly').where('phuong', '==', tenPhuong)).get();
                 kq.kv3 = sn.docs.filter(d => { if (laToanPhuong) return true; const x = d.data(); return (x.khuVuc || layNhanKhuVucTuDiaChi(x.noiOHienTai || x.noiThuongTru || '', x.phuong) || 'Khu Vực 1') === phamVi; }).map(d => ({ ref: d.ref, id: d.id, data: d.data() }));
             }
             if (muonTV && laToanPhuong) {
@@ -9508,6 +9610,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                     lichSuDien: [{ tu: '', den: dien, nhom, luc: bay, boi: email }]
                 }, chung);
             }
+            if (cskvCoO()) duLieu.o = (cu && cu.o) || ho.o || layODangNhap(); else if (!cu && ho.o) duLieu.o = ho.o;
             try {
                 if (id) { await dbFirestore.collection('doi_tuong_quan_ly').doc(id).set(duLieu, { merge: true }); }
                 else { const r = await dbFirestore.collection('doi_tuong_quan_ly').add(duLieu); id = r && r.id; }
@@ -10011,7 +10114,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             if (huyLangNgheDoiTuong) { huyLangNgheDoiTuong(); huyLangNgheDoiTuong = null; }
             const laCanBoKhuVuc = currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length > 0;
             let truyVan = dbFirestore.collection('doi_tuong_quan_ly').where('phuong', '==', khuVucHienTai);
-            if (laCanBoKhuVuc) truyVan = truyVan.where('khuVuc', 'in', currentUser.khuVucPhuTrach.slice(0, 10));
+            truyVan = apDungPhamViCSKV(truyVan);
             huyLangNgheDoiTuong = truyVan.onSnapshot(snap => {
                 danhSachDoiTuong = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
                 danhSachDoiTuong.sort((a, b) => (a.hoTen || '').localeCompare(b.hoTen || ''));
@@ -10246,6 +10349,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             // thành trường riêng để cả client lẫn Security Rules đều lọc được đúng theo khu vực.
             const dtNoiO = document.getElementById('dt_noiOHienTai') ? document.getElementById('dt_noiOHienTai').value : '';
             duLieu.khuVuc = layNhanKhuVucTuDiaChi(dtNoiO, khuVucHienTai) || donViMacDinhTheoLoaiHinh(khuVucHienTai);
+            if (cskvCoO()) { const idO = document.getElementById('dtId').value, bgO = idO ? danhSachDoiTuong.find(x => x.id === idO) : null; dongDauPhamViO(duLieu, bgO); }
             truong.forEach(t => { const elInput = document.getElementById('dt_' + t); if (elInput) duLieu[t] = elInput.value.trim ? elInput.value.trim() : elInput.value; });
             duLieu.anhBase64 = document.getElementById('dt_anhBase64').value || '';
             duLieu.nhom = dtNhomCuaDien(duLieu.dienDoiTuong);
@@ -10334,12 +10438,12 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             if (!CHE_DO_FIREBASE || !dbFirestore || !currentUser || !currentUser.email) return;
             if (currentUser.role === 'chua_cap_quyen') return;
             const laCanBoKhuVuc = currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length > 0;
-            const khoa = [khuVucHienTai, currentUser.role, laCanBoKhuVuc ? currentUser.khuVucPhuTrach.join('|') : ''].join('#');
+            const khoa = [khuVucHienTai, currentUser.role, laCanBoKhuVuc ? currentUser.khuVucPhuTrach.join('|') + (cskvCoO() ? '›' + currentUser.oPhuTrach.join('|') : '') : ''].join('#');
             if (huyLangNgheCoSo && khoa === csKhoaDangKy) return;
             if (huyLangNgheCoSo) { huyLangNgheCoSo(); huyLangNgheCoSo = null; }
             csKhoaDangKy = khoa;
             let truyVan = dbFirestore.collection('co_so_dia_ban').where('phuong', '==', khuVucHienTai);
-            if (laCanBoKhuVuc) truyVan = truyVan.where('khuVuc', 'in', currentUser.khuVucPhuTrach.slice(0, 10));
+            truyVan = apDungPhamViCSKV(truyVan);
             huyLangNgheCoSo = truyVan.onSnapshot(snap => {
                 danhSachCoSo = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
                 danhSachCoSo.sort((a, b) => (a.ten || '').localeCompare(b.ten || ''));
@@ -10613,6 +10717,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             btn.disabled = true;
             try {
                 const id = document.getElementById('csId').value;
+                if (cskvCoO()) dongDauPhamViO(duLieu, id ? danhSachCoSo.find(x => x.id === id) : null);
                 if (id) await dbFirestore.collection('co_so_dia_ban').doc(id).set(duLieu, { merge: true });
                 else { duLieu.nguoiTao = currentUser.email.toLowerCase(); await dbFirestore.collection('co_so_dia_ban').add(duLieu); }
                 ghiNhatKy(id ? 'Sửa hồ sơ cơ sở địa bàn' : 'Thêm cơ sở địa bàn', ten);
@@ -10755,7 +10860,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             try {
                 const laCB = currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length > 0;
                 let q = dbFirestore.collection('doi_tuong_quan_ly').where('phuong', '==', khuVucHienTai);
-                if (laCB) q = q.where('khuVuc', 'in', currentUser.khuVucPhuTrach.slice(0, 10));
+                q = apDungPhamViCSKV(q);
                 const snap = await q.get();
                 return snap.docs.map(d => d.data());
             } catch (e) { return null; }
@@ -12562,7 +12667,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
         //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
         // ======================================================================================================
-        const PHIEN_BAN_APP = '2026.10.26';
+        const PHIEN_BAN_APP = '2026.10.27';
         const SB_NHOM = [
             { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
             { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
