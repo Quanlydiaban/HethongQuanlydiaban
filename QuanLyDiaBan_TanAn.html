@@ -1774,6 +1774,18 @@ button.dt-chip{cursor:pointer}
                             <div class="col-span-2 md:col-span-4"><label class="text-gray-400 block mb-0.5">Nơi làm việc</label><input id="cd_noiLamViec" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
                         </div>
                         <input type="hidden" id="cd_soQDCB"><input type="hidden" id="cd_ngayQDCB">
+                        <div class="mt-2 pt-2 border-t border-gray-700 text-xs">
+                            <div class="cd-bm-t">📅 Lịch điểm danh, kiểm diện</div>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 items-end">
+                                <div><label class="text-gray-400 block mb-0.5">Chu kỳ điểm danh (ngày)</label><input type="number" min="0" id="cd_kdChuKy" oninput="cdVeDiemDanh()" placeholder="VD: 7, để trống = không nhắc" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                                <div><label class="text-gray-400 block mb-0.5">Ngày điểm danh</label><input type="date" id="cd_kdNgay" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                                <div><label class="text-gray-400 block mb-0.5">Kết quả</label><select id="cd_kdKQ" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"><option value="co">Có mặt</option><option value="vang">Vắng mặt</option></select></div>
+                                <div><button type="button" onclick="cdThemDiemDanh()" class="w-full bg-indigo-700 hover:bg-indigo-600 rounded px-2 py-1.5">➕ Ghi điểm danh</button></div>
+                                <div class="col-span-2 md:col-span-4"><input id="cd_kdGhiChu" placeholder="Lý do vắng mặt, ghi chú (nếu có)" class="w-full bg-gray-900 border border-gray-700 rounded px-2 py-1.5 text-white"></div>
+                            </div>
+                            <div id="cd_kdHan" class="text-amber-300 mt-1"></div><div id="cd_kdDs" class="mt-1"></div>
+                            <p class="text-[10px] text-gray-500 mt-1">Chu kỳ do cơ quan ra Lệnh/Quyết định hoặc Trưởng Công an yêu cầu, anh tự nhập. Phần mềm nhắc ở mục Việc cần làm hôm nay, lịch .ics và tự điền Phiếu CĐ13.</p>
+                        </div>
                         <div id="dtBoMau"></div>
                     </div>
                 </div>
@@ -2134,6 +2146,8 @@ button.dt-chip{cursor:pointer}
             </div>
             <p class="text-gray-400">Tạo file lịch để nhập vào Lịch trên điện thoại; máy sẽ tự nhắc trước 1 ngày lúc 8 giờ sáng, không cần máy chủ.</p>
             <label class="flex items-center gap-2 text-gray-200"><input type="checkbox" id="icsTamTru" checked onchange="icsTinh()" class="accent-cyan-500"> Hạn tạm trú, lưu trú</label>
+            <label class="flex items-center gap-2 text-gray-200"><input type="checkbox" id="icsXoaDK" checked onchange="icsTinh()" class="accent-cyan-500"> Hạn 07 ngày làm việc của hồ sơ xóa đăng ký</label>
+            <label class="flex items-center gap-2 text-gray-200"><input type="checkbox" id="icsDiemDanh" checked onchange="icsTinh()" class="accent-cyan-500"> Lịch điểm danh người bị cấm đi khỏi nơi cư trú</label>
             <label class="flex items-center gap-2 text-gray-200"><input type="checkbox" id="icsCoSo" checked onchange="icsTinh()" class="accent-cyan-500"> Hạn giấy phép và hạn kiểm tra cơ sở</label>
             <label class="text-gray-400 block">Lấy các việc trong <select id="icsNgay" onchange="icsTinh()" class="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white"><option value="30">30 ngày tới</option><option value="60" selected>60 ngày tới</option><option value="90">90 ngày tới</option><option value="180">180 ngày tới</option></select></label>
             <label class="flex items-start gap-2 text-gray-200"><input type="checkbox" id="icsAnTen" checked onchange="icsTinh()" class="mt-0.5 accent-cyan-500"><span>Không ghi họ tên công dân vào lịch (chỉ ghi địa chỉ). <span class="text-gray-500">Khuyến nghị bật: lịch điện thoại thường đồng bộ lên dịch vụ đám mây của hãng.</span></span></label>
@@ -2155,9 +2169,9 @@ button.dt-chip{cursor:pointer}
                 <input id="xsTim" oninput="xsVeSo()" placeholder="Tìm chủ hộ, số, địa chỉ..." class="bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white w-52">
                 <span class="flex-1"></span><button onclick="xsXuatExcel()" class="bg-emerald-800 hover:bg-emerald-700 rounded px-2.5 py-1">📥 Xuất sổ Excel</button>
             </div>
-            <details class="text-gray-400"><summary class="cursor-pointer">Hạn 07 ngày làm việc: tự trừ thứ bảy, chủ nhật. Bấm để khai thêm ngày nghỉ lễ cần trừ</summary>
+            <details class="text-gray-400"><summary class="cursor-pointer">Hạn 07 ngày làm việc: tự trừ thứ bảy, chủ nhật và ngày nghỉ lễ đã có sẵn. Bấm để xem lịch nghỉ và khai thêm</summary>
                 <input id="xsNghi" oninput="xsLuuNgayNghi(this.value)" placeholder="VD: 02/09/2026, 03/09/2026 (dd/mm/yyyy, cách nhau dấu phẩy)" class="mt-1 w-full bg-gray-900 border border-gray-700 rounded px-2 py-1 text-white">
-                <p class="text-[10px] text-gray-500 mt-0.5">Danh sách này lưu trên máy đang dùng. Anh tự khai các ngày nghỉ lễ, nghỉ bù nằm trong thời gian chờ để hạn tính đúng.</p></details>
+                <div id="xsNghiTuDong" class="text-[11px] text-gray-300 mt-1"></div><p class="text-[10px] text-amber-400 mt-0.5">Lịch trên tự tính theo Điều 112 Bộ luật Lao động (Tết Dương lịch, Tết Nguyên đán 5 ngày, Giỗ Tổ, 30/4, 1/5, 2/9, kèm nghỉ bù khi trùng cuối tuần). Ngày nghỉ liền kề Quốc khánh và ngày hoán đổi do Chính phủ quyết định riêng từng năm nên anh nhập thêm khi có thông báo chính thức.</p><p class="text-[10px] text-gray-500 mt-0.5">Danh sách khai thêm này lưu trên máy đang dùng. Anh tự khai các ngày nghỉ lễ, nghỉ bù nằm trong thời gian chờ để hạn tính đúng.</p></details>
             <div id="xsTomTat" class="flex flex-wrap gap-2"></div>
             <div id="xsBang"></div>
         </div>
@@ -6306,8 +6320,9 @@ button.dt-chip{cursor:pointer}
                 } catch (e) { /* danhSachDoiTuong có thể chưa kịp tải, bỏ qua không chặn phần còn lại */ }
 
                 let soXoaDKCanLam = 0; try { soXoaDKCanLam = xsDemViec(); } catch (e) { }
+                let soDiemDanhDenHan = 0; try { soDiemDanhDenHan = cdDemDenHanDiemDanh(); } catch (e) { }
                 const elViec = document.getElementById('banerVieCanLamHomNay');
-                const tongViec = soSapHet + soCanDoiCCCD + soQuaHanKiemTra + soLoiHSCT + soKV3CanBaoCao + soXoaDKCanLam;
+                const tongViec = soSapHet + soCanDoiCCCD + soQuaHanKiemTra + soLoiHSCT + soKV3CanBaoCao + soXoaDKCanLam + soDiemDanhDenHan;
                 window._kpiViec = { soSapHet, soCanDoiCCCD, soQuaHanKiemTra, soLoiHSCT, soKV3CanBaoCao, soXoaDKCanLam, tongViec }; setTimeout(() => { try { uiKpiVe(); } catch (e) { } }, 0);
                 if (elViec) {
                     if (tongViec === 0) {
@@ -6325,6 +6340,7 @@ button.dt-chip{cursor:pointer}
                                 ${muc(soQuaHanKiemTra, 'hộ chưa kiểm tra định kỳ trong 30 ngày', "moModalLichKiemTraDinhKy()")}
                                 ${muc(soLoiHSCT, 'hộ có lỗi Số HSCT cần sửa', "moModalRaSoatLoi()")}
                                 ${muc(soXoaDKCanLam, 'hồ sơ xóa đăng ký thường trú/tạm trú cần xử lý (đến hạn 07 ngày làm việc hoặc chưa cập nhật phần mềm)', "moSoXoaDK()")}
+                                ${muc(soDiemDanhDenHan, 'người bị cấm đi khỏi nơi cư trú đến hạn điểm danh, kiểm diện', "moModalDoiTuong()")}
                                 ${muc(soKV3CanBaoCao, 'đối tượng án treo/cải tạo/quản chế CẦN theo dõi, báo cáo tháng này (theo luật)', "moModalDoiTuong()")}
                             </div>`;
                     }
@@ -7737,6 +7753,17 @@ button.dt-chip{cursor:pointer}
                 const chuKy = parseInt(c.chuKyKiemTraThang, 10) || 0, cuoi = csParseNgay(c.kiemTraGanNhat);
                 if (chuKy && cuoi) { const han = new Date(cuoi); han.setMonth(han.getMonth() + chuKy); if (han >= hn && han <= gioiHan) sk.push({ uid: 'kt-' + (c.id || c.ten) + '-' + han.getFullYear() + '-' + (han.getMonth() + 1) + '-' + han.getDate(), ngay: han, td: 'Đến hạn kiểm tra: ' + (c.ten || ''), mt: (c.diaChi || '') }); }
             });
+            if (document.getElementById('icsXoaDK').checked && xsDaThu) xsDsNguoiDung().forEach(c => {
+                if (c.huy || c.tuNop || c.ngayCapNhatPhanMem || c.ngayLapBienBan || !c.ngayThongBao) return;
+                const han = xsHanNop(c.ngayThongBao); if (!han || han < hn || han > gioiHan) return;
+                sk.push({ uid: 'xoadk-' + c.id + '-' + xsIso(han), ngay: han, td: 'Đến hạn 07 ngày làm việc, lập biên bản xóa đăng ký' + (anTen ? '' : ' — ' + (c.chuHo || '')), mt: anTen ? '' : (c.diaChi || '') });
+            });
+            if (document.getElementById('icsDiemDanh').checked && Array.isArray(danhSachDoiTuong)) danhSachDoiTuong.forEach(d => {
+                const ck = parseInt((d.cd || {}).kdChuKy, 10); let h = cdHanDiemDanhKeTiep(d); if (!h || !(ck > 0)) return;
+                if (h < hn) h = new Date(hn);
+                const den = csParseNgay(d.denNgayQL);
+                for (let i = 0; i < 40 && h <= gioiHan && (!den || h <= den); i++) { sk.push({ uid: 'diemdanh-' + d.id + '-' + xsIso(h), ngay: new Date(h), td: 'Điểm danh người bị cấm đi khỏi nơi cư trú' + (anTen ? '' : ' — ' + (d.hoTen || '')), mt: anTen ? '' : (d.noiOHienTai || '') }); h = new Date(h); h.setDate(h.getDate() + ck); }
+            });
             sk.sort((a, b) => a.ngay - b.ngay);
             return sk;
         }
@@ -7768,6 +7795,79 @@ button.dt-chip{cursor:pointer}
         // (Word), nên phần mềm không biết đã làm đến bước nào và dễ quên cập nhật. Sổ này ghi lại từng hồ sơ, tự tính hạn 07 ngày
         // theo mẫu Thông báo của đơn vị, nhắc khi đến hạn lập biên bản và khi đã lập biên bản mà chưa cập nhật xóa trên phần mềm,
         // đồng thời soạn sẵn 3 văn bản đúng mẫu của đơn vị. Phần mềm KHÔNG tự xóa gì: việc xóa vẫn dùng chức năng Xóa khẩu/Xóa hộ.
+        // ================== 2026.10.29: LỊCH NGHỈ LỄ TỰ ĐỘNG + KIỂM DIỆN CĐKNCT + PHẠM VI KHU VỰC/Ô CHO CÁC SỔ ==================
+        // --- Âm lịch Việt Nam (thuật toán Hồ Ngọc Đức, múi giờ +7) — chỉ để tính Tết Nguyên đán và Giỗ Tổ (10/3 âm lịch) ---
+        function pAmJd(dd, mm, yy) { const a = Math.floor((14 - mm) / 12), y = yy + 4800 - a, m = mm + 12 * a - 3; let jd = dd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045; if (jd < 2299161) jd = dd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - 32083; return jd; }
+        function pAmJdRaNgay(jd) { let b, c; if (jd > 2299160) { const a = jd + 32044; b = Math.floor((4 * a + 3) / 146097); c = a - Math.floor(b * 146097 / 4); } else { b = 0; c = jd + 32082; } const d = Math.floor((4 * c + 3) / 1461), e = c - Math.floor(1461 * d / 4), m = Math.floor((5 * e + 2) / 153); return new Date(b * 100 + d - 4800 + Math.floor(m / 10), m + 3 - 12 * Math.floor(m / 10) - 1, e - Math.floor((153 * m + 2) / 5) + 1); }
+        function pAmNewMoon(k) { const T = k / 1236.85, T2 = T * T, T3 = T2 * T, dr = Math.PI / 180; let J = 2415020.75933 + 29.53058868 * k + 0.0001178 * T2 - 0.000000155 * T3; J += 0.00033 * Math.sin((166.56 + 132.87 * T - 0.009173 * T2) * dr); const M = 359.2242 + 29.10535608 * k - 0.0000333 * T2 - 0.00000347 * T3, Mp = 306.0253 + 385.81691806 * k + 0.0107306 * T2 + 0.00001236 * T3, F = 21.2964 + 390.67050646 * k - 0.0016528 * T2 - 0.00000239 * T3; let C = (0.1734 - 0.000393 * T) * Math.sin(M * dr) + 0.0021 * Math.sin(2 * dr * M); C += -0.4068 * Math.sin(Mp * dr) + 0.0161 * Math.sin(dr * 2 * Mp); C += -0.0004 * Math.sin(dr * 3 * Mp); C += 0.0104 * Math.sin(dr * 2 * F) - 0.0051 * Math.sin(dr * (M + Mp)); C += -0.0074 * Math.sin(dr * (M - Mp)) + 0.0004 * Math.sin(dr * (2 * F + M)); C += -0.0004 * Math.sin(dr * (2 * F - M)) - 0.0006 * Math.sin(dr * (2 * F + Mp)); C += 0.0010 * Math.sin(dr * (2 * F - Mp)) + 0.0005 * Math.sin(dr * (2 * Mp + M)); const dt = T < -11 ? 0.001 + 0.000839 * T + 0.0002261 * T2 - 0.00000845 * T3 - 0.000000081 * T * T3 : -0.000278 + 0.000265 * T + 0.000262 * T2; return J + C - dt; }
+        function pAmSun(jdn) { const T = (jdn - 2451545.5 - 7 / 24) / 36525, T2 = T * T, dr = Math.PI / 180, M = 357.52910 + 35999.05030 * T - 0.0001559 * T2 - 0.00000048 * T * T2, L0 = 280.46645 + 36000.76983 * T + 0.0003032 * T2; let DL = (1.914600 - 0.004817 * T - 0.000014 * T2) * Math.sin(dr * M); DL += (0.019993 - 0.000101 * T) * Math.sin(dr * 2 * M) + 0.000290 * Math.sin(dr * 3 * M); let L = (L0 + DL) * dr; L -= Math.PI * 2 * Math.floor(L / (Math.PI * 2)); return Math.floor(L / Math.PI * 6); }
+        function pAmNm(k) { return Math.floor(pAmNewMoon(k) + 0.5 + 7 / 24); }
+        function pAmM11(yy) { const off = pAmJd(31, 12, yy) - 2415021; const k = Math.floor(off / 29.530588853); let nm = pAmNm(k); if (pAmSun(nm) >= 9) nm = pAmNm(k - 1); return nm; }
+        function pAmNhuan(a11) { const k = Math.floor((a11 - 2415021.076998695) / 29.530588853 + 0.5); let last = 0, i = 1, arc = pAmSun(pAmNm(k + i)); do { last = arc; i++; arc = pAmSun(pAmNm(k + i)); } while (arc !== last && i < 14); return i - 1; }
+        function pAmRaDuong(ld, lm, ly) { let a11, b11; if (lm < 11) { a11 = pAmM11(ly - 1); b11 = pAmM11(ly); } else { a11 = pAmM11(ly); b11 = pAmM11(ly + 1); } const k = Math.floor(0.5 + (a11 - 2415021.076998695) / 29.530588853); let off = lm - 11; if (off < 0) off += 12; if (b11 - a11 > 365) { const lo = pAmNhuan(a11); if (off >= lo) off += 1; } return pAmJdRaNgay(pAmNm(k + off) + ld - 1); }
+        // --- Ngày nghỉ lễ theo Điều 112 Bộ luật Lao động 2019 (số ngày cơ bản) + nghỉ bù khi trùng thứ bảy/chủ nhật (Điều 111) ---
+        // KHÔNG gồm: ngày nghỉ liền kề Quốc khánh, hoán đổi ngày làm việc dịp Tết... do Thủ tướng/Bộ Nội vụ quyết định riêng từng năm — anh khai thêm ở ô bên dưới.
+        const _pNghiCache = {};
+        function xsNghiLeNam(nam) {
+            if (_pNghiCache[nam]) return _pNghiCache[nam];
+            const ds = [], them = (d, nhan) => ds.push({ d: new Date(d.getFullYear(), d.getMonth(), d.getDate()), nhan });
+            them(new Date(nam, 0, 1), 'Tết Dương lịch');
+            const t1 = pAmRaDuong(1, 1, nam), cuoi = new Date(t1); cuoi.setDate(cuoi.getDate() - 1); them(cuoi, 'Ngày cuối năm âm lịch');
+            for (let i = 0; i < 4; i++) { const x = new Date(t1); x.setDate(x.getDate() + i); them(x, 'Tết Nguyên đán (mùng ' + (i + 1) + ')'); }
+            them(pAmRaDuong(10, 3, nam), 'Giỗ Tổ Hùng Vương (10/3 âm lịch)');
+            them(new Date(nam, 3, 30), 'Giải phóng miền Nam 30/4'); them(new Date(nam, 4, 1), 'Quốc tế Lao động 1/5'); them(new Date(nam, 8, 2), 'Quốc khánh 2/9');
+            ds.sort((a, b) => a.d - b.d);
+            const co = new Set(ds.map(x => xsIso(x.d))), bu = [];
+            ds.forEach(x => { const th = x.d.getDay(); if (th === 0 || th === 6) { const n = new Date(x.d); do { n.setDate(n.getDate() + 1); } while (n.getDay() === 0 || n.getDay() === 6 || co.has(xsIso(n))); co.add(xsIso(n)); bu.push({ d: new Date(n), nhan: 'Nghỉ bù (' + x.nhan + ' trùng cuối tuần)' }); } });
+            return (_pNghiCache[nam] = ds.concat(bu).sort((a, b) => a.d - b.d));
+        }
+        function xsNghiLeTuDongSet() { const s = new Set(), nam = new Date().getFullYear(); for (let y = nam - 1; y <= nam + 3; y++) xsNghiLeNam(y).forEach(x => s.add(xsIso(x.d))); return s; }
+        function xsNghiTuDongHtml() {
+            const nam = new Date().getFullYear(), fm = d => xsP2(d.getDate()) + '/' + xsP2(d.getMonth() + 1) + '/' + d.getFullYear() + ' (' + ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][d.getDay()] + ')';
+            return [nam, nam + 1].map(y => '<b>' + y + '</b>: ' + xsNghiLeNam(y).map(x => fm(x.d) + ' ' + escHtml(x.nhan)).join('; ')).join('<br>');
+        }
+        // --- Việc cần làm theo lịch: hạn 07 ngày làm việc của hồ sơ xóa đăng ký, và hạn điểm danh người bị cấm đi khỏi nơi cư trú ---
+        function cdHanDiemDanhKeTiep(d) {
+            const cd = d.cd || {}, ck = parseInt(cd.kdChuKy, 10);
+            if (d.dienDoiTuong !== 'Cấm đi khỏi nơi cư trú' || !(ck > 0)) return null;
+            const dd = (cd.diemDanh || []).map(x => x.ngay).filter(Boolean).sort(), moc = dd.length ? dd[dd.length - 1] : d.tuNgayQL, m = csParseNgay(moc);
+            if (!m) return null; m.setDate(m.getDate() + ck);
+            const den = csParseNgay(d.denNgayQL); if (den && m > den) return null;
+            return m;
+        }
+        function cdDemDenHanDiemDanh() {
+            if (typeof danhSachDoiTuong === 'undefined' || !Array.isArray(danhSachDoiTuong)) return 0;
+            const hn = csHomNay(); return danhSachDoiTuong.filter(d => { const h = cdHanDiemDanhKeTiep(d); return h && h <= hn; }).length;
+        }
+        function cdDongDiemDanh(c) {
+            const ds = ((c.cd && c.cd.diemDanh) || []).slice().sort((a, b) => String(a.ngay).localeCompare(String(b.ngay))), tong = Math.max(1, Math.min(60, parseInt(c.v.soDong, 10) || 20));
+            let h = ds.map(x => `<tr style="height:20pt"><td align="center">${cdDMY(x.ngay)}</td><td align="center">${x.kq === 'vang' ? '' : 'x'}</td><td align="center">${x.kq === 'vang' ? 'x' : ''}</td><td>${CD_O(x.ghiChu || '')}</td><td></td></tr>`).join('');
+            for (let i = ds.length; i < tong; i++) h += '<tr style="height:20pt"><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>';
+            return h;
+        }
+        window._cdDiemDanh = [];
+        function cdVeDiemDanh() {
+            const el = document.getElementById('cd_kdDs'); if (!el) return;
+            const ds = window._cdDiemDanh.slice().sort((a, b) => String(b.ngay).localeCompare(String(a.ngay)));
+            el.innerHTML = ds.length ? ds.map(x => `<div class="flex items-center gap-2 py-0.5 border-b border-gray-800"><span class="w-24">${cdDMY(x.ngay)}</span><span class="${x.kq === 'vang' ? 'text-red-400' : 'text-emerald-400'} w-20">${x.kq === 'vang' ? 'Vắng mặt' : 'Có mặt'}</span><span class="flex-1 text-gray-400">${escHtml(x.ghiChu || '')}</span><button type="button" onclick="cdXoaDiemDanh('${x.ngay}')" class="text-red-400">✖</button></div>`).join('') : '<span class="text-gray-500">Chưa ghi lần điểm danh nào.</span>';
+            const dummy = { dienDoiTuong: 'Cấm đi khỏi nơi cư trú', tuNgayQL: (document.getElementById('dt_tuNgayQL') || {}).value, denNgayQL: (document.getElementById('dt_denNgayQL') || {}).value, cd: { kdChuKy: (document.getElementById('cd_kdChuKy') || {}).value, diemDanh: window._cdDiemDanh } };
+            const h = cdHanDiemDanhKeTiep(dummy), t = document.getElementById('cd_kdHan'); if (t) t.innerText = h ? 'Lần điểm danh kế tiếp: ' + xsFmt(xsIso(h)) : '';
+        }
+        function cdThemDiemDanh() {
+            const ngay = document.getElementById('cd_kdNgay').value; if (!ngay) return alert('Chọn ngày điểm danh.');
+            const kq = document.getElementById('cd_kdKQ').value, gc = document.getElementById('cd_kdGhiChu').value.trim();
+            window._cdDiemDanh = window._cdDiemDanh.filter(x => x.ngay !== ngay); window._cdDiemDanh.push({ ngay, kq, ghiChu: gc });
+            document.getElementById('cd_kdGhiChu').value = ''; cdVeDiemDanh();
+        }
+        function cdXoaDiemDanh(ngay) { window._cdDiemDanh = window._cdDiemDanh.filter(x => x.ngay !== ngay); cdVeDiemDanh(); }
+        // --- Gắn Khu vực + Ô cho bản ghi của các sổ: nhật ký địa bàn, tạm vắng, sổ giao nhận CT15, sổ hồ sơ xóa ĐKTT ---
+        function dongDauKhuVucO(obj, ho) {
+            if (ho && ho.khuVuc) obj.khuVuc = ho.khuVuc;
+            if (!obj.khuVuc && currentUser && currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length) obj.khuVuc = currentUser.khuVucPhuTrach[0];
+            if (ho && ho.o) obj.o = ho.o;
+            if (cskvCoO()) obj.o = obj.o || layODangNhap();
+            return obj;
+        }
         const XS_COLL = 'ho_so_xoa_dktt';
         const XS_KEY_LOCAL = 'hoSoXoaDKTTCacheV1';
         const XS_KEY_CAIDAT = 'hoSoXoaDKTTCaiDatV1';
@@ -7775,7 +7875,7 @@ button.dt-chip{cursor:pointer}
 const XS_KEY_NGHI = 'hoSoXoaDKTTNgayNghiV1';
 function xsNgayNghiLe() {
             let s = ''; try { s = localStorage.getItem(XS_KEY_NGHI) || ''; } catch (e) { }
-            const kq = new Set();
+            const kq = xsNghiLeTuDongSet();
             s.split(/[,;\n]+/).forEach(x => { const m = x.trim().match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/); if (m) kq.add(m[3] + '-' + xsP2(+m[2]) + '-' + xsP2(+m[1])); });
             return kq;
         }
@@ -7884,7 +7984,7 @@ function xsNgayNghiLe() {
             xsDangTai = true; xsLoi = '';
             try {
                 if (CHE_DO_FIREBASE) {
-                    const snap = await dbFirestore.collection(XS_COLL).where('phuong', '==', khuVucHienTai).get();
+                    const snap = await apDungPhamViCSKV(dbFirestore.collection(XS_COLL).where('phuong', '==', khuVucHienTai)).get();
                     xsDS = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
                 } else {
                     xsDS = JSON.parse(localStorage.getItem(XS_KEY_LOCAL) || '[]').filter(c => !c.phuong || c.phuong === khuVucHienTai);
@@ -7894,7 +7994,7 @@ function xsNgayNghiLe() {
         }
         async function xsLuu(c) {
             if (xsKhongSua()) throw new Error('Tài khoản không có quyền ghi sổ này');
-            c.phuong = khuVucHienTai; c.capNhatBoi = currentUser.email.toLowerCase(); c.capNhatLuc = new Date().toISOString();
+            c.phuong = khuVucHienTai; dongDauKhuVucO(c, c.hoId ? (danhSachHoGiaDinh || []).find(h => h.id === c.hoId) : null); c.capNhatBoi = currentUser.email.toLowerCase(); c.capNhatLuc = new Date().toISOString();
             if (!c.taoLuc) { c.taoLuc = c.capNhatLuc; c.taoBoi = c.capNhatBoi; }
             const du = JSON.parse(JSON.stringify(c)); delete du.id;
             if (CHE_DO_FIREBASE) {
@@ -7946,7 +8046,7 @@ function xsNgayNghiLe() {
         // ---------- Danh sách / sổ ----------
         function moSoXoaDK() {
             document.getElementById('xsTenPhuong').innerText = khuVucHienTai;
-            try { document.getElementById('xsNghi').value = localStorage.getItem(XS_KEY_NGHI) || ''; } catch (e) { }
+            try { document.getElementById('xsNghi').value = localStorage.getItem(XS_KEY_NGHI) || ''; document.getElementById('xsNghiTuDong').innerHTML = xsNghiTuDongHtml(); } catch (e) { }
             const m = document.getElementById('xsModal'); m.style.zIndex = '50'; m.classList.remove('hidden');
             document.getElementById('xsBang').innerHTML = '<p class="text-gray-500 p-3">Đang tải...</p>';
             xsTai(true).then(() => { xsVeSo(); xsCapNhatBadge(); });
@@ -8380,7 +8480,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             let ds = [];
             try {
                 if (CHE_DO_FIREBASE) {
-                    const snap = await dbFirestore.collection('khai_bao_tam_vang').where('phuong', '==', khuVucHienTai).get();
+                    const snap = await apDungPhamViCSKV(dbFirestore.collection('khai_bao_tam_vang').where('phuong', '==', khuVucHienTai)).get();
                     snap.forEach(doc => ds.push(Object.assign({ id: doc.id }, doc.data())));
                 } else {
                     ds = JSON.parse(localStorage.getItem('khaiBaoTamVangCacheV1') || '[]').filter(k => k.phuong === khuVucHienTai);
@@ -8413,6 +8513,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                 nguoiKhaiBao: currentUser.email.toLowerCase(),
                 ngayTao: new Date().toISOString()
             };
+            dongDauKhuVucO(duLieu, hoLienQuan);
             try {
                 if (CHE_DO_FIREBASE) await dbFirestore.collection('khai_bao_tam_vang').add(duLieu);
                 else { const ds = JSON.parse(localStorage.getItem('khaiBaoTamVangCacheV1') || '[]'); duLieu.id = 'local-' + Date.now(); ds.push(duLieu); localStorage.setItem('khaiBaoTamVangCacheV1', JSON.stringify(ds)); }
@@ -9232,8 +9333,8 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             document.getElementById('nkNgayXayRa').value = new Date().toISOString().slice(0, 10);
             document.getElementById('nhatKyDiaBanModal').classList.remove('hidden');
             if (huyLangNgheNhatKyDiaBan) huyLangNgheNhatKyDiaBan();
-            huyLangNgheNhatKyDiaBan = dbFirestore.collection('nhat_ky_dia_ban')
-                .where('phuong', '==', khuVucHienTai)
+            huyLangNgheNhatKyDiaBan = apDungPhamViCSKV(dbFirestore.collection('nhat_ky_dia_ban')
+                .where('phuong', '==', khuVucHienTai))
                 .onSnapshot(snap => {
                     danhSachNhatKyDiaBan = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
                     danhSachNhatKyDiaBan.sort((a, b) => (b.ngayXayRa || '').localeCompare(a.ngayXayRa || ''));
@@ -9252,11 +9353,11 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             const moTa = document.getElementById('nkMoTa').value.trim();
             if (!tieuDe) return alert("Vui lòng nhập tiêu đề sự vụ.");
             try {
-                await dbFirestore.collection('nhat_ky_dia_ban').add({
+                await dbFirestore.collection('nhat_ky_dia_ban').add(dongDauKhuVucO({
                     tieuDe, loaiVu, ngayXayRa, diaChi, moTa,
                     trangThai: 'Đang xử lý', phuong: khuVucHienTai,
                     nguoiTao: currentUser.email.toLowerCase(), thoiGianTao: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                }, null));
                 ghiNhatKy('Ghi nhận sự vụ địa bàn', tieuDe);
                 document.getElementById('nkTieuDe').value = '';
                 document.getElementById('nkDiaChi').value = '';
@@ -9678,11 +9779,16 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             const cd = Object.assign({}, cu || {});
             const g = k => { const e = document.getElementById('cd_' + k); return e ? (e.value || '').trim() : ''; };
             ['loaiLenh', 'soLenh', 'ngayLenh', 'coQuan', 'hanhVi', 'denNgayChu', 'noiLamViec', 'soQDCB', 'ngayQDCB'].forEach(k => { if (document.getElementById('cd_' + k)) cd[k] = g(k); });
+            if (document.getElementById('cd_kdChuKy')) { cd.kdChuKy = parseInt(g('kdChuKy'), 10) || 0; cd.diemDanh = (window._cdDiemDanh || []).slice(); }
             return cd;
         }
         function cdNapForm(d) {
             const cd = (d && d.cd) || {};
             ['loaiLenh', 'soLenh', 'ngayLenh', 'coQuan', 'hanhVi', 'denNgayChu', 'noiLamViec', 'soQDCB', 'ngayQDCB'].forEach(k => { const e = document.getElementById('cd_' + k); if (e) e.value = cd[k] || (k === 'loaiLenh' ? 'Lệnh' : ''); });
+            window._cdDiemDanh = ((cd.diemDanh) || []).map(x => Object.assign({}, x));
+            const ck = document.getElementById('cd_kdChuKy'); if (ck) ck.value = cd.kdChuKy || '';
+            const kn = document.getElementById('cd_kdNgay'); if (kn) kn.value = new Date().toISOString().slice(0, 10);
+            try { cdVeDiemDanh(); } catch (e) { }
         }
         function cdBoiCanh(d, v) {
             const ch = cdCauHinh(), cd = d.cd || {};
@@ -9711,7 +9817,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             return `<table class="dau"><tr><td width="40%" align="center" valign="top" style="font-size:12pt">${left}</td><td width="60%" align="center" valign="top"><b style="font-size:12pt;white-space:nowrap">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><table align="center" style="border-collapse:collapse;margin:0 auto"><tr><td style="border-bottom:1px solid #000;padding:0 2pt 1pt 2pt;font-size:13pt;white-space:nowrap"><b>Độc lập - Tự do - Hạnh phúc</b></td></tr></table></td></tr><tr><td align="center" valign="top" style="font-size:13pt;padding-top:4pt">${o.boSo ? '&nbsp;' : 'Số: ' + (o.so ? CD_O(o.so) : '.............') + '/' + CD_O(o.kyHieu)}</td><td align="center" valign="top" style="font-size:13pt;padding-top:4pt"><i>${CD_O(c.ch.diaDanh)}, ${ngay}</i></td></tr></table>`;
         }
         function cdTieuDe(ten, trichYeu, kyDuong) {
-            return `<p align="center" style="text-align:center;margin:12pt 0 0 0"><b style="font-size:14pt">${ten}</b></p>` + (trichYeu ? `<p align="center" style="text-align:center;margin:0"><b style="font-size:13pt">${trichYeu}</b></p>` : '') + (kyDuong ? cdDuongKe(kyDuong) : '') + '<p style="margin:0;font-size:6pt">&nbsp;</p>';
+            return `<p align="center" style="text-align:center;margin:12pt 0 0 0"><b style="font-size:14pt">${ten}</b></p>` + (trichYeu ? `<p align="center" style="text-align:center;margin:0"><b style="font-size:14pt">${trichYeu}</b></p>` : '') + (kyDuong ? cdDuongKe(kyDuong) : '') + '<p style="margin:0;font-size:6pt">&nbsp;</p>';
         }
         const cdP = s => `<p class="tl">${s}</p>`, cdPL = s => `<p style="text-align:left;margin:0 0 3pt 0">${s}</p>`;
         function cdKhoi(c, o) {
@@ -9860,7 +9966,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
               truong: [{ k: 'soDong', nhan: 'Số dòng', loai: 'text', mac: () => '20' }],
               build: c => cdMaMau(c, 'CĐ13') + `<p align="center" style="text-align:center;margin:10pt 0 6pt 0"><b style="font-size:14pt">PHIẾU ĐIỂM DANH, KIỂM DIỆN</b></p><p align="center" style="text-align:center;margin:0 0 8pt 0">Họ và tên: <b>${cdTr(c.hoTen)}</b></p>` +
                   `<table border="1" cellspacing="0" cellpadding="3" style="width:100%;border-collapse:collapse;font-size:12pt"><tr style="text-align:center;font-weight:bold"><td width="16%">Ngày, tháng, năm</td><td width="9%">Có mặt</td><td width="9%">Vắng mặt</td><td width="40%">Lý do vắng mặt</td><td width="26%">Ghi chú</td></tr>` +
-                  Array.from({ length: Math.max(1, Math.min(60, parseInt(c.v.soDong, 10) || 20)) }, () => '<tr style="height:20pt"><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>').join('') + '</table>' },
+                  cdDongDiemDanh(c) + '</table>' },
 
             { id: 'CD6', ma: 'CĐ6', gd: 2, ten: 'Biên bản người bị CĐKNCT vi phạm nghĩa vụ', kyHieu: '', mauTT: true,
               truong: [cdText('lan', 'Lần thứ', () => '1'), cdDate('ngayLam', 'Ngày lập biên bản', () => cdHomNay()), cdTime('gioLam', 'Hồi (giờ)', () => ''), cdTime('gioXong', 'Lập xong hồi', () => ''), cdText('diaDiem', 'Địa điểm', c => c.ch.truSo || '', true),
@@ -10984,10 +11090,10 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
 <head><meta charset="utf-8"><title>Báo cáo công tác ${o(ky.nhan)}</title>
 <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
 <style>
-@page WordSection1 { size: 21.0cm 29.7cm; margin: 2.0cm 2.0cm 2.0cm 3.0cm; }
+@page WordSection1 { size: 21.0cm 29.7cm; margin: 2.0cm 2.0cm 2.0cm 3.0cm; mso-header-margin: 1.0cm; mso-footer-margin: 1.0cm; ${dinhDang === 'pdf' ? '' : 'mso-header: h1; mso-first-header: fh1; mso-title-page: yes;'} }
 div.WordSection1 { page: WordSection1; }
 body { font-family: "Times New Roman", serif; font-size: 14pt; }
-p { margin: 0 0 6pt 0; text-align: justify; line-height: 130%; }
+p { margin: 0 0 6pt 0; text-align: justify; text-indent: 1.27cm; line-height: 125%; }
 td, th { font-family: "Times New Roman", serif; font-size: 13pt; padding: 3pt 5pt; }
 table.luoi { border-collapse: collapse; margin: 4pt 0 8pt 0; }
 table.luoi td, table.luoi th { border: 1px solid #000; }
@@ -10995,11 +11101,8 @@ table.luoi th { background: #E8ECF3; }
 h3 { font-size: 14pt; font-weight: bold; margin: 10pt 0 4pt 0; }
 </style></head>
 <body><div class="WordSection1">
-<table width="100%" style="border:none;border-collapse:collapse"><tr>
-<td width="42%" valign="top" align="center" style="border:none;font-size:13pt">CÔNG AN THÀNH PHỐ CẦN THƠ<br><b>CÔNG AN ${o(donViHoa)}</b><br>————<br>Số: ${soKH ? o(soKH) : '……/BC-CA'}</td>
-<td width="58%" valign="top" align="center" style="border:none;font-size:13pt"><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập - Tự do - Hạnh phúc</b><br>————————<br><i>Cần Thơ, ngày ${hn.getDate()} tháng ${hn.getMonth() + 1} năm ${hn.getFullYear()}</i></td>
-</tr></table>
-<p align="center" style="text-align:center;margin-top:14pt"><b style="font-size:15pt">BÁO CÁO</b><br><b>Kết quả công tác ${o(chucDanh === 'CẢNH SÁT KHU VỰC' ? 'Cảnh sát khu vực' : 'Công an ' + khuVucHienTai)} ${o(ky.nhan)}</b><br><i style="font-size:12pt">(Từ ${o(ky.khoangNgay.replace(' – ', ' đến '))} — phạm vi: ${o(phamViChu)})</i></p>
+${(() => { const dk = pc => `<table align="center" width="${pc}%" style="border-collapse:collapse;margin:0 auto"><tr><td style="border:none;border-top:1px solid #000;font-size:1pt;line-height:1pt;height:1pt;padding:0">&nbsp;</td></tr></table>`; return `<table width="100%" style="border:none;border-collapse:collapse"><tr><td width="42%" valign="top" align="center" style="border:none;font-size:12pt;text-indent:0">CÔNG AN THÀNH PHỐ CẦN THƠ<br><b>CÔNG AN ${o(donViHoa)}</b>${dk(45)}</td><td width="58%" valign="top" align="center" style="border:none"><b style="font-size:12pt">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><table align="center" style="border-collapse:collapse;margin:0 auto"><tr><td style="border:none;border-bottom:1px solid #000;padding:0 2pt 1pt 2pt;font-size:14pt;white-space:nowrap"><b>Độc lập - Tự do - Hạnh phúc</b></td></tr></table></td></tr><tr><td align="center" valign="top" style="border:none;font-size:13pt;padding-top:4pt">Số: ${soKH ? o(soKH) : '……/BC-CA'}</td><td align="center" valign="top" style="border:none;font-size:14pt;padding-top:4pt"><i>${o(xsTenNgan())}, ${xsNgayChu(xsIso(hn))}</i></td></tr></table>`; })()}
+<p align="center" style="text-align:center;text-indent:0;margin:12pt 0 0 0"><b style="font-size:14pt">BÁO CÁO</b></p><p align="center" style="text-align:center;text-indent:0;margin:0"><b style="font-size:14pt">Kết quả công tác ${o(chucDanh === 'CẢNH SÁT KHU VỰC' ? 'Cảnh sát khu vực' : 'Công an ' + khuVucHienTai)} ${o(ky.nhan)}</b></p><table align="center" width="30%" style="border-collapse:collapse;margin:0 auto"><tr><td style="border:none;border-top:1px solid #000;font-size:1pt;line-height:1pt;height:1pt;padding:0">&nbsp;</td></tr></table><p align="center" style="text-align:center;text-indent:0;margin:4pt 0 8pt 0"><i style="font-size:12pt">(Từ ${o(ky.khoangNgay.replace(' – ', ' đến '))} — phạm vi: ${o(phamViChu)})</i></p>
 
 <h3>I. TÌNH HÌNH DÂN CƯ, ĐỊA BÀN</h3>
 <p>Tại thời điểm báo cáo, địa bàn quản lý có <b>${tongHo.toLocaleString('vi-VN')}</b> hộ, <b>${tongNk.toLocaleString('vi-VN')}</b> nhân khẩu, phân theo diện cư trú như sau:</p>
@@ -11034,9 +11137,12 @@ ${(document.getElementById('bc_phuongHuong').value || '').trim() ? noiDung(docum
 <td width="50%" valign="top" align="center" style="border:none"><b>${o(chucDanh)}</b>${kySo ? '<br>'.repeat(9) : '<br><br><br><br><br>'}${hoTenKy ? '<b>' + o(hoTenKy) + '</b>' : ''}</td>
 </tr></table>
 ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự thảo do phần mềm Quản Lý Địa Bàn CSKV tự tổng hợp từ số liệu tại thời điểm ${hn.toLocaleString('vi-VN')}; cán bộ cần đối chiếu, bổ sung và xác nhận trước khi ký, gửi.</i></p>`}
-</div></body></html>`;
+</div>${dinhDang === 'pdf' ? '' : `
+<div style="mso-element:header" id="h1"><p align="center" style="text-align:center;margin:0;text-indent:0"><span style="mso-field-code:' PAGE '"><span style="mso-no-proof:yes">2</span></span></p></div>
+<div style="mso-element:header" id="fh1"><p style="margin:0;text-indent:0">&nbsp;</p></div>`}</body></html>`;
 
                 if (dinhDang === 'pdf') {
+
                     const w = window.open('', '_blank');
                     if (!w) { tt.innerText = ''; return alert('Trình duyệt đang chặn cửa sổ bật lên (pop-up). Hãy cho phép rồi bấm lại.'); }
                     w.document.write(html); w.document.close();
@@ -11081,6 +11187,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
                 nguoiGiao: currentUser.email.toLowerCase(), ngayGiao: new Date().toISOString(),
                 trangThai: 'Đã giao', nguoiNhan: '', ngayNhanLai: ''
             };
+            dongDauKhuVucO(banGhi, hoId ? (danhSachHoGiaDinh || []).find(h => h.id === hoId) : null);
             try {
                 if (CHE_DO_FIREBASE) await dbFirestore.collection('so_giao_nhan_ho_so').add(banGhi);
                 else { const ds = JSON.parse(localStorage.getItem('soGiaoNhanHoSoCacheV1') || '[]'); banGhi.id = 'local-' + Date.now(); ds.push(banGhi); localStorage.setItem('soGiaoNhanHoSoCacheV1', JSON.stringify(ds)); }
@@ -11096,7 +11203,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
             let ds = [];
             try {
                 if (CHE_DO_FIREBASE) {
-                    const snap = await dbFirestore.collection('so_giao_nhan_ho_so').where('phuong', '==', khuVucHienTai).get();
+                    const snap = await apDungPhamViCSKV(dbFirestore.collection('so_giao_nhan_ho_so').where('phuong', '==', khuVucHienTai)).get();
                     snap.forEach(doc => ds.push(Object.assign({ id: doc.id }, doc.data())));
                 } else { ds = JSON.parse(localStorage.getItem('soGiaoNhanHoSoCacheV1') || '[]').filter(k => k.phuong === khuVucHienTai); }
             } catch (err) { el.innerHTML = '<p class="text-red-400 p-2">Lỗi tải dữ liệu: ' + err.message + '</p>'; return; }
@@ -11133,7 +11240,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
             let ds = [];
             try {
                 if (CHE_DO_FIREBASE) {
-                    const snap = await dbFirestore.collection('so_giao_nhan_ho_so').where('hoId', '==', hoId).get();
+                    const snap = await apDungPhamViCSKV(dbFirestore.collection('so_giao_nhan_ho_so').where('phuong', '==', khuVucHienTai).where('hoId', '==', hoId)).get();
                     snap.forEach(doc => ds.push(doc.data()));
                 } else { ds = JSON.parse(localStorage.getItem('soGiaoNhanHoSoCacheV1') || '[]').filter(k => k.hoId === hoId); }
             } catch (err) { el.innerHTML = ''; return; }
@@ -12186,7 +12293,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
             anDash.suVu = null;
             if (!CHE_DO_FIREBASE || !dbFirestore) return;
             try {
-                const s = await dbFirestore.collection('nhat_ky_dia_ban').where('phuong', '==', khuVucHienTai).where('trangThai', '==', 'Đang xử lý').get();
+                const s = await apDungPhamViCSKV(dbFirestore.collection('nhat_ky_dia_ban').where('phuong', '==', khuVucHienTai).where('trangThai', '==', 'Đang xử lý')).get();
                 anDash.suVu = s.size; anDash.suVuPhuong = khuVucHienTai;
             } catch (e) { anDash.suVu = null; }
         }
@@ -12667,7 +12774,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
         //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
         // ======================================================================================================
-        const PHIEN_BAN_APP = '2026.10.27';
+        const PHIEN_BAN_APP = '2026.10.29';
         const SB_NHOM = [
             { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
             { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
