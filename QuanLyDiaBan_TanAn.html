@@ -560,7 +560,7 @@ button.dt-chip{cursor:pointer}
                 </label><label id="btnNhapBoSungDanTocTonGiao" class="nm-item" title="Chỉ cập nhật đúng 2 cột Dân tộc/Tôn giáo — khớp theo CCCD nếu có, hoặc theo Số HSCT + Họ tên nếu file không có CCCD. KHÔNG đụng đến bất kỳ dữ liệu nào khác đã sửa tay trên phần mềm"><span class="nm-w">
                     <span class="nm-t">🧬 Bổ Sung Dân Tộc/Tôn Giáo</span><small>Chỉ cập nhật 2 cột dân tộc, tôn giáo</small>
                     </span><input type="file" id="excelFileBoSung" accept=".xlsx, .xls" class="hidden" onchange="nhapBoSungDanTocTonGiao(event)">
-                </label><button id="btnHoanTacNhap" onclick="hoanTacLanNhapExcelGanNhat()" class="nm-item" title="Chỉ xóa đúng những hộ CHÍNH BẠN vừa nhập gần nhất — không đụng đến dữ liệu người khác"><span class="nm-w"><span class="nm-t">↩️ Hoàn Tác Lần Nhập Của Tôi</span><small>Xóa đúng những hộ bạn vừa nhập gần nhất</small></span></button><button onclick="moModalHuongDanExcel()" class="nm-item"><span class="nm-w"><span class="nm-t">❓ Hướng Dẫn Mẫu Excel</span><small>Cột nào, định dạng nào cho đúng mẫu</small></span></button><button id="btnDongBoDuLieuCu" onclick="dongBoDuLieuCuLenMayChu()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">⬆️ Đồng Bộ Dữ Liệu Cũ Lên Máy Chủ</span><small>Đẩy dữ liệu lưu trên máy lên máy chủ</small></span></button><button id="btnRaSoatLoi" onclick="moModalRaSoatLoi()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">🔧 Rà Soát Lỗi DL</span><small>Tìm hộ thiếu, trùng, sai thông tin</small></span></button><button id="btnXoaDL" onclick="moModalXoaDuLieu()" class="nm-item nm-danger hidden"><span class="nm-w"><span class="nm-t">🗑️ Xóa DL</span><small>Xóa theo lô — cẩn thận</small></span></button></div></div><div class="nm-g" data-nm="cu_tru"><button type="button" class="nm-top nm-gb" onclick="nmMo('cu_tru',event)" aria-haspopup="true" aria-expanded="false"><span class="nm-ic">🏠</span><span>Cư trú</span><span class="nm-dot hidden"></span><span class="nm-car">▾</span></button><div class="nm-panel hidden" role="menu"><button id="btnRaSoatQuaHan" onclick="moModalRaSoatQuaHan()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">⏰ Tạm Trú Quá Hạn</span><small>Hộ tạm trú đã quá hạn cần xử lý</small></span></button><button onclick="moModalNhacHanTamTru()" class="nm-item"><span class="nm-w"><span class="nm-t">🏠 Nhắc Hạn Tạm Trú</span><small>Hộ sắp hết hạn tạm trú</small></span><span id="badgeSoTamTruSapHet" class="hidden absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span></button><button onclick="moModalNhacCCCD()" class="nm-item"><span class="nm-w"><span class="nm-t">🔔 Nhắc Mốc CCCD</span><small>Người đến mốc đổi/cấp CCCD</small></span></button><button id="btnDeXuatXoa" onclick="moDeXuatXoa()" class="nm-item hidden" title="Chỉ gợi ý để xác minh, không tự xóa"><span class="nm-w"><span class="nm-t">🧾 Đề Xuất Xem Xét Xóa ĐK</span><small>Hộ, người có dấu hiệu cần xác minh</small></span></button><button id="btnSoXoaDK" onclick="moSoXoaDK()" class="nm-item hidden" title="Sổ theo dõi hồ sơ xóa đăng ký thường trú: nhắc hạn 07 ngày, soạn biên bản, thông báo"><span class="nm-w"><span class="nm-t">📒 Sổ Hồ Sơ Xóa ĐKTT</span><small>Theo dõi hồ sơ, nhắc hạn, soạn văn bản</small></span><span id="badgeSoXoaDK" class="hidden absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span></button><button onclick="icsMo()" class="nm-item"><span class="nm-w"><span class="nm-t">📅 Xuất Lịch Nhắc Việc</span><small>File .ics cho lịch điện thoại</small></span></button><button id="btnKhaiBaoTamVang" onclick="moModalKhaiBaoTamVang()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">📋 Khai Báo Tạm Vắng</span><small>Lập, theo dõi khai báo tạm vắng</small></span></button><button id="btnSoCT15" onclick="moModalSoCT15()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">📚 Sổ CT15</span><small>Sổ theo dõi cư trú</small></span></button><button onclick="moModalNguonNVQS()" class="nm-item" title="Danh sách nam trong độ tuổi thực hiện NVQS/NVCA"><span class="nm-w"><span class="nm-t">🎖️ Nguồn NVQS/NVCA</span><small>Nam trong độ tuổi nghĩa vụ quân sự, CAND</small></span></button></div></div><div class="nm-g" data-nm="dia_ban"><button type="button" class="nm-top nm-gb" onclick="nmMo('dia_ban',event)" aria-haspopup="true" aria-expanded="false"><span class="nm-ic">🛡️</span><span>Địa bàn & đối tượng</span><span class="nm-dot hidden"></span><span class="nm-car">▾</span></button><div class="nm-panel hidden" role="menu"><button onclick="moModalDoiTuong()" class="nm-item"><span class="nm-w"><span class="nm-t">🗂️ Quản Lý Đối Tượng (KV3)</span><small>Hồ sơ, nhắc hạn, theo dõi đối tượng</small></span></button><button onclick="moModalCoSo()" class="nm-item" title="Hồ sơ cơ sở lưu trú, kinh doanh có điều kiện ANTT, thờ tự... kèm nhắc hạn giấy phép và kiểm tra"><span class="nm-w"><span class="nm-t">🏪 Cơ Sở Địa Bàn</span><small>Cơ sở kinh doanh, giấy phép, hạn kiểm tra</small></span><span id="badgeCoSoCanXuLy" class="hidden absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span></button><button onclick="moModalNhatKyDiaBan()" class="nm-item"><span class="nm-w"><span class="nm-t">📋 Nhật Ký Địa Bàn</span><small>Sự vụ, tình hình ghi nhận hằng ngày</small></span></button><button onclick="moModalLichKiemTraDinhKy()" class="nm-item"><span class="nm-w"><span class="nm-t">🗓️ Lịch Kiểm Tra Định Kỳ</span><small>Lịch kiểm tra, nhắc đến hạn</small></span></button><button id="btnBanGiao" onclick="moModalBanGiao()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">🔄 Bàn Giao Địa Bàn</span><small>Chuyển giao địa bàn khi đổi cán bộ</small></span></button></div></div><div class="nm-g" data-nm="bao_cao"><button type="button" class="nm-top nm-gb" onclick="nmMo('bao_cao',event)" aria-haspopup="true" aria-expanded="false"><span class="nm-ic">📄</span><span>Báo cáo</span><span class="nm-dot hidden"></span><span class="nm-car">▾</span></button><div class="nm-panel hidden" role="menu"><button onclick="moModalBaoCaoVanBan()" class="nm-item" title="Tự điền số liệu vào văn bản báo cáo tuần/tháng/quý để tải về Word"><span class="nm-w"><span class="nm-t">📝 Soạn Báo Cáo (Word)</span><small>Xuất báo cáo công tác, hỗ trợ ký số / PDF</small></span></button><button onclick="moModalChonKyBaoCao()" class="nm-item"><span class="nm-w"><span class="nm-t">📈 Báo Cáo Thống Kê</span><small>Số liệu theo kỳ báo cáo</small></span></button><button onclick="xuatBaoCaoExcelKV1()" class="nm-item"><span class="nm-w"><span class="nm-t">📋 Xuất Mẫu KV1</span><small>Biểu mẫu Excel theo khu vực 1</small></span></button><button onclick="xuatBaoCaoExcelKV2()" class="nm-item"><span class="nm-w"><span class="nm-t">📊 Xuất Mẫu KV2</span><small>Biểu mẫu Excel theo khu vực 2</small></span></button></div></div><div class="nm-g" data-nm="he_thong"><button type="button" class="nm-top nm-gb" onclick="nmMo('he_thong',event)" aria-haspopup="true" aria-expanded="false"><span class="nm-ic">⚙️</span><span>Hệ thống</span><span class="nm-dot hidden"></span><span class="nm-car">▾</span></button><div class="nm-panel hidden" role="menu"><button onclick="sbMoModal()" class="nm-item" title="Sao lưu / khôi phục dữ liệu, tự đăng xuất, phiên bản"><span class="nm-w"><span class="nm-t">🛡️ Sao Lưu &amp; Bảo Mật</span><small>Sao lưu mã hóa, khôi phục, tự đăng xuất</small></span></button><button id="btnSaoLuu" onclick="xuatSaoLuuJSON()" class="nm-item"><span class="nm-w"><span class="nm-t">💾 Sao lưu nhanh (cũ)</span><small>Xuất JSON dạng cũ — nên dùng mục trên</small></span></button><label id="btnPhucHoi" class="nm-item"><span class="nm-w"><span class="nm-t">⬆️ Khôi phục (cũ)</span><small>Nhập lại file JSON dạng cũ</small></span></label><button onclick="moModalNhatKy()" class="nm-item"><span class="nm-w"><span class="nm-t">📜 Nhật Ký</span><small>Ai làm gì, lúc nào</small></span></button><button id="btnBatThongBao" onclick="xinPhepThongBao()" class="nm-item"><span class="nm-w"><span class="nm-t">🔔 Bật Thông Báo</span><small>Nhận nhắc việc trên thiết bị này</small></span></button><button id="btnCheDoNgoaiTroi" onclick="doiCheDoNgoaiTroi()" class="nm-item" title="Tăng độ sáng/tương phản màn hình — dễ đọc hơn khi làm việc ngoài trời nắng gắt"><span class="nm-w"><span class="nm-t">☀️ Chế Độ Ngoài Trời</span><small>Tăng tương phản khi dùng ngoài nắng</small></span></button><button onclick="moModalDoiMatKhau()" class="nm-item"><span class="nm-w"><span class="nm-t">🔑 Đổi Mật Khẩu</span><small>Đổi mật khẩu đăng nhập</small></span></button></div></div><span class="nm-sep"></span><button onclick="dangXuat()" class="nm-top nm-out">🔒 Thoát</button></div>
+                </label><button id="btnHoanTacNhap" onclick="hoanTacLanNhapExcelGanNhat()" class="nm-item" title="Chỉ xóa đúng những hộ CHÍNH BẠN vừa nhập gần nhất — không đụng đến dữ liệu người khác"><span class="nm-w"><span class="nm-t">↩️ Hoàn Tác Lần Nhập Của Tôi</span><small>Xóa đúng những hộ bạn vừa nhập gần nhất</small></span></button><button onclick="moModalHuongDanExcel()" class="nm-item"><span class="nm-w"><span class="nm-t">❓ Hướng Dẫn Mẫu Excel</span><small>Cột nào, định dạng nào cho đúng mẫu</small></span></button><button id="btnDongBoDuLieuCu" onclick="dongBoDuLieuCuLenMayChu()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">⬆️ Đồng Bộ Dữ Liệu Cũ Lên Máy Chủ</span><small>Đẩy dữ liệu lưu trên máy lên máy chủ</small></span></button><button id="btnRaSoatLoi" onclick="moModalRaSoatLoi()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">🔧 Rà Soát Lỗi DL</span><small>Tìm hộ thiếu, trùng, sai thông tin</small></span></button><button id="btnXoaDL" onclick="moModalXoaDuLieu()" class="nm-item nm-danger hidden"><span class="nm-w"><span class="nm-t">🗑️ Xóa DL</span><small>Xóa theo lô — cẩn thận</small></span></button></div></div><div class="nm-g" data-nm="cu_tru"><button type="button" class="nm-top nm-gb" onclick="nmMo('cu_tru',event)" aria-haspopup="true" aria-expanded="false"><span class="nm-ic">🏠</span><span>Cư trú</span><span class="nm-dot hidden"></span><span class="nm-car">▾</span></button><div class="nm-panel hidden" role="menu"><button id="btnRaSoatQuaHan" onclick="moModalRaSoatQuaHan()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">⏰ Tạm Trú Quá Hạn</span><small>Hộ tạm trú đã quá hạn cần xử lý</small></span></button><button onclick="moModalNhacHanTamTru()" class="nm-item"><span class="nm-w"><span class="nm-t">🏠 Nhắc Hạn Tạm Trú</span><small>Hộ sắp hết hạn tạm trú</small></span><span id="badgeSoTamTruSapHet" class="hidden absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span></button><button onclick="moModalNhacCCCD()" class="nm-item"><span class="nm-w"><span class="nm-t">🔔 Nhắc Mốc CCCD</span><small>Người đến mốc đổi/cấp CCCD</small></span></button><button id="btnDeXuatXoa" onclick="moDeXuatXoa()" class="nm-item hidden" title="Chỉ gợi ý để xác minh, không tự xóa"><span class="nm-w"><span class="nm-t">🧾 Đề Xuất Xem Xét Xóa ĐK</span><small>Hộ, người có dấu hiệu cần xác minh</small></span></button><button id="btnSoXoaDK" onclick="moSoXoaDK()" class="nm-item hidden" title="Sổ theo dõi hồ sơ xóa đăng ký thường trú: nhắc hạn 07 ngày, soạn biên bản, thông báo"><span class="nm-w"><span class="nm-t">📒 Sổ Hồ Sơ Xóa ĐKTT</span><small>Theo dõi hồ sơ, nhắc hạn, soạn văn bản</small></span><span id="badgeSoXoaDK" class="hidden absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span></button><button onclick="icsMo()" class="nm-item"><span class="nm-w"><span class="nm-t">📅 Xuất Lịch Nhắc Việc</span><small>File .ics cho lịch điện thoại</small></span></button><button id="btnKhaiBaoTamVang" onclick="moModalKhaiBaoTamVang()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">📋 Khai Báo Tạm Vắng</span><small>Lập, theo dõi khai báo tạm vắng</small></span></button><button id="btnSoCT15" onclick="moModalSoCT15()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">📚 Sổ CT15</span><small>Sổ theo dõi cư trú</small></span></button><button onclick="moModalNguonNVQS()" class="nm-item" title="Danh sách nam trong độ tuổi thực hiện NVQS/NVCA"><span class="nm-w"><span class="nm-t">🎖️ Nguồn NVQS/NVCA</span><small>Nam trong độ tuổi nghĩa vụ quân sự, CAND</small></span></button></div></div><div class="nm-g" data-nm="dia_ban"><button type="button" class="nm-top nm-gb" onclick="nmMo('dia_ban',event)" aria-haspopup="true" aria-expanded="false"><span class="nm-ic">🛡️</span><span>Địa bàn & đối tượng</span><span class="nm-dot hidden"></span><span class="nm-car">▾</span></button><div class="nm-panel hidden" role="menu"><button onclick="moModalDoiTuong()" class="nm-item"><span class="nm-w"><span class="nm-t">🗂️ Quản Lý Đối Tượng (KV3)</span><small>Hồ sơ, nhắc hạn, theo dõi đối tượng</small></span></button><button onclick="moModalCoSo()" class="nm-item" title="Hồ sơ cơ sở lưu trú, kinh doanh có điều kiện ANTT, thờ tự... kèm nhắc hạn giấy phép và kiểm tra"><span class="nm-w"><span class="nm-t">🏪 Cơ Sở Địa Bàn</span><small>Cơ sở kinh doanh, giấy phép, hạn kiểm tra</small></span><span id="badgeCoSoCanXuLy" class="hidden absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">0</span></button><button onclick="moModalNhatKyDiaBan()" class="nm-item"><span class="nm-w"><span class="nm-t">📋 Nhật Ký Địa Bàn</span><small>Sự vụ, tình hình ghi nhận hằng ngày</small></span></button><button onclick="moModalLichKiemTraDinhKy()" class="nm-item"><span class="nm-w"><span class="nm-t">🗓️ Lịch Kiểm Tra Định Kỳ</span><small>Lịch kiểm tra, nhắc đến hạn</small></span></button><button id="btnBanGiao" onclick="moModalBanGiao()" class="nm-item hidden"><span class="nm-w"><span class="nm-t">🔄 Bàn Giao Địa Bàn</span><small>Chuyển giao địa bàn khi đổi cán bộ</small></span></button></div></div><div class="nm-g" data-nm="bao_cao"><button type="button" class="nm-top nm-gb" onclick="nmMo('bao_cao',event)" aria-haspopup="true" aria-expanded="false"><span class="nm-ic">📄</span><span>Báo cáo</span><span class="nm-dot hidden"></span><span class="nm-car">▾</span></button><div class="nm-panel hidden" role="menu"><button onclick="moModalBaoCaoVanBan()" class="nm-item" title="Tự điền số liệu vào văn bản báo cáo tuần/tháng/quý để tải về Word"><span class="nm-w"><span class="nm-t">📝 Soạn Báo Cáo (Word)</span><small>Xuất báo cáo công tác, hỗ trợ ký số / PDF</small></span></button><button onclick="moModalChonKyBaoCao()" class="nm-item"><span class="nm-w"><span class="nm-t">📈 Báo Cáo Thống Kê</span><small>Số liệu theo kỳ báo cáo</small></span></button><button onclick="xuatBaoCaoExcelKV1()" class="nm-item"><span class="nm-w"><span class="nm-t">📋 Xuất Mẫu KV1</span><small>Biểu mẫu Excel theo khu vực 1</small></span></button><button onclick="xuatBaoCaoExcelKV2()" class="nm-item"><span class="nm-w"><span class="nm-t">📊 Xuất Mẫu KV2</span><small>Biểu mẫu Excel theo khu vực 2</small></span></button></div></div><div class="nm-g" data-nm="he_thong"><button type="button" class="nm-top nm-gb" onclick="nmMo('he_thong',event)" aria-haspopup="true" aria-expanded="false"><span class="nm-ic">⚙️</span><span>Hệ thống</span><span class="nm-dot hidden"></span><span class="nm-car">▾</span></button><div class="nm-panel hidden" role="menu"><button onclick="sbMoModal()" class="nm-item" title="Sao lưu / khôi phục dữ liệu, tự đăng xuất, phiên bản"><span class="nm-w"><span class="nm-t">🛡️ Sao Lưu &amp; Bảo Mật</span><small>Sao lưu mã hóa, khôi phục, tự đăng xuất</small></span></button><button id="btnSaoLuu" onclick="xuatSaoLuuJSON()" class="nm-item"><span class="nm-w"><span class="nm-t">💾 Sao lưu nhanh (cũ)</span><small>Xuất JSON dạng cũ — nên dùng mục trên</small></span></button><label id="btnPhucHoi" class="nm-item"><span class="nm-w"><span class="nm-t">⬆️ Khôi phục (cũ)</span><small>Nhập lại file JSON dạng cũ</small></span></label><button onclick="moModalNhatKy()" class="nm-item"><span class="nm-w"><span class="nm-t">📜 Nhật Ký</span><small>Ai làm gì, lúc nào</small></span></button><button id="btnBatThongBao" onclick="xinPhepThongBao()" class="nm-item"><span class="nm-w"><span class="nm-t">🔔 Bật Thông Báo</span><small>Nhận nhắc việc trên thiết bị này</small></span></button><button id="btnCheDoNgoaiTroi" onclick="doiCheDoNgoaiTroi()" class="nm-item" title="Tăng độ sáng/tương phản màn hình — dễ đọc hơn khi làm việc ngoài trời nắng gắt"><span class="nm-w"><span class="nm-t">☀️ Chế Độ Ngoài Trời</span><small>Tăng tương phản khi dùng ngoài nắng</small></span></button><button id="btnXuatCheSo" onclick="doiXuatCheSo()" class="nm-item" title="Khi gửi file ra ngoài đơn vị nên để che số"><span class="nm-w"><span class="nm-t">🙈 Xuất file: ĐANG che số</span><small>Bấm để chuyển sang xuất đầy đủ CCCD/HSCT</small></span></button><button onclick="moModalDoiMatKhau()" class="nm-item"><span class="nm-w"><span class="nm-t">🔑 Đổi Mật Khẩu</span><small>Đổi mật khẩu đăng nhập</small></span></button></div></div><span class="nm-sep"></span><button onclick="dangXuat()" class="nm-top nm-out">🔒 Thoát</button></div>
         </header>
 
         <section id="uiKpi" aria-label="Số liệu chính"></section>
@@ -3160,7 +3160,7 @@ button.dt-chip{cursor:pointer}
                         const r = d.data();
                         const t = r.thoiGian ? r.thoiGian.toDate().toLocaleString('vi-VN') : '...';
                         return `<tr><td class="p-1.5 font-mono">${escHtml(t)}</td><td class="p-1.5">${escHtml(r.email)}</td>
-                            <td class="p-1.5 text-blue-300">${escHtml(r.hanhDong)}</td><td class="p-1.5">${escHtml(r.chiTiet)}</td>
+                            <td class="p-1.5 ${String(r.hanhDong || '').startsWith('⚠️') ? 'text-red-400 font-bold' : 'text-blue-300'}">${escHtml(r.hanhDong)}</td><td class="p-1.5">${escHtml(r.chiTiet)}</td>
                             <td class="p-1.5 text-gray-500">${escHtml(r.phuong)}</td></tr>`;
                     }).join('') + `</tbody></table>`;
             } catch (err) {
@@ -3464,7 +3464,7 @@ button.dt-chip{cursor:pointer}
         // trông như "nhập Tạm trú lại ra Thường trú". Giờ tự động PHÁT HIỆN hộ đã tồn tại (khớp đúng Số HSCT,
         // hoặc bất kỳ thành viên nào trùng CCCD) và CẬP NHẬT đúng diện cư trú + thông tin mới nhất vào hồ sơ
         // đó, thay vì tạo bản ghi mới — giữ nguyên ảnh nhà/toạ độ GPS/ghi chú đã có (không bị Excel ghi đè mất).
-        async function luuDanhSachMoiLenFirestore(danhSachMoi) {
+        async function luuDanhSachMoiLenFirestore(danhSachMoi, kh) {
             const CO_LO = 400;
             const hoTheoHsct = {}, hoTheoCccd = {};
             danhSachHoGiaDinh.forEach(ho => {
@@ -3479,8 +3479,8 @@ button.dt-chip{cursor:pointer}
                     hoMoi.khuVuc = layNhanKhuVucTuDiaChi(hoMoi.diaChi, hoMoi.phuong) || 'Khu Vực 1';
                     if (currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length && !currentUser.khuVucPhuTrach.includes(hoMoi.khuVuc)) { soNgoaiPhamVi++; return; }
                     dongDauPhamViO(hoMoi);
-                    let hoTrung = (hoMoi.hsct && hoTheoHsct[hoMoi.hsct]) || null;
-                    if (!hoTrung) {
+                    let hoTrung = kh ? (kh.dich.get(hoMoi) || null) : ((hoMoi.hsct && hoTheoHsct[hoMoi.hsct]) || null);
+                    if (!hoTrung && !kh) {
                         for (const tv of (hoMoi.thanhVien || [])) {
                             if (tv.cccd && hoTheoCccd[tv.cccd]) { hoTrung = hoTheoCccd[tv.cccd]; break; }
                         }
@@ -3511,6 +3511,14 @@ button.dt-chip{cursor:pointer}
                     }
                 });
                 await lo.commit();
+            }
+            if (kh) {
+                const dsCu = [...kh.hoCu.entries()].filter(([h]) => h.id);
+                for (let i = 0; i < dsCu.length; i += CO_LO) {
+                    const lo = dbFirestore.batch();
+                    dsCu.slice(i, i + CO_LO).forEach(([h, t]) => lo.set(dbFirestore.collection('households').doc(h.id), { thanhVien: t }, { merge: true }));
+                    await lo.commit();
+                }
             }
             return { soHoCapNhat, soHoTaoMoi, soNgoaiPhamVi };
         }
@@ -4210,7 +4218,7 @@ button.dt-chip{cursor:pointer}
             ws['!cols'] = [{ wch: 22 }, { wch: 20 }, { wch: 26 }, { wch: 16 }, { wch: 26 }, { wch: 20 }, { wch: 18 }, { wch: 22 }];
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Danh_Ba_Can_Bo");
-            XLSX.writeFile(wb, "Danh_Ba_Can_Bo_He_Thong.xlsx");
+            xuatXlsx(wb, "Danh_Ba_Can_Bo_He_Thong.xlsx");
         }
 
         async function datLai2FA(email) {
@@ -5133,7 +5141,7 @@ button.dt-chip{cursor:pointer}
 
                 let marker = L.marker(coords, { icon: customIcon }).bindPopup(`
                     <div style="color: black; font-size: 12px;">
-                        <b style="color: #1e3a8a;">${ho.chuHo}</b> (HS: ${ho.hsct})<br>
+                        <b style="color: #1e3a8a;">${ho.chuHo}</b> (HS: ${cheSo(ho.hsct)})<br>
                         <b>Diện:</b> <span style="color: ${colorPin}; font-weight: bold;">${dien}</span><br>
                         <b>Địa chỉ:</b> ${ho.diaChi}<br>
                         <b>Thành viên:</b> ${ho.thanhVien ? ho.thanhVien.length : 0} người
@@ -5478,7 +5486,7 @@ button.dt-chip{cursor:pointer}
                     const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
                     const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
                     
-                    let mapCol = { hsct: -1, hoTen: -1, ngaySinh: -1, quanHe: -1, diaChi: -1, phuongXa: -1, chuHo: -1, cccd: -1, gioiTinh: -1, dienNV: -1, danToc: -1, tonGiao: -1, queQuan: -1, ngheNghiep: -1, sdt: -1, quocTich: -1, ngayHetHan: -1, noiThuongTruGoc: -1, noiOHienTai: -1 };
+                    let mapCol = { hsct: -1, hoTen: -1, ngaySinh: -1, quanHe: -1, diaChi: -1, phuongXa: -1, chuHo: -1, cccd: -1, gioiTinh: -1, dienNV: -1, danToc: -1, tonGiao: -1, queQuan: -1, ngheNghiep: -1, sdt: -1, quocTich: -1, ngayHetHan: -1, noiThuongTruGoc: -1, noiOHienTai: -1, cmnd: -1, cccdChuHo: -1, sdt2: -1, queTinh: -1, noXa: -1, noTinh: -1 };
                     
                     for (let i = 0; i < Math.min(20, rows.length); i++) {
                         let r = rows[i] || [];
@@ -5505,19 +5513,29 @@ button.dt-chip{cursor:pointer}
                             if (mapCol.noiOHienTai === -1 && t.includes('nơi') && t.includes('hiện') && t.includes('tại')) mapCol.noiOHienTai = j;
                             if (mapCol.phuongXa === -1 && (t.includes('phường') || t.includes('xã'))) mapCol.phuongXa = j;
                             if (mapCol.chuHo === -1 && (t.includes('chủ') && t.includes('hộ')) && !(t.includes('quan') && t.includes('hệ'))) mapCol.chuHo = j;
-                            if (mapCol.cccd === -1 && (t.includes('cccd') || (t.includes('định') && t.includes('danh')) || t.includes('cmnd') || t === 'đdcn')) mapCol.cccd = j;
+                            if (mapCol.cccdChuHo === -1 && t.includes('cccd') && t.includes('chủ') && t.includes('hộ')) mapCol.cccdChuHo = j;
+                            if (mapCol.cmnd === -1 && t.includes('cmnd') && !/cha|mẹ|vk|ck|vợ|chồng|chủhộ/.test(t)) mapCol.cmnd = j;
+                            if (mapCol.cccd === -1 && (t.includes('cccd') || (t.includes('định') && t.includes('danh')) || t === 'đdcn') && !/cha|mẹ|vk\/ck|vợ|chồng|chủhộ/.test(t)) mapCol.cccd = j;
+                            if (t === 'ttxã' || t === 'thườngtrúxã') mapCol.phuongXa = j;
+                            if (t === 'địachỉthườngtrú') mapCol.diaChi = j;
+                            if (mapCol.sdt2 === -1 && (t.includes('sdt') || t.includes('sđt')) ) mapCol.sdt2 = j;
+                            if (mapCol.queTinh === -1 && t.includes('quê') && t.includes('tỉnh')) mapCol.queTinh = j;
+                            if (mapCol.noXa === -1 && t === 'noxã') mapCol.noXa = j;
+                            if (mapCol.noTinh === -1 && t === 'notỉnh') mapCol.noTinh = j;
                             if (mapCol.gioiTinh === -1 && (t.includes('giới') || t.includes('nam/nữ') || t === 'gt')) mapCol.gioiTinh = j;
-                            if (mapCol.dienNV === -1 && (t.includes('diện') || (t.includes('loại') && t.includes('hình')) || (t.includes('trạng') && t.includes('thái')))) mapCol.dienNV = j;
+                            if (mapCol.dienNV === -1 && (t.includes('diện') || (t.includes('loại') && t.includes('hình')) || (t.includes('trạng') && t.includes('thái') && !t.includes('tàikhoản')))) mapCol.dienNV = j;
                             if (mapCol.ngayHetHan === -1 && (t.includes('hết') && t.includes('hạn'))) mapCol.ngayHetHan = j;
                             if (mapCol.danToc === -1 && (t.includes('dân') && t.includes('tộc'))) mapCol.danToc = j;
                             if (mapCol.tonGiao === -1 && (t.includes('tôn') && t.includes('giáo'))) mapCol.tonGiao = j;
-                            if (mapCol.queQuan === -1 && t.includes('quê')) mapCol.queQuan = j;
+                            if (mapCol.queQuan === -1 && t.includes('quê') && !t.includes('tỉnh')) mapCol.queQuan = j;
                             if (mapCol.ngheNghiep === -1 && (t.includes('nghề') || (t.includes('nơi') && t.includes('làm')) || t.includes('côngtác'))) mapCol.ngheNghiep = j;
-                            if (mapCol.sdt === -1 && (t.includes('sđt') || (t.includes('điện') && t.includes('thoại')) || t.includes('phone'))) mapCol.sdt = j;
+                            if (mapCol.sdt === -1 && (t.includes('sđt') || t === 'sốđt' || t === 'đt' || (t.includes('điện') && t.includes('thoại')) || t.includes('phone')) && !t.includes('vip')) mapCol.sdt = j;
                             if (mapCol.quocTich === -1 && (t.includes('quốc') && t.includes('tịch'))) mapCol.quocTich = j;
                         });
                     }
 
+                    if (mapCol.cccd === -1 && mapCol.cmnd !== -1) mapCol.cccd = mapCol.cmnd;
+                    if (mapCol.sdt === -1 && mapCol.sdt2 !== -1) mapCol.sdt = mapCol.sdt2;
                     if (mapCol.hoTen === -1) {
                         mapCol = { hsct: 0, hoTen: 1, ngaySinh: 2, quanHe: 3, cccd: 4, diaChi: 5, phuongXa: 6, chuHo: 7, dienNV: 8, gioiTinh: 9, danToc: 10, tonGiao: 11, queQuan: 12, ngheNghiep: 13, sdt: 14, quocTich: 15 };
                     }
@@ -5614,6 +5632,8 @@ button.dt-chip{cursor:pointer}
                         if (!tenChuHoCol && laChuHoDongNay) {
                             mapHoMoi[key].chuHo = hoTenVal;
                         }
+                        if (tenChuHoCol) (mapHoMoi[key]._aj = mapHoMoi[key]._aj || []).push(tenChuHoCol);
+                        { const ccChu = (mapCol.cccdChuHo !== -1 && mapCol.cccdChuHo !== undefined) ? String(r[mapCol.cccdChuHo] || '').trim() : ''; if (ccChu) (mapHoMoi[key]._cc = mapHoMoi[key]._cc || []).push(ccChu); }
                         
                         // SỬ DỤNG HÀM XỬ LÝ NGÀY THÁNG ĐỘC LẬP CHÍNH XÁC CHO EXCEL
                         let ngaySinhRaw = r[mapCol.ngaySinh];
@@ -5633,6 +5653,7 @@ button.dt-chip{cursor:pointer}
                         }
 
                         let cccdVal = (mapCol.cccd !== -1 && mapCol.cccd !== undefined) ? String(r[mapCol.cccd] || '').trim() : '';
+                        if (!dcCccd(cccdVal) && mapCol.cmnd !== -1 && mapCol.cmnd !== undefined && mapCol.cmnd !== mapCol.cccd) { const cm = String(r[mapCol.cmnd] || '').trim(); if (dcCccd(cm)) cccdVal = cm; }
                         if (cccdVal.toLowerCase() === 'nam' || cccdVal.toLowerCase() === 'nữ') {
                             cccdVal = ''; 
                         }
@@ -5655,8 +5676,10 @@ button.dt-chip{cursor:pointer}
                         }
 
                         let queQuanVal = (mapCol.queQuan !== -1 && mapCol.queQuan !== undefined) ? String(r[mapCol.queQuan] || '').trim() : '';
+                        if (mapCol.queTinh !== -1) { const qt = String(r[mapCol.queTinh] || '').trim(); if (qt && !queQuanVal.includes(qt)) queQuanVal = queQuanVal ? queQuanVal + ', ' + qt : qt; }
                         let ngheNghiepVal = (mapCol.ngheNghiep !== -1 && mapCol.ngheNghiep !== undefined) ? String(r[mapCol.ngheNghiep] || '').trim() : '';
                         let sdtVal = (mapCol.sdt !== -1 && mapCol.sdt !== undefined) ? String(r[mapCol.sdt] || '').trim() : '';
+                        if (!sdtVal && mapCol.sdt2 !== -1 && mapCol.sdt2 !== undefined) sdtVal = String(r[mapCol.sdt2] || '').trim();
                         let gioiTinhRaw = (mapCol.gioiTinh !== -1 && mapCol.gioiTinh !== undefined) ? String(r[mapCol.gioiTinh] || '').trim() : '';
                         let gioiTinhChuan = boDauTiengViet(gioiTinhRaw);
                         let gioiTinhVal = 'Nam';
@@ -5670,6 +5693,7 @@ button.dt-chip{cursor:pointer}
                         // tại hộ nhưng thực tế đang sinh sống/làm việc ở địa chỉ khác. Đọc riêng theo từng dòng,
                         // không dùng chung 1 giá trị cho cả hộ như "Địa chỉ".
                         let noiOHienTaiVal = (mapCol.noiOHienTai !== -1 && mapCol.noiOHienTai !== undefined) ? String(r[mapCol.noiOHienTai] || '').trim() : '';
+                        if (noiOHienTaiVal) [mapCol.noXa, mapCol.noTinh].forEach(c => { if (c !== -1 && c !== undefined) { const v = String(r[c] || '').trim(); if (v && !noiOHienTaiVal.includes(v)) noiOHienTaiVal += ', ' + v; } });
 
                         mapHoMoi[key].thanhVien.push({ 
                             hoTen: hoTenVal, 
@@ -5688,6 +5712,7 @@ button.dt-chip{cursor:pointer}
                     }
 
                     let danhSachMoi = Object.values(mapHoMoi);
+                    const loiChuHoFile = dcChuanHoaChuHo(danhSachMoi);
                     if (danhSachMoi.length === 0) return alert("Không tìm thấy dữ liệu hợp lệ trong file Excel!");
 
                     // NHẮC LẦN 2: sau khi đã đọc xong file, đối chiếu KHU VỰC suy ra từ ĐỊA CHỈ THẬT trong Excel
@@ -5706,9 +5731,15 @@ button.dt-chip{cursor:pointer}
                         }
                     }
 
+                    const coCotDc = k => mapCol[k] !== -1 && mapCol[k] !== undefined;
+                    const khDc = await dcDoiChieuVaXacNhan(danhSachMoi, { loiChuHo: loiChuHoFile, coCot: { gioiTinh: coCotDc('gioiTinh'), danToc: coCotDc('danToc'), tonGiao: coCotDc('tonGiao'), quocTich: coCotDc('quocTich') } });
+                    if (khDc === false) { event.target.value = ""; return; }
+                    if (!khDc.ds.length) { event.target.value = ""; return alert('Sau khi đối chiếu không còn hộ nào để nhập.'); }
+                    danhSachMoi = khDc.ds;
+                    try { ghiNhatKy('Đối chiếu trùng khi nhập Excel', dcTomTat(khDc) + ` | người ở hộ khác: ${khDc.B.length}, khác thông tin: ${khDc.C.length}, nghi trùng: ${khDc.D.length}`); } catch (e) { }
                     let ketQuaLuu = { soHoCapNhat: 0, soHoTaoMoi: danhSachMoi.length };
                     if (CHE_DO_FIREBASE) {
-                        ketQuaLuu = await luuDanhSachMoiLenFirestore(danhSachMoi); // onSnapshot sẽ tự cập nhật giao diện
+                        ketQuaLuu = await luuDanhSachMoiLenFirestore(danhSachMoi, khDc); // onSnapshot sẽ tự cập nhật giao diện
                         ghiNhatKy('Nhập Excel', `${danhSachMoi.length} hộ (${ketQuaLuu.soHoCapNhat} cập nhật, ${ketQuaLuu.soHoTaoMoi} mới) - file: ${file.name}`);
                     } else {
                         // Chế độ offline (localStorage): áp dụng CÙNG logic phát hiện trùng theo Số HSCT/CCCD
@@ -5719,8 +5750,8 @@ button.dt-chip{cursor:pointer}
                             (ho.thanhVien || []).forEach(tv => { if (tv.cccd) hoTheoCccd[tv.cccd] = ho; });
                         });
                         danhSachMoi.forEach(hoMoi => {
-                            let hoTrung = (hoMoi.hsct && hoTheoHsct[hoMoi.hsct]) || null;
-                            if (!hoTrung) {
+                            let hoTrung = khDc.dich.get(hoMoi) || null;
+                            if (false) {
                                 for (const tv of (hoMoi.thanhVien || [])) {
                                     if (tv.cccd && hoTheoCccd[tv.cccd]) { hoTrung = hoTheoCccd[tv.cccd]; break; }
                                 }
@@ -5736,6 +5767,7 @@ button.dt-chip{cursor:pointer}
                                 (hoMoi.thanhVien || []).forEach(tv => { if (tv.cccd) hoTheoCccd[tv.cccd] = hoMoi; });
                             }
                         });
+                        khDc.hoCu.forEach((t, h) => { h.thanhVien = t; });
                         localStorage.setItem("danhSachHoGiaDinhCacheGIS_V5", JSON.stringify(danhSachHoGiaDinh));
                         phanTichDuLieuPhanCap();
                         capNhatGiaoDienSauKhiTai();
@@ -5761,7 +5793,7 @@ button.dt-chip{cursor:pointer}
                         ? `\n\n🔎 CHẨN ĐOÁN CỘT: Không dò được tiêu đề của các cột sau trong file — ${canhBaoCotThieu.join('; ')}. Nếu file CÓ các cột này nhưng phần mềm không nhận ra, hãy kiểm tra lại đúng chính tả tiêu đề dòng đầu tiên của file.`
                         : `\n\n🔎 CHẨN ĐOÁN CỘT: Đã dò được đầy đủ các cột quan trọng (HSCT, Chủ hộ, Quan hệ, CCCD, Phường/Xã).`;
                     if (ketQuaLuu.soNgoaiPhamVi) alert('⚠️ Đã BỎ QUA ' + ketQuaLuu.soNgoaiPhamVi + ' hộ có địa chỉ thuộc khu vực/ô ngoài phạm vi bạn được giao phụ trách (không được phép nhập).');
-                    alert(`✅ Đã xử lý ${danhSachMoi.length} hộ trong file — ${ketQuaLuu.soHoTaoMoi} hộ MỚI, ${ketQuaLuu.soHoCapNhat} hộ ĐÃ CÓ SẴN được cập nhật lại đúng diện cư trú/thông tin mới nhất (không tạo trùng lặp).${ghiChuKV}${ghiChuPhuong}${ghiChuCCCD}${ghiChuChanDoan}`);
+                    alert(`✅ Đã xử lý ${danhSachMoi.length} hộ trong file — ${ketQuaLuu.soHoTaoMoi} hộ MỚI, ${ketQuaLuu.soHoCapNhat} hộ ĐÃ CÓ SẴN được cập nhật lại đúng diện cư trú/thông tin mới nhất (không tạo trùng lặp).\n🔎 Đối chiếu: ${dcTomTat(khDc)}.${ghiChuKV}${ghiChuPhuong}${ghiChuCCCD}${ghiChuChanDoan}`);
                 } catch (err) {
                     if (err.code === 'permission-denied' || /permission/i.test(err.message || '')) {
                         alert("⛔ KHÔNG THỂ NHẬP: Tài khoản này chưa được Admin cấp quyền cho " + khuVucHienTai + ".\n\nĐây KHÔNG phải lỗi hỏng file — đây là tính năng bảo mật đang hoạt động đúng: hệ thống chặn ghi dữ liệu khi tài khoản chưa được phân quyền. Vui lòng liên hệ Admin để được cấp quyền trước khi nhập.");
@@ -5832,7 +5864,7 @@ button.dt-chip{cursor:pointer}
                         const hopLeHSCT = mauDong.every(r => /^\d{4,6}-\d{5,8}$/.test(String((r || [])[1] || '').trim()));
                         const hopLeTen = mauDong.every(r => /^[A-ZÀ-Ỹ\s]{3,}$/.test(String((r || [])[3] || '').trim()));
                         if (hopLeHSCT && hopLeTen) {
-                            const xemTruoc = mauDong.map(r => `HSCT "${(r || [])[1]}" — ${(r || [])[3]} — Dân tộc:"${(r || [])[10] || ''}" — Tôn giáo:"${(r || [])[11] || ''}"`).join('\n');
+                            const xemTruoc = mauDong.map(r => `HSCT "${cheSoRaw((r || [])[1])}" — ${(r || [])[3]} — Dân tộc:"${(r || [])[10] || ''}" — Tôn giáo:"${(r || [])[11] || ''}"`).join('\n');
                             if (confirm(`ℹ️ File này KHÔNG có dòng tiêu đề, nhưng dữ liệu đúng đúng thứ tự cột quen thuộc của hệ thống:\nCột 2 = Số HSCT, Cột 3 = CCCD, Cột 4 = Họ tên, Cột 11 = Dân tộc, Cột 12 = Tôn giáo.\n\nXem thử 5 dòng đầu:\n${xemTruoc}\n\nĐÚNG với dữ liệu thật trong file → bấm OK để dùng cách đọc này.\nSAI → bấm Hủy, không có gì bị thay đổi.`)) {
                                 mapCol = { cccd: 2, hsct: 1, hoTen: 3, danToc: 10, tonGiao: 11 };
                                 dungViTriCoDinh = true;
@@ -5914,9 +5946,9 @@ button.dt-chip{cursor:pointer}
                                 } else if (nguoiKhop.length > 1) {
                                     // 2+ người trùng họ tên trong CÙNG 1 hộ (VD sinh đôi cùng tên đệm) -> không tự
                                     // đoán ai là ai, để tránh gán NHẦM dân tộc/tôn giáo cho sai người.
-                                    canhBaoTrungTen.push(`HSCT ${hsctHo} — "${muc.tenGoc}" (${nguoiKhop.length} người trùng tên trong hộ, bỏ qua)`);
+                                    canhBaoTrungTen.push(`HSCT ${cheSoRaw(hsctHo)} — "${muc.tenGoc}" (${nguoiKhop.length} người trùng tên trong hộ, bỏ qua)`);
                                 } else {
-                                    canhBaoTrungTen.push(`HSCT ${hsctHo} — "${muc.tenGoc}" (không tìm thấy tên này trong hộ)`);
+                                    canhBaoTrungTen.push(`HSCT ${cheSoRaw(hsctHo)} — "${muc.tenGoc}" (không tìm thấy tên này trong hộ)`);
                                 }
                             });
                             delete capNhatTheoHsctTen[hsctHo];
@@ -6110,6 +6142,7 @@ button.dt-chip{cursor:pointer}
         }
 
         function capNhatGiaoDienSauKhiTai() {
+            capNhatChuChim();
             try { dangKyLangNgheCoSoNenTang(); } catch (e) { console.warn('Cơ sở địa bàn:', e.message); } // idempotent: chỉ đăng ký lại khi phạm vi đổi
             let tongNhanKhau = 0;
             let cntTT = 0, cntTamT = 0, cntKhac = 0;
@@ -6386,7 +6419,7 @@ button.dt-chip{cursor:pointer}
             ws['!cols'] = [{ wch: 16 }, { wch: 10 }, { wch: 10 }, { wch: 8 }, { wch: 8 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Chi_Tiet_Theo_Dien");
-            XLSX.writeFile(wb, "Chi_Tiet_Theo_Dien_Cu_Tru_" + String(tenPhuong).replace(/\s/g, '_') + ".xlsx");
+            xuatXlsx(wb, "Chi_Tiet_Theo_Dien_Cu_Tru_" + String(tenPhuong).replace(/\s/g, '_') + ".xlsx");
         }
 
         function capNhatBieuDoKhuVuc(theoKhuVuc) {
@@ -6584,8 +6617,8 @@ button.dt-chip{cursor:pointer}
                 row.className = "hover:bg-gray-800/50 border-b border-gray-800 transition";
                 row.innerHTML = `
                     <td class="p-2">${viTriHienThi + 1}</td>
-                    <td class="p-2 text-blue-300 font-mono">${ho.hsct ? escHtml(ho.hsct) : '<span class="text-gray-500 italic">— (không áp dụng)</span>'}</td>
-                    <td class="p-2 text-cyan-300 font-mono">${escHtml(cccdChuHo)}</td>
+                    <td class="p-2 text-blue-300 font-mono">${ho.hsct ? cheSo(ho.hsct) : '<span class="text-gray-500 italic">— (không áp dụng)</span>'}</td>
+                    <td class="p-2 text-cyan-300 font-mono">${cheSo(cccdChuHo)}</td>
                     <td class="p-2 font-semibold text-white">${escHtml(ho.chuHo)}</td>
                     <td class="p-2 text-gray-300">${escHtml(ho.diaChi)}${vietHuyHieuNhanDacBiet(ho)}${dtHuyHieuHo(ho)}</td>
                     <td class="p-2"><span class="px-2 py-0.5 rounded text-[10px] border ${styleNV}">${dien}</span></td>
@@ -6603,7 +6636,7 @@ button.dt-chip{cursor:pointer}
         function hienModalQRHoSo() {
             if (currentSelectedHoIndex === null) return;
             const ho = danhSachHoGiaDinh[currentSelectedHoIndex];
-            document.getElementById('qrHoSoTenHo').innerText = 'Hộ: ' + (ho.chuHo || '') + ' — HSCT: ' + (ho.hsct || '');
+            document.getElementById('qrHoSoTenHo').innerText = 'Hộ: ' + (ho.chuHo || '') + ' — HSCT: ' + cheSoRaw(ho.hsct || '');
             document.getElementById('qrHoSoCanvas').innerHTML = '';
             const urlHienTai = location.origin + location.pathname;
             const urlQR = urlHienTai + '?tim=' + encodeURIComponent(ho.hsct || '');
@@ -6617,7 +6650,7 @@ button.dt-chip{cursor:pointer}
                 if (!canvas) return alert("Chưa tạo được mã QR, vui lòng thử lại.");
                 const a = document.createElement('a');
                 a.href = canvas.toDataURL('image/png');
-                a.download = 'MaQR_' + (document.getElementById('modalHsct').innerText || 'HoSo') + '.png';
+                a.download = 'MaQR_' + (document.getElementById('modalHsct').dataset.raw || 'HoSo') + '.png';
                 a.click();
             }, 100);
         }
@@ -6642,7 +6675,7 @@ button.dt-chip{cursor:pointer}
             currentSelectedHoIndex = idx;
             const ho = danhSachHoGiaDinh[idx];
             
-            document.getElementById('modalHsct').innerText = ho.hsct;
+            document.getElementById('modalHsct').dataset.raw = ho.hsct || ''; document.getElementById('modalHsct').innerHTML = cheSo(ho.hsct);
             document.getElementById('editChuHo').value = ho.chuHo;
             document.getElementById('editDiaChi').value = ho.diaChi;
             // NÂNG CẤP THEO YÊU CẦU: từ 1 ô tích "cơ sở lưu trú" duy nhất -> hệ thống đa nhãn đầy đủ hơn theo
@@ -6699,7 +6732,7 @@ button.dt-chip{cursor:pointer}
                         </td>
                         <td class="p-1.5"><input type="text" value="${tv.quanHe || ''}" onchange="capNhatTV(${i}, 'quanHe', this.value)" class="bg-transparent border-b border-gray-600 w-full text-gray-300 px-1"></td>
                         <td class="p-1.5"><input type="text" value="${tv.ngaySinh || ''}" onchange="capNhatTV(${i}, 'ngaySinh', this.value)" class="bg-transparent border-b border-gray-600 w-full text-gray-400 px-1"></td>
-                        <td class="p-1.5"><input type="text" value="${tv.cccd || ''}" onchange="capNhatTV(${i}, 'cccd', this.value)" class="bg-transparent border-b border-gray-600 w-full text-blue-300 font-mono px-1"></td>
+                        <td class="p-1.5"><input type="text" value="${escHtml(cheSoRaw(tv.cccd || ''))}" readonly onfocus="soCheMoO(this, ${i})" onblur="soCheDongO(this, ${i})" onchange="capNhatTV(${i}, 'cccd', this.value)" class="bg-transparent border-b border-gray-600 w-full text-blue-300 font-mono px-1"></td>
                         <td class="p-1.5"><input type="text" value="${tv.queQuan || ''}" onchange="capNhatTV(${i}, 'queQuan', this.value)" class="bg-transparent border-b border-gray-600 w-full text-gray-300 px-1"></td>
                         <td class="p-1.5"><input type="text" value="${tv.ngheNghiep || ''}" onchange="capNhatTV(${i}, 'ngheNghiep', this.value)" class="bg-transparent border-b border-gray-600 w-full text-gray-300 px-1"></td>
                         <td class="p-1.5"><input type="text" value="${tv.sdt || ''}" onchange="capNhatTV(${i}, 'sdt', this.value)" class="bg-transparent border-b border-gray-600 w-full text-emerald-300 font-mono px-1"></td>
@@ -7259,9 +7292,10 @@ button.dt-chip{cursor:pointer}
             const hoMoi = {
                 phuong: khuVucHienTai, diaChi: diaChiMoi, chuHo: chuHoMoiTen, dienNghiepVu: dienNVMoi,
                 hsct: (dienNVMoi === 'Thường trú') ? (await sinhHSCTTam(khuVucHienTai)) : '',
-                thanhVien: thanhVienTach, tachTuHoId: ho.id, tachTuHsct: ho.hsct || '',
+                khuVuc: layNhanKhuVucTuDiaChi(diaChiMoi, khuVucHienTai) || ho.khuVuc || 'Khu Vực 1', ...(ho.o ? { o: ho.o } : {}), thanhVien: thanhVienTach, tachTuHoId: ho.id, tachTuHsct: ho.hsct || '',
                 nguoiTao: currentUser.email.toLowerCase(), capNhatLuc: firebase.firestore.FieldValue.serverTimestamp()
             };
+            dongDauPhamViO(hoMoi, ho);
             const thanhVienConLai = ho.thanhVien.filter((tv, i) => !chonIdx.includes(i));
 
             try {
@@ -7338,6 +7372,9 @@ button.dt-chip{cursor:pointer}
                 nguoiTao: currentUser.email.toLowerCase(),
                 capNhatLuc: firebase.firestore.FieldValue.serverTimestamp()
             };
+            duLieuHo.khuVuc = layNhanKhuVucTuDiaChi(diaChi, khuVucHienTai) || 'Khu Vực 1'; dongDauPhamViO(duLieuHo);
+            if (currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length && !currentUser.khuVucPhuTrach.includes(duLieuHo.khuVuc)) return alert('Địa chỉ này thuộc "' + duLieuHo.khuVuc + '", ngoài khu vực anh được giao (' + currentUser.khuVucPhuTrach.join(', ') + '). Kiểm tra lại cách ghi Khu vực trong địa chỉ.');
+            if (!dcKiemTraNhapTay(duLieuHo)) return;
             try {
                 let hoMoiIdGhi = '';
                 if (CHE_DO_FIREBASE) hoMoiIdGhi = (await dbFirestore.collection('households').add(duLieuHo)).id;
@@ -7491,7 +7528,7 @@ button.dt-chip{cursor:pointer}
             document.getElementById('qqKhungQuet').classList.add('hidden'); el.classList.remove('hidden');
             const homNay = new Date(); homNay.setHours(0, 0, 0, 0);
             let h = `<div class="bg-gray-900/70 border border-gray-700 rounded p-2"><p class="text-white font-semibold text-sm">${escHtml(info.hoTen)}</p>
-                <p class="text-gray-400">${info.ngaySinh ? 'Sinh ' + escHtml(info.ngaySinh) : ''}${info.gioiTinh ? ' · ' + info.gioiTinh : ''} · CCCD ${escHtml(info.cccd)}</p>
+                <p class="text-gray-400">${info.ngaySinh ? 'Sinh ' + escHtml(info.ngaySinh) : ''}${info.gioiTinh ? ' · ' + info.gioiTinh : ''} · CCCD ${cheSo(info.cccd)}</p>
                 ${info.diaChi ? `<p class="text-gray-500">Thường trú trên thẻ: ${escHtml(info.diaChi)}</p>` : ''}</div>`;
             if (ds.length) {
                 h += `<p class="text-emerald-400 font-semibold">✅ Đã có trong hệ thống (${ds.length} hồ sơ hộ)</p>`;
@@ -7589,7 +7626,7 @@ button.dt-chip{cursor:pointer}
             document.getElementById('ktvBang').innerHTML = dsl.length === 0 ? '<p class="text-gray-500 p-3">Không có khai báo nào khớp bộ lọc.</p>' : `<table class="w-full text-left border-collapse text-[11px]">
                 <thead><tr class="text-gray-400 border-b border-gray-700"><th class="p-1.5">Họ tên</th><th class="p-1.5">Diện</th><th class="p-1.5">Từ ngày</th><th class="p-1.5">Đến ngày (DK)</th><th class="p-1.5">Nơi đến / Lý do</th><th class="p-1.5">Tình trạng</th><th class="p-1.5"></th></tr></thead>
                 <tbody>${dsl.map(k => { const t = ktvTinhTrang(k); return `<tr class="border-b border-gray-800 hover:bg-gray-800/40">
-                    <td class="p-1.5 text-white font-medium">${escHtml(k.hoTen || '')}${k.cccd ? `<div class="text-gray-500 font-mono font-normal">${escHtml(k.cccd)}</div>` : ''}</td>
+                    <td class="p-1.5 text-white font-medium">${escHtml(k.hoTen || '')}${k.cccd ? `<div class="text-gray-500 font-mono font-normal">${cheSo(k.cccd)}</div>` : ''}</td>
                     <td class="p-1.5">${escHtml(k.dien || '')}</td>
                     <td class="p-1.5">${k.tuNgay ? new Date(k.tuNgay).toLocaleDateString('vi-VN') : ''}</td>
                     <td class="p-1.5">${k.denNgay ? new Date(k.denNgay).toLocaleDateString('vi-VN') : '(chưa rõ)'}</td>
@@ -7632,7 +7669,7 @@ button.dt-chip{cursor:pointer}
             const ws = XLSX.utils.aoa_to_sheet([['STT', 'Họ tên', 'CCCD', 'Diện', 'Địa chỉ hộ', 'Chủ hộ', 'Từ ngày', 'Đến ngày (DK)', 'Nơi đến / Lý do', 'Tình trạng', 'Ngày về', 'Gặp nắm tình hình', 'Ghi chú'], ...dong]);
             ws['!cols'] = [5, 24, 15, 24, 34, 20, 12, 12, 30, 24, 12, 16, 24].map(w => ({ wch: w }));
             const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Tam vang');
-            XLSX.writeFile(wb, 'TamVang_' + boDauTiengViet(khuVucHienTai).replace(/\s+/g, '_') + '_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+            xuatXlsx(wb, 'TamVang_' + boDauTiengViet(khuVucHienTai).replace(/\s+/g, '_') + '_' + new Date().toISOString().slice(0, 10) + '.xlsx');
             ghiNhatKy('Xuất Excel tạm vắng', ds.length + ' dòng');
         }
 
@@ -7697,7 +7734,7 @@ button.dt-chip{cursor:pointer}
             const ws = XLSX.utils.aoa_to_sheet([['STT', 'Dấu hiệu', 'Người / hộ', 'Chủ hộ', 'Địa chỉ', 'Chi tiết', 'Kết quả xác minh (cán bộ điền)'], ...dxKetQua.map((r, i) => [i + 1, DX_NHAN[r.loai], r.nguoi, r.h.chuHo || '', r.h.diaChi || '', r.ly, ''])]);
             ws['!cols'] = [5, 30, 24, 22, 40, 50, 30].map(w => ({ wch: w }));
             const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'De xuat xem xet');
-            XLSX.writeFile(wb, 'DeXuatXemXetXoaCuTru_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+            xuatXlsx(wb, 'DeXuatXemXetXoaCuTru_' + new Date().toISOString().slice(0, 10) + '.xlsx');
             ghiNhatKy('Xuất danh sách đề xuất xem xét xóa đăng ký', dxKetQua.length + ' dòng');
         }
 
@@ -7868,6 +7905,279 @@ button.dt-chip{cursor:pointer}
             if (cskvCoO()) obj.o = obj.o || layODangNhap();
             return obj;
         }
+        // ================== 2026.10.30: CHE SỐ CCCD / HSCT KHI HIỂN THỊ TRÊN MÀN HÌNH ==================
+        // Hiển thị dạng 09420***5490. Bấm vào số mới hiện đủ 10 giây (chỉ vai trò được phép), mỗi lần xem đều ghi nhật ký hệ thống.
+        // Biểu mẫu in/xuất chính thức (CT01, DC01, CĐ...) vẫn giữ nguyên số đầy đủ vì là văn bản nghiệp vụ.
+        const _soCheM = {}; let _soCheN = 0;
+        function soCheDuocXem() { return !!currentUser && ['admin', 'chi_huy', 'can_bo_du_lieu', 'can_bo'].includes(currentUser.role); }
+        function cheSoRaw(v) {
+            v = String(v == null ? '' : v).trim(); if (!v || !/^[\w\-\/.]+$/.test(v)) return v;
+            const n = v.length; if (n >= 12) return v.slice(0, 5) + '***' + v.slice(-4); if (n >= 10) return v.slice(0, 3) + '***' + v.slice(-3); if (n >= 6) return v.slice(0, 2) + '***' + v.slice(-2); return v.slice(0, 1) + '***';
+        }
+        function cheSo(v) {
+            v = String(v == null ? '' : v).trim(); if (!v) return ''; if (cheSoRaw(v) === v) return escHtml(v);
+            const id = ++_soCheN; _soCheM[id] = v; delete _soCheM[id - 6000];
+            return `<span class="so-che" data-id="${id}" data-mo="0" onclick="soCheBam(this,event)" title="${soCheDuocXem() ? 'Bấm để xem số đầy đủ 10 giây (có ghi nhật ký)' : 'Số đã được che'}" style="cursor:pointer">${escHtml(cheSoRaw(v))}</span>`;
+        }
+        function soCheBam(el, ev) {
+            if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+            const raw = _soCheM[el.dataset.id]; if (raw == null || !soCheDuocXem()) return;
+            if (el.dataset.mo === '1') { el.textContent = cheSoRaw(raw); el.dataset.mo = '0'; return; }
+            if (!soCheChoPhepXem()) return;
+            el.textContent = raw; el.dataset.mo = '1'; try { ghiNhatKy('Xem số định danh/HSCT đầy đủ', cheSoRaw(raw)); } catch (e) { }
+            setTimeout(() => { if (el.dataset.mo === '1') { el.textContent = cheSoRaw(raw); el.dataset.mo = '0'; } }, 10000);
+        }
+        function soCheMoO(el, i) {
+            if (!soCheDuocXem() || currentSelectedHoIndex === null) return;
+            const ho = danhSachHoGiaDinh[currentSelectedHoIndex], tv = ho.thanhVien[i]; if (!soCheChoPhepXem()) return; el.value = tv.cccd || ''; el.readOnly = false;
+            if (tv.cccd) try { ghiNhatKy('Xem số CCCD đầy đủ (chi tiết hộ)', cheSoRaw(tv.cccd), ho.id); } catch (e) { }
+        }
+        function soCheDongO(el, i) {
+            if (currentSelectedHoIndex === null) return;
+            const tv = danhSachHoGiaDinh[currentSelectedHoIndex].thanhVien[i]; el.value = cheSoRaw(tv.cccd || ''); el.readOnly = true;
+        }
+        // ================== 2026.10.31: XUẤT FILE CHE SỐ + CHỮ CHÌM + CẢNH BÁO XEM HÀNG LOẠT + ĐỐI CHIẾU TRÙNG KHI NHẬP ==================
+        const DC_TIEUDE_SO = /hsct|cccd|cmnd|căn cước|định danh|ddcn|đdcn/i;
+        function xuatCheSoBat() { try { return localStorage.getItem('xuatCheSoV1') !== '0'; } catch (e) { return true; } }
+        function soCheToast(msg) {
+            try { const t = document.createElement('div'); t.textContent = msg; t.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:2147483001;background:#1e3a5f;color:#fff;border:1px solid #60a5fa;border-radius:10px;padding:8px 14px;font-size:12px;max-width:90vw'; document.body.appendChild(t); setTimeout(() => t.remove(), 4500); } catch (e) { }
+        }
+        function capNhatNutXuatCheSo() { const b = document.getElementById('btnXuatCheSo'); if (b) { const t = b.querySelector('.nm-t'), sm = b.querySelector('small'); if (t) t.textContent = xuatCheSoBat() ? '🙈 Xuất file: ĐANG che số' : '👁️ Xuất file: đầy đủ số'; if (sm) sm.textContent = xuatCheSoBat() ? 'Bấm để chuyển sang xuất đầy đủ CCCD/HSCT' : 'Bấm để chuyển sang xuất che số (gửi ngoài đơn vị)'; } }
+        function doiXuatCheSo() {
+            const moi = !xuatCheSoBat(); try { localStorage.setItem('xuatCheSoV1', moi ? '1' : '0'); } catch (e) { }
+            try { ghiNhatKy('Đổi chế độ xuất file', moi ? 'Che số CCCD/HSCT' : 'Xuất đầy đủ số'); } catch (e) { }
+            capNhatNutXuatCheSo(); soCheToast(moi ? 'Các file Excel xuất ra sẽ che số CCCD/HSCT.' : 'Các file Excel xuất ra sẽ có số đầy đủ. Chú ý khi gửi ngoài đơn vị.');
+        }
+        function cheOXuat(v) { const t = String(v).trim(); const m = cheSoRaw(t); return m; }
+        function cheSheetJS(wb) {
+            let dem = 0;
+            (wb.SheetNames || []).forEach(n => {
+                const ws = wb.Sheets[n]; if (!ws || !ws['!ref']) return;
+                const rg = XLSX.utils.decode_range(ws['!ref']), cot = {};
+                for (let r = rg.s.r; r <= rg.e.r; r++) for (let c = rg.s.c; c <= rg.e.c; c++) {
+                    const ce = ws[XLSX.utils.encode_cell({ r, c })]; if (!ce || ce.v == null || (typeof ce.v !== 'string' && typeof ce.v !== 'number')) continue;
+                    const t = String(ce.v).trim();
+                    if (typeof ce.v === 'string' && t.length < 40 && DC_TIEUDE_SO.test(t)) { cot[c] = true; continue; }
+                    if ((cot[c] && /^[\w\-\/.]+$/.test(t)) || /^\d{9}$|^\d{12}$/.test(t)) { const m = cheOXuat(t); if (m !== t) { ce.v = m; ce.t = 's'; delete ce.w; dem++; } }
+                }
+            });
+            return dem;
+        }
+        function cheExcelJS(wb) {
+            let dem = 0;
+            wb.eachSheet(ws => {
+                const cot = {};
+                ws.eachRow({ includeEmpty: false }, row => row.eachCell({ includeEmpty: false }, (cell, c) => {
+                    const v = cell.value; if (v == null || (typeof v !== 'string' && typeof v !== 'number')) return;
+                    const t = String(v).trim();
+                    if (typeof v === 'string' && t.length < 40 && DC_TIEUDE_SO.test(t)) { cot[c] = true; return; }
+                    if ((cot[c] && /^[\w\-\/.]+$/.test(t)) || /^\d{9}$|^\d{12}$/.test(t)) { const m = cheOXuat(t); if (m !== t) { cell.value = m; dem++; } }
+                }));
+            });
+            return dem;
+        }
+        function xuatXlsx(wb, ten, opts) {
+            if (xuatCheSoBat()) { const n = cheSheetJS(wb); if (n) soCheToast('Đã che ' + n + ' số CCCD/HSCT trong file (Hệ thống ▸ Xuất file để đổi).'); }
+            return XLSX.writeFile(wb, ten, opts);
+        }
+        // --- Chữ chìm tên tài khoản + ngày trên màn hình (ngăn chụp ảnh màn hình đem ra ngoài) ---
+        function capNhatChuChim() {
+            try {
+                capNhatNutXuatCheSo();
+                if (!currentUser || !currentUser.email) return;
+                const ten = currentUser.email.toLowerCase(), ngay = new Date().toLocaleDateString('vi-VN'), k = ten + '|' + ngay;
+                let el = document.getElementById('chuChimBaoMat');
+                if (el && el.dataset.k === k) return;
+                if (!el) { el = document.createElement('div'); el.id = 'chuChimBaoMat'; el.style.cssText = 'position:fixed;inset:0;z-index:2147483000;pointer-events:none;'; document.body.appendChild(el); const st = document.createElement('style'); st.textContent = '@media print{#chuChimBaoMat{display:none!important}}'; document.head.appendChild(st); }
+                const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='440' height='240'><text x='30' y='130' transform='rotate(-20 220 120)' font-family='Arial' font-size='14' fill='rgba(150,150,150,0.14)'>${escHtml(ten)} · ${ngay}</text></svg>`;
+                el.style.backgroundImage = 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")'; el.dataset.k = k;
+            } catch (e) { }
+        }
+        // --- Giới hạn xem số đầy đủ: cảnh báo ghi nhật ký từ 40 lượt/giờ, chặn (trừ Admin) từ 100 lượt/giờ ---
+        function soCheChoPhepXem() {
+            let a = []; try { a = JSON.parse(localStorage.getItem('soCheXemV1') || '[]'); } catch (e) { }
+            const now = Date.now(); a = a.filter(t => now - t < 3600000);
+            if (a.length >= 100 && currentUser.role !== 'admin') { alert('⛔ Đã xem số đầy đủ quá nhiều lần trong 1 giờ (' + a.length + ' lượt). Để bảo mật, tạm khóa xem số đầy đủ, vui lòng thử lại sau. Sự việc đã được ghi nhật ký.'); try { ghiNhatKy('⚠️ Bị chặn xem số đầy đủ (quá 100 lượt/giờ)', a.length + ' lượt'); } catch (e) { } return false; }
+            a.push(now); try { localStorage.setItem('soCheXemV1', JSON.stringify(a)); } catch (e) { }
+            if (a.length === 40 || a.length === 80) { try { ghiNhatKy('⚠️ CẢNH BÁO xem số đầy đủ hàng loạt', a.length + ' lượt trong 1 giờ'); } catch (e) { } soCheToast('Cảnh báo: bạn đã xem ' + a.length + ' số đầy đủ trong 1 giờ. Sự việc đã được ghi nhật ký.'); }
+            return true;
+        }
+        // --- ĐỐI CHIẾU TRÙNG KHI NHẬP EXCEL (họ tên, CCCD, HSCT, ngày sinh) ---
+        const DC_MAC_DINH = { B: 'giu', C: 'giu', V: 'giu' };
+        function dcKD(s) { return boDauTiengViet(String(s || '')).replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim(); }
+        function dcCccd(s) { const d = String(s || '').replace(/\D/g, ''); return (d.length === 9 || d.length === 12) ? d : ''; }
+        function dcHsct(s) { return String(s || '').replace(/\s+/g, '').toUpperCase(); }
+        function dcHsctTam(s) { return !s || /^TAM-/i.test(s); }
+        function dcNgay(s) {
+            s = String(s || '').trim(); const p2 = x => String(x).padStart(2, '0'); let m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+            if (m) return { full: p2(m[1]) + '/' + p2(m[2]) + '/' + m[3], nam: m[3] };
+            m = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/); if (m) return { full: p2(m[3]) + '/' + p2(m[2]) + '/' + m[1], nam: m[1] };
+            m = s.match(/^(\d{4})$/); if (m) return { full: '', nam: m[1] }; return { full: '', nam: '' };
+        }
+        function dcLop(h) { const d = String(h.dienNghiepVu || ''); return d === 'Thường trú' ? 'TT' : (d === 'NOHN' ? 'NOHN' : 'TLT'); }
+        function dcNguoi(tv) { const c = dcCccd(tv.cccd), ten = dcKD(tv.hoTen), n = dcNgay(tv.ngaySinh); return { c, ten, full: n.full, nam: n.nam, kTen: (ten && n.full) ? ten + '|' + n.full : '', kNam: (ten && n.nam) ? ten + '|' + n.nam : '' }; }
+        function dcChiMuc(dsHo) {
+            const ix = { hsct: new Map(), c: new Map(), kTen: new Map(), kNam: new Map() }, them = (m, k, v) => { if (!k) return; const a = m.get(k); if (a) a.push(v); else m.set(k, [v]); };
+            dsHo.forEach(ho => {
+                const h = dcHsct(ho.hsct); if (h) them(ix.hsct, h, ho); const L = dcLop(ho);
+                (ho.thanhVien || []).forEach(tv => { const k = dcNguoi(tv), x = { ho, tv, k }; if (k.c) them(ix.c, L + '|' + k.c, x); if (k.kTen) them(ix.kTen, L + '|' + k.kTen, x); if (k.kNam) them(ix.kNam, L + '|' + k.kNam, x); });
+            });
+            return ix;
+        }
+        function dcKhop(ix, L, k) {
+            const out = []; if (k.c) (ix.c.get(L + '|' + k.c) || []).forEach(x => out.push(Object.assign({ muc: 'cccd' }, x)));
+            if (!out.length && k.kTen) (ix.kTen.get(L + '|' + k.kTen) || []).forEach(x => { if (!k.c || !x.k.c) out.push(Object.assign({ muc: 'tenns' }, x)); });
+            return out;
+        }
+        function dcGopNguoi(o, n, opt) {
+            const r = Object.assign({}, o);
+            Object.keys(n).forEach(k => { const v = n[k]; if (v === '' || v == null) return; if (['danToc', 'tonGiao', 'quocTich', 'gioiTinh'].includes(k) && !(opt && opt.coCot && opt.coCot[k]) && r[k]) return; r[k] = v; });
+            return r;
+        }
+        function dcLap(dsMoi, cs, opt) {
+            cs = Object.assign({}, DC_MAC_DINH, cs || {});
+            const ix = dcChiMuc(danhSachHoGiaDinh || []);
+            const kq = { ds: [], dich: new Map(), hoCu: new Map(), tk: { hoMoi: 0, hoCN: 0, nguoiMoi: 0, nguoiCN: 0, boHo: 0 }, A: [], B: [], C: [], D: [], E: [], V: [], rong: [], hsctMoi: [], CH: (opt && opt.loiChuHo) || [] };
+            const so = tv => cheSoRaw(tv.cccd || tv.ngaySinh || ''), daThay = new Map(), daKhop = new Set(), dichKq = new Map(), moi = [];
+            dsMoi.forEach(H => {
+                const L = dcLop(H), tenHo = H.chuHo || '', seen = new Map(), tvs = [];
+                (H.thanhVien || []).forEach(tv => {
+                    const k = dcNguoi(tv), key = k.c ? 'c' + k.c : (k.kTen ? 't' + k.kTen : '');
+                    if (key && seen.has(key)) { seen.get(key).tv = dcGopNguoi(seen.get(key).tv, tv, opt); kq.A.push({ loai: 'Dòng lặp trong cùng hộ', ho: tenHo, ten: tv.hoTen, so: so(tv), xuLy: 'Gộp thành 1 người' }); return; }
+                    const it = { tv: Object.assign({}, tv), k }; if (key) seen.set(key, it); tvs.push(it);
+                });
+                const tvs2 = [];
+                tvs.forEach(it => {
+                    const key = it.k.c ? L + '|c' + it.k.c : (it.k.kTen ? L + '|t' + it.k.kTen : '');
+                    if (key && daThay.has(key) && daThay.get(key) !== H) { kq.A.push({ loai: 'Người xuất hiện ở 2 hộ trong file', ho: tenHo, ten: it.tv.hoTen, so: so(it.tv), xuLy: 'Giữ ở hộ "' + daThay.get(key).chuHo + '" (đứng trước), bỏ dòng này' }); return; }
+                    if (key) daThay.set(key, H); tvs2.push(it);
+                });
+                let dich = null; const hs = dcHsct(H.hsct), cungHs = hs ? (ix.hsct.get(hs) || []) : [];
+                if (cungHs.length) dich = cungHs[0];
+                else {
+                    const votes = new Map(); tvs2.forEach(it => { new Set(dcKhop(ix, L, it.k).map(x => x.ho)).forEach(h => votes.set(h, (votes.get(h) || 0) + 1)); });
+                    let best = null, bc = 0; votes.forEach((c, h) => { if (c > bc) { bc = c; best = h; } });
+                    if (best && bc >= Math.max(1, Math.ceil(tvs2.length / 2)) && (dcHsctTam(hs) || dcHsctTam(dcHsct(best.hsct)))) dich = best;
+                }
+                const final = [], danhGia = [];
+                tvs2.forEach(it => {
+                    const m = dcKhop(ix, L, it.k), tai = dich ? m.find(x => x.ho === dich && !daKhop.has(x.tv)) : null;
+                    if (tai) {
+                        let mt = ''; if (tai.muc === 'cccd') { if (it.k.ten && tai.k.ten && it.k.ten !== tai.k.ten) mt = 'họ tên khác (cũ: ' + tai.tv.hoTen + ')'; else if (it.k.full && tai.k.full && it.k.full !== tai.k.full) mt = 'ngày sinh khác (cũ: ' + tai.tv.ngaySinh + ')'; }
+                        if (mt) { kq.C.push({ ho: tenHo, ten: it.tv.hoTen, so: so(it.tv), ghiChu: 'Cùng CCCD nhưng ' + mt, xuLy: cs.C === 'giu' ? 'Giữ thông tin cũ' : 'Ghi đè theo file' }); if (cs.C === 'giu') { daKhop.add(tai.tv); final.push(tai.tv); return; } }
+                        daKhop.add(tai.tv); final.push(dcGopNguoi(tai.tv, it.tv, opt)); kq.tk.nguoiCN++; return;
+                    }
+                    const khac = m.find(x => x.ho !== dich && !daKhop.has(x.tv));
+                    if (khac) {
+                        kq.B.push({ ho: tenHo, ten: it.tv.hoTen, so: so(it.tv), hoCu: khac.ho.chuHo || '', diaChiCu: khac.ho.diaChi || '', xuLy: cs.B === 'giu' ? 'Bỏ qua dòng này, giữ ở hộ cũ' : (cs.B === 'chuyen' ? 'Chuyển sang hộ trong file' : 'Thêm vào cả hai hộ') });
+                        if (cs.B === 'giu') return;
+                        if (cs.B === 'chuyen') { daKhop.add(khac.tv); final.push(dcGopNguoi(khac.tv, it.tv, opt)); kq.tk.nguoiCN++; return; }
+                    }
+                    if (!khac) { const g = (it.k.kTen && ix.kTen.get(L + '|' + it.k.kTen)) || (it.k.kNam && ix.kNam.get(L + '|' + it.k.kNam)) || []; const x = g.find(z => !daKhop.has(z.tv)); if (x) kq.D.push({ ho: tenHo, ten: it.tv.hoTen, so: so(it.tv), hoCu: x.ho.chuHo || '', diaChiCu: x.ho.diaChi || '', ghiChu: it.k.kTen && ix.kTen.get(L + '|' + it.k.kTen) ? 'Trùng họ tên + ngày sinh, khác CCCD' : 'Trùng họ tên + năm sinh', xuLy: 'Vẫn thêm là người mới' }); }
+                    final.push(it.tv); kq.tk.nguoiMoi++;
+                });
+                if (dich && dichKq.has(dich)) { dichKq.get(dich).final.push(...final); return; }
+                const rec = { H, dich, final }; moi.push(rec); if (dich) dichKq.set(dich, rec);
+                if (dich && hs && cungHs.length && !tvs2.some(it => dcKhop(ix, L, it.k).some(x => x.ho === dich)) && (dich.thanhVien || []).length && tvs2.length) kq.E.push({ ho: tenHo, hsct: cheSoRaw(hs), hoCu: dich.chuHo || '', ghiChu: 'Cùng HSCT nhưng không có người nào trùng với hộ đang lưu — kiểm tra lại HSCT' });
+            });
+            const choDich = new Set(moi.filter(r => r.dich).map(r => r.dich));
+            moi.forEach(r => {
+                const { H, dich, final } = r;
+                if (final.length === 0 && !dich) { kq.tk.boHo++; kq.rong.push({ ho: H.chuHo || '', diaChi: H.diaChi || '', ghiChu: 'Hộ mới không còn người nào sau khi loại trùng, không tạo hộ' }); return; }
+                let tvKq = final;
+                if (dich) {
+                    const conLai = (dich.thanhVien || []).filter(tv => !daKhop.has(tv));
+                    conLai.forEach(tv => kq.V.push({ ho: dich.chuHo || '', ten: tv.hoTen || '', so: cheSoRaw(tv.cccd || tv.ngaySinh || ''), xuLy: cs.V === 'giu' ? 'Giữ lại trong hộ' : 'Bỏ khỏi hộ' }));
+                    if (cs.V === 'giu') tvKq = final.concat(conLai);
+                }
+                let hsFinal = H.hsct || '', hsCu = dich ? dich.hsct || '' : '';
+                if (dich) { if (dcHsctTam(dcHsct(hsFinal)) && hsCu) hsFinal = hsCu; else if (hsCu && dcHsct(hsCu) !== dcHsct(hsFinal) && dcHsctTam(dcHsct(hsCu))) kq.hsctMoi.push({ ho: H.chuHo || '', ghiChu: 'Cập nhật HSCT chính thức thay cho mã tạm' }); }
+                const hc = Object.assign({}, H, { thanhVien: tvKq, hsct: hsFinal }); kq.ds.push(hc);
+                if (dich) { kq.dich.set(hc, dich); kq.tk.hoCN++; } else kq.tk.hoMoi++;
+                if (tvKq.length === 0) kq.rong.push({ ho: H.chuHo || '', diaChi: H.diaChi || '', ghiChu: 'Hộ không còn thành viên' });
+            });
+            const matBoi = new Set(); daKhop.forEach(tv => matBoi.add(tv));
+            (danhSachHoGiaDinh || []).forEach(ho => {
+                if (choDich.has(ho)) return; const cu = ho.thanhVien || [], moiLs = cu.filter(tv => !daKhop.has(tv));
+                if (moiLs.length !== cu.length) { kq.hoCu.set(ho, moiLs); if (!moiLs.length) kq.rong.push({ ho: ho.chuHo || '', diaChi: ho.diaChi || '', ghiChu: 'Hộ cũ không còn thành viên sau khi chuyển người đi' }); }
+            });
+            return kq;
+        }
+        function dcTomTat(kq) { const t = kq.tk; return `${t.hoMoi} hộ mới, ${t.hoCN} hộ khớp với hộ đã có (cập nhật, không tạo trùng); ${t.nguoiMoi} người mới, ${t.nguoiCN} người khớp và được cập nhật` + (kq.A.length ? `; ${kq.A.length} dòng lặp đã tự gộp` : '') + (t.boHo ? `; ${t.boHo} hộ bỏ qua` : ''); }
+        function dcDoiChieuVaXacNhan(dsMoi, opt) {
+            let cs = Object.assign({}, DC_MAC_DINH), kq = dcLap(dsMoi, cs, opt);
+            const can = () => kq.CH.length || kq.B.length || kq.C.length || kq.D.length || kq.E.length || kq.V.length || kq.rong.length || kq.A.length;
+            if (!can()) return Promise.resolve(kq);
+            return new Promise(res => {
+                let ov = document.getElementById('dcModal'); if (ov) ov.remove();
+                ov = document.createElement('div'); ov.id = 'dcModal'; ov.style.cssText = 'position:fixed;inset:0;z-index:2147482000;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:10px'; document.body.appendChild(ov);
+                const bang = (tt, ds, cot, mau, mt) => ds.length ? `<details class="mb-2" ${ds.length <= 6 ? 'open' : ''}><summary class="cursor-pointer font-semibold ${mau}">${tt} (${ds.length})</summary><p class="text-[11px] text-gray-400 my-1">${mt}</p><div class="overflow-x-auto"><table class="w-full text-[11px]"><thead><tr>${cot.map(c => `<th class="text-left p-1 text-gray-400">${c[0]}</th>`).join('')}</tr></thead><tbody>${ds.slice(0, 40).map(r => `<tr class="border-t border-gray-800">${cot.map(c => `<td class="p-1">${escHtml(String(r[c[1]] == null ? '' : r[c[1]]))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${ds.length > 40 ? `<p class="text-[10px] text-gray-500">… còn ${ds.length - 40} dòng, xem đủ trong file Excel cảnh báo.</p>` : ''}</details>` : '';
+                const rd = (k, v, nhan) => `<label class="block"><input type="radio" name="dc_${k}" ${cs[k] === v ? 'checked' : ''} onchange="dcDoi('${k}','${v}')"> ${nhan}</label>`;
+                const ve = () => {
+                    kq = dcLap(dsMoi, cs, opt);
+                    ov.innerHTML = `<div style="background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:12px;max-width:860px;width:100%;max-height:92vh;display:flex;flex-direction:column"><div style="padding:12px 16px;border-bottom:1px solid #374151"><b class="text-base">🔎 Đối chiếu trước khi nhập</b><p class="text-[12px] text-gray-300 mt-1">Phần mềm so từng người theo CCCD, họ tên + ngày sinh, và từng hộ theo HSCT. Chưa ghi gì vào dữ liệu.</p><p class="text-[12px] text-emerald-300 mt-1">${dcTomTat(kq)}</p></div><div style="padding:10px 16px;overflow:auto;flex:1">` +
+                        (kq.CH.length ? `<details class="mb-2" open><summary class="cursor-pointer font-semibold text-orange-300">Chủ hộ cần kiểm tra (${kq.CH.length})</summary><p class="text-[11px] text-gray-400 my-1">Phần mềm đã tự chọn theo thứ tự: CCCD chủ hộ, rồi cột Quan hệ, rồi cột Chủ hộ. Anh sửa lại ở ô chọn nếu thấy chưa đúng.</p><div class="overflow-x-auto"><table class="w-full text-[11px]"><thead><tr><th class="text-left p-1 text-gray-400">HSCT</th><th class="text-left p-1 text-gray-400">Vấn đề</th><th class="text-left p-1 text-gray-400">Cột Chủ hộ</th><th class="text-left p-1 text-gray-400">Ghi "Chủ hộ" ở cột Quan hệ</th><th class="text-left p-1 text-gray-400">Chủ hộ được chọn</th></tr></thead><tbody>${kq.CH.slice(0, 60).map((l, i) => `<tr class="border-t border-gray-800"><td class="p-1">${escHtml(l.hsct)}</td><td class="p-1">${escHtml(l.loai)}</td><td class="p-1">${escHtml(l.aj)}</td><td class="p-1">${escHtml(l.f)}</td><td class="p-1"><select onchange="dcChonChuHo(${i}, this.value)" style="background:#111827;border:1px solid #374151;border-radius:6px;padding:2px 4px;max-width:200px">${l.H.thanhVien.map((t, j) => `<option value="${j}" ${j === l.idx ? 'selected' : ''}>${escHtml(t.hoTen)}</option>`).join('')}${l.aj && !l.H.thanhVien.some(t => dcKD(t.hoTen) === dcKD(l.aj)) ? `<option value="-1" ${l.idx === -1 ? 'selected' : ''}>${escHtml(l.aj)} (không có trong hộ)</option>` : ''}</select></td></tr>`).join('')}</tbody></table></div>${kq.CH.length > 60 ? `<p class="text-[10px] text-gray-500">… còn ${kq.CH.length - 60} hộ nữa, xem trong file Excel cảnh báo.</p>` : ''}</details>` : '') +
+                        bang('Người đã có ở HỘ KHÁC trong phần mềm', kq.B, [['Hộ trong file', 'ho'], ['Người', 'ten'], ['Số', 'so'], ['Đang ở hộ', 'hoCu'], ['Địa chỉ cũ', 'diaChiCu'], ['Xử lý', 'xuLy']], 'text-amber-300', 'Thường gặp khi người chuyển hộ/tách hộ, hoặc nhập nhầm. Chọn cách xử lý bên dưới.') +
+                        bang('Cùng CCCD nhưng khác họ tên/ngày sinh', kq.C, [['Hộ', 'ho'], ['Người trong file', 'ten'], ['Số', 'so'], ['Ghi chú', 'ghiChu'], ['Xử lý', 'xuLy']], 'text-rose-300', 'Rất có thể gõ nhầm CCCD hoặc họ tên ở một bên. Nên kiểm tra lại file gốc.') +
+                        bang('Nghi trùng (cùng họ tên và ngày/năm sinh, khác CCCD)', kq.D, [['Hộ trong file', 'ho'], ['Người', 'ten'], ['Số', 'so'], ['Đã có ở hộ', 'hoCu'], ['Ghi chú', 'ghiChu']], 'text-purple-300', 'Chỉ nhắc để anh xem, vẫn thêm là người mới.') +
+                        bang('Cùng HSCT nhưng không người nào trùng', kq.E, [['Hộ trong file', 'ho'], ['HSCT', 'hsct'], ['Hộ đang lưu', 'hoCu'], ['Ghi chú', 'ghiChu']], 'text-rose-300', 'Có thể HSCT bị gõ nhầm.') +
+                        bang('Dòng lặp / người ở 2 hộ trong chính file', kq.A, [['Hộ', 'ho'], ['Người', 'ten'], ['Số', 'so'], ['Loại', 'loai'], ['Xử lý', 'xuLy']], 'text-sky-300', 'Phần mềm tự loại trùng, không cần làm gì.') +
+                        bang('Có trong phần mềm nhưng KHÔNG có trong file', kq.V, [['Hộ', 'ho'], ['Người', 'ten'], ['Số', 'so'], ['Xử lý', 'xuLy']], 'text-gray-200', 'Có thể đã chuyển đi, qua đời hoặc file chỉ gồm một phần hộ.') +
+                        bang('Hộ rỗng / bỏ qua', kq.rong, [['Hộ', 'ho'], ['Địa chỉ', 'diaChi'], ['Ghi chú', 'ghiChu']], 'text-gray-300', '') +
+                        `<div class="mt-3 p-2 rounded" style="background:#1f2937;font-size:12px"><b>Cách xử lý:</b>` +
+                        (kq.B.length ? `<div class="mt-1"><span class="text-amber-300">Người đã ở hộ khác:</span>${rd('B', 'giu', 'Giữ ở hộ cũ, bỏ qua dòng trong file (an toàn, khuyến nghị)')}${rd('B', 'chuyen', 'Chuyển người sang hộ trong file (gỡ khỏi hộ cũ)')}${rd('B', 'trung', 'Cho phép có mặt ở cả hai hộ (không khuyến nghị)')}</div>` : '') +
+                        (kq.C.length ? `<div class="mt-1"><span class="text-rose-300">Cùng CCCD khác thông tin:</span>${rd('C', 'giu', 'Giữ thông tin cũ trong phần mềm')}${rd('C', 'ghide', 'Ghi đè theo file')}</div>` : '') +
+                        (kq.V.length || cs.V === 'bo' ? `<div class="mt-1"><span>Người không có trong file:</span>${rd('V', 'giu', 'Giữ lại trong hộ (không mất dữ liệu, khuyến nghị)')}${rd('V', 'bo', 'Bỏ khỏi hộ (file là danh sách đầy đủ của các hộ này)')}</div>` : '') +
+                        `</div></div><div style="padding:10px 16px;border-top:1px solid #374151;display:flex;gap:8px;flex-wrap:wrap"><button onclick="dcTaiExcel()" style="background:#374151;border-radius:8px;padding:6px 12px">📥 Tải danh sách cảnh báo</button><span style="flex:1"></span><button onclick="dcHuy()" style="background:#4b5563;border-radius:8px;padding:6px 14px">Hủy, không nhập</button><button onclick="dcTiep()" style="background:#047857;border-radius:8px;padding:6px 14px;font-weight:bold">Tiến hành nhập</button></div></div>`;
+                };
+                window.dcDoi = (k, v) => { cs[k] = v; ve(); }; window._dcLoiChuHo = kq.CH; window.dcVeLai = () => ve();
+                window.dcHuy = () => { ov.remove(); res(false); };
+                window.dcTiep = () => { ov.remove(); res(kq); };
+                window.dcTaiExcel = () => {
+                    const wb = XLSX.utils.book_new(), add = (ten, ds, cot) => { if (ds.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([cot.map(c => c[0])].concat(ds.map(r => cot.map(c => r[c[1]] == null ? '' : String(r[c[1]]))))), ten); };
+                    add('ChuHo', kq.CH.map(l => ({ hsct: l.hsct, loai: l.loai, aj: l.aj, f: l.f, ho: l.ho })), [['HSCT', 'hsct'], ['Vấn đề', 'loai'], ['Cột Chủ hộ', 'aj'], ['Cột Quan hệ', 'f'], ['Chủ hộ được chọn', 'ho']]); add('NguoiOHoKhac', kq.B, [['Hộ trong file', 'ho'], ['Người', 'ten'], ['Số', 'so'], ['Đang ở hộ', 'hoCu'], ['Địa chỉ cũ', 'diaChiCu'], ['Xử lý', 'xuLy']]); add('KhacThongTin', kq.C, [['Hộ', 'ho'], ['Người', 'ten'], ['Số', 'so'], ['Ghi chú', 'ghiChu'], ['Xử lý', 'xuLy']]);
+                    add('NghiTrung', kq.D, [['Hộ trong file', 'ho'], ['Người', 'ten'], ['Số', 'so'], ['Đã có ở hộ', 'hoCu'], ['Ghi chú', 'ghiChu']]); add('HSCT', kq.E, [['Hộ', 'ho'], ['HSCT', 'hsct'], ['Hộ đang lưu', 'hoCu'], ['Ghi chú', 'ghiChu']]);
+                    add('LapTrongFile', kq.A, [['Hộ', 'ho'], ['Người', 'ten'], ['Số', 'so'], ['Loại', 'loai'], ['Xử lý', 'xuLy']]); add('KhongCoTrongFile', kq.V, [['Hộ', 'ho'], ['Người', 'ten'], ['Số', 'so'], ['Xử lý', 'xuLy']]);
+                    if (!wb.SheetNames.length) return; XLSX.writeFile(wb, 'CanhBaoDoiChieu_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+                };
+                ve();
+            });
+        }
+        // Kiểm tra trùng khi nhập hộ bằng tay
+        function dcKiemTraNhapTay(ho) {
+            const ix = dcChiMuc(danhSachHoGiaDinh || []), L = dcLop(ho), loi = [], hs = dcHsct(ho.hsct);
+            if (hs && !dcHsctTam(hs) && (ix.hsct.get(hs) || []).length) { const h = ix.hsct.get(hs)[0]; loi.push('HSCT này đã có ở hộ "' + (h.chuHo || '') + '" (' + (h.diaChi || '') + ')'); }
+            (ho.thanhVien || []).forEach(tv => { const m = dcKhop(ix, L, dcNguoi(tv))[0]; if (m) loi.push('"' + (tv.hoTen || '') + '" đã có ở hộ "' + (m.ho.chuHo || '') + '" (' + (m.ho.diaChi || '') + ')' + (m.muc === 'cccd' ? ' — cùng CCCD' : ' — cùng họ tên và ngày sinh')); });
+            if (!loi.length) return true;
+            return confirm('⚠️ PHÁT HIỆN TRÙNG:\n\n• ' + loi.slice(0, 8).join('\n• ') + (loi.length > 8 ? '\n• ...' : '') + '\n\nBấm OK để VẪN TẠO hộ mới, Hủy để quay lại kiểm tra.\n(Nếu người này đã chuyển hộ, nên sửa hộ cũ hoặc dùng chức năng tách hộ.)');
+        }
+        setInterval(capNhatChuChim, 60000);
+        // ================== 2026.10.32: ĐỐI SÁNH CHỦ HỘ (cột Quan hệ, cột Chủ hộ, CCCD chủ hộ) KHI NHẬP EXCEL ==================
+        function dcChuHoDem(a) { const m = new Map(); a.forEach(x => m.set(x, (m.get(x) || 0) + 1)); let b = '', n = 0; m.forEach((c, k) => { if (c > n) { n = c; b = k; } }); return b; }
+        function dcApDungChuHo(H, idx, tenNgoai) {
+            (H.thanhVien || []).forEach((t, i) => { if (i === idx) t.quanHe = 'Chủ hộ'; else if (dcKD(t.quanHe) === 'chu ho') t.quanHe = 'Thành viên'; });
+            H.chuHo = idx >= 0 ? H.thanhVien[idx].hoTen : (tenNgoai || H.chuHo);
+        }
+        function dcChuanHoaChuHo(dsHo) {
+            const loi = [];
+            dsHo.forEach(H => {
+                const tvs = H.thanhVien || [], aj = H._aj || [], cc = H._cc || []; delete H._aj; delete H._cc; if (!tvs.length) return;
+                const ajTen = dcChuHoDem(aj), ccChu = dcCccd(dcChuHoDem(cc)), kdAj = dcKD(ajTen), idxF = [];
+                tvs.forEach((t, i) => { if (dcKD(t.quanHe) === 'chu ho') idxF.push(i); });
+                const idxCC = ccChu ? tvs.findIndex(t => dcCccd(t.cccd) === ccChu) : -1, idxAJ = kdAj ? tvs.findIndex(t => dcKD(t.hoTen) === kdAj) : -1;
+                let idx = -1, loai = '', tenNgoai = '';
+                if (idxCC >= 0) { idx = idxCC; if (idxF.length !== 1 || idxF[0] !== idxCC) loai = 'Cột Quan hệ không trùng với người có CCCD chủ hộ' + (idxF.length ? '' : ' (không ai ghi "Chủ hộ")'); }
+                else if (idxF.length === 1) { idx = idxF[0]; if (kdAj && idxAJ !== idxF[0]) loai = idxAJ >= 0 ? 'Cột Quan hệ và cột Chủ hộ chỉ hai người khác nhau' : 'Tên ở cột Chủ hộ không khớp người ghi "Chủ hộ" ở cột Quan hệ'; }
+                else if (idxF.length > 1) { idx = (idxAJ >= 0 && idxF.includes(idxAJ)) ? idxAJ : idxF[0]; loai = 'Có ' + idxF.length + ' người cùng ghi "Chủ hộ" ở cột Quan hệ'; }
+                else if (idxAJ >= 0) { idx = idxAJ; loai = 'Không ai ghi "Chủ hộ" ở cột Quan hệ, lấy theo tên ở cột Chủ hộ'; }
+                else if (ajTen) { idx = -1; tenNgoai = ajTen; loai = 'Chủ hộ "' + ajTen + '" không có trong danh sách hộ (có thể đã chuyển đi hoặc qua đời)'; }
+                else { let b = 0, nb = 9999; tvs.forEach((t, i) => { const y = parseInt((dcNgay(t.ngaySinh).nam) || '9999', 10); if (y < nb) { nb = y; b = i; } }); idx = b; loai = 'Không xác định được chủ hộ, tạm lấy người lớn tuổi nhất'; }
+                if (idx >= 0 || tenNgoai) dcApDungChuHo(H, idx, tenNgoai);
+                if (loai) loi.push({ H, loai, aj: ajTen, f: idxF.map(i => tvs[i].hoTen).join(', '), idx, tenNgoai, hsct: cheSoRaw(H.hsct || ''), ho: H.chuHo || '' });
+            });
+            return loi;
+        }
+        window.dcChonChuHo = (i, v) => { const l = window._dcLoiChuHo && window._dcLoiChuHo[i]; if (!l) return; const idx = parseInt(v, 10); dcApDungChuHo(l.H, idx, l.aj); l.idx = idx; l.ho = l.H.chuHo; if (window.dcVeLai) window.dcVeLai(); };
         const XS_COLL = 'ho_so_xoa_dktt';
         const XS_KEY_LOCAL = 'hoSoXoaDKTTCacheV1';
         const XS_KEY_CAIDAT = 'hoSoXoaDKTTCaiDatV1';
@@ -8091,7 +8401,7 @@ function xsNgayNghiLe() {
             const ws = XLSX.utils.aoa_to_sheet([['STT', 'Số hồ sơ', 'Phạm vi', 'Loại đăng ký', 'Chủ hộ', 'Năm sinh', 'Nhân khẩu bị xóa', 'Địa chỉ', 'Khu vực', 'Căn cứ', 'Lý do', 'Ngày xác minh', 'Ngày thông báo', 'Hạn nộp hồ sơ', 'Ngày lập biên bản', 'Ngày xóa trên phần mềm', 'Trạng thái', 'Ghi chú'], ...hang]);
             ws['!cols'] = [5, 9, 11, 12, 22, 9, 34, 38, 12, 22, 40, 13, 13, 13, 14, 16, 34, 28].map(w => ({ wch: w }));
             const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'So xoa DKTT');
-            XLSX.writeFile(wb, 'SoHoSoXoaDKTT_' + xsIso(new Date()) + '.xlsx');
+            xuatXlsx(wb, 'SoHoSoXoaDKTT_' + xsIso(new Date()) + '.xlsx');
             ghiNhatKy('Xuất sổ hồ sơ xóa ĐKTT', ds.length + ' hồ sơ');
         }
 
@@ -8136,7 +8446,7 @@ function xsNgayNghiLe() {
             const q = boDauTiengViet(xsGt('xfTim')).toLowerCase().trim(), kq = xsEl('xfGoiY');
             if (q.length < 2) { kq.innerHTML = ''; return; }
             const ds = layDuLieuXuatBaoCaoDayDu().filter(h => boDauTiengViet([h.chuHo, h.hsct, h.diaChi, ...(h.thanhVien || []).map(t => t.hoTen)].join(' ')).toLowerCase().includes(q)).slice(0, 8);
-            kq.innerHTML = ds.length ? ds.map(h => `<button type="button" class="block w-full text-left px-2 py-1 hover:bg-gray-700 border-b border-gray-800" onclick="xsChonHo('${h.id}')"><b class="text-white">${escHtml(h.chuHo || '')}</b> <span class="text-gray-400">${escHtml(h.hsct || '')} — ${escHtml(h.diaChi || '')}</span></button>`).join('') : '<div class="px-2 py-1 text-gray-500">Không thấy hộ nào. Nếu hộ đã xóa khỏi phần mềm, nhập tay các ô bên dưới.</div>';
+            kq.innerHTML = ds.length ? ds.map(h => `<button type="button" class="block w-full text-left px-2 py-1 hover:bg-gray-700 border-b border-gray-800" onclick="xsChonHo('${h.id}')"><b class="text-white">${escHtml(h.chuHo || '')}</b> <span class="text-gray-400">${cheSo(h.hsct || '')} — ${escHtml(h.diaChi || '')}</span></button>`).join('') : '<div class="px-2 py-1 text-gray-500">Không thấy hộ nào. Nếu hộ đã xóa khỏi phần mềm, nhập tay các ô bên dưới.</div>';
         }
         function xsChonHo(hoId, tenNguoi) {
             const h = danhSachHoGiaDinh.find(x => x.id === hoId); if (!h) return;
@@ -8828,7 +9138,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                     <tbody>${ds.map(d => `<tr class="border-b border-gray-800">
                         <td class="p-1.5 text-white font-medium">${escHtml(d.hoTen)}</td>
                         <td class="p-1.5 text-center text-emerald-300 font-bold">${d.tuoi}</td>
-                        <td class="p-1.5 font-mono">${escHtml(d.cccd)}</td>
+                        <td class="p-1.5 font-mono">${cheSo(d.cccd)}</td>
                         <td class="p-1.5">${escHtml(d.dienNV)}</td>
                         <td class="p-1.5">${escHtml(d.chuHo)}</td>
                         <td class="p-1.5">${escHtml(d.diaChi)}</td>
@@ -8881,7 +9191,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                     danhSach.map(d => `<tr>
                         <td class="p-1.5 font-medium text-white">${escHtml(d.hoTen)}</td>
                         <td class="p-1.5 text-center"><span class="bg-orange-900/50 text-orange-300 px-2 py-0.5 rounded">${d.tuoi} tuổi</span></td>
-                        <td class="p-1.5 font-mono">${escHtml(d.cccd)}</td>
+                        <td class="p-1.5 font-mono">${cheSo(d.cccd)}</td>
                         <td class="p-1.5">${escHtml(d.diaChi)} <span class="text-gray-500">(CH: ${escHtml(d.chuHo)})</span></td>
                         <td class="p-1.5 font-mono">${escHtml(d.sdt)}</td>
                     </tr>`).join('') + `</tbody></table>
@@ -11716,6 +12026,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         }
 
         async function taiXuongWorkbookExcelJS(wb, tenFile) {
+            if (xuatCheSoBat()) { const n = cheExcelJS(wb); if (n) soCheToast('Đã che ' + n + ' số CCCD/HSCT trong file (Hệ thống ▸ Xuất file để đổi).'); }
             const buffer = await wb.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: 'application/octet-stream' });
             const url = URL.createObjectURL(blob);
@@ -12138,7 +12449,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
             const ws = XLSX.utils.aoa_to_sheet([['STT', ...d.cot], ...d.dong.map((r, i) => [i + 1, ...r])]);
             ws['!cols'] = [{ wch: 5 }, ...d.cot.map((c, i) => ({ wch: /địa chỉ|ghi chú|tên/i.test(c) ? 42 : 16 }))];
             const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Danh_sach');
-            XLSX.writeFile(wb, 'Danh_sach_' + boDauTiengViet(d.tieuDe).replace(/[^a-zA-Z0-9]+/g, '_').slice(0, 50) + '.xlsx');
+            xuatXlsx(wb, 'Danh_sach_' + boDauTiengViet(d.tieuDe).replace(/[^a-zA-Z0-9]+/g, '_').slice(0, 50) + '.xlsx');
         }
 
         // ---------------------------------------------------------------------------------------------------
@@ -12726,7 +13037,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
             Object.entries(anCacheTP.mh).sort((a, b) => b[1].nk - a[1].nk).forEach(([p, m]) => hang.push([p, m.ho, m.nk, m.dien.tt, m.dien.tam, m.dien.khac, m.gt.nam, m.gt.nu, m.tuoi.tre, m.tuoi.ld, m.tuoi.cao, m.L.hetHan.length, m.diemCL]));
             const ws = XLSX.utils.aoa_to_sheet(hang); ws['!cols'] = hang[0].map((c, i) => ({ wch: i === 0 ? 24 : 12 }));
             const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Toan_thanh_pho');
-            XLSX.writeFile(wb, 'Phan_tich_toan_thanh_pho_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+            xuatXlsx(wb, 'Phan_tich_toan_thanh_pho_' + new Date().toISOString().slice(0, 10) + '.xlsx');
         }
 
         // ======================= XUẤT EXCEL / IN =======================
@@ -12752,7 +13063,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
             them('Chat_luong_DL', [['Trường dữ liệu', 'Cần có', 'Còn thiếu', 'Đầy đủ (%)'], ...AN_TRUONG_CL.map(([k, n]) => [n, M.Q[k][0], M.Q[k][1], M.Q[k][0] ? Math.round((1 - M.Q[k][1] / M.Q[k][0]) * 1000) / 10 : '']),
                 ['CCCD xuất hiện ở nhiều hộ', M.L.cccdTrung.length, '', ''], ['Địa chỉ lệch phường/xã', M.L.lechPhuong.length, '', '']], [34, 12, 12, 12]);
             if (loai === 'dash' && anDash.snaps.length) them('Xu_huong', [['Ngày', 'Số hộ', 'Nhân khẩu', 'Thường trú', 'Tạm/Lưu trú'], ...anDash.snaps.map(s => [s.ngayGhi, s.soHo, s.soKhau, s.soThuongTru, s.soTamTru])], [14, 10, 12, 12, 12]);
-            XLSX.writeFile(wb, (loai === 'dash' ? 'Dashboard_' : 'Phan_tich_') + boDauTiengViet(ten).replace(/\s+/g, '_') + '_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+            xuatXlsx(wb, (loai === 'dash' ? 'Dashboard_' : 'Phan_tich_') + boDauTiengViet(ten).replace(/\s+/g, '_') + '_' + new Date().toISOString().slice(0, 10) + '.xlsx');
         }
         function anIn(idEl) {
             const src = document.getElementById(idEl); if (!src) return;
@@ -12774,7 +13085,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
         //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
         // ======================================================================================================
-        const PHIEN_BAN_APP = '2026.10.29';
+        const PHIEN_BAN_APP = '2026.10.32';
         const SB_NHOM = [
             { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
             { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
@@ -13232,7 +13543,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
                     <p class="text-purple-300 font-semibold mb-1">🟣 ${loiTrungCCCD.length} số CCCD/định danh xuất hiện ở NHIỀU HƠN 1 hộ khác nhau</p>
                     <div class="max-h-48 overflow-y-auto text-[11px] space-y-1.5 mb-2">
                         ${loiTrungCCCD.map(([cccd, ds2]) => `<div class="text-gray-300 border-b border-gray-800 pb-1">
-                            • CCCD <span class="text-purple-400 font-mono">${escHtml(cccd)}</span> (${escHtml(ds2[0].tv.hoTen || '')}) — xuất hiện ở ${new Set(ds2.map(x=>x.ho.id)).size} hộ:
+                            • CCCD <span class="text-purple-400 font-mono">${cheSo(cccd)}</span> (${escHtml(ds2[0].tv.hoTen || '')}) — xuất hiện ở ${new Set(ds2.map(x=>x.ho.id)).size} hộ:
                             ${[...new Map(ds2.map(x => [x.ho.id, x.ho])).values()].map(ho => `<button onclick="moModalChiTietHoTheoId('${ho.id}')" class="text-blue-400 hover:text-blue-300 underline ml-1">${escHtml(ho.chuHo || ho.hsct || '(hộ)')} ▸</button>`).join(', ')}
                         </div>`).join('')}
                     </div>
@@ -13244,7 +13555,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
                 html += `<div class="bg-rose-950/30 border border-rose-800/50 rounded-lg p-2.5 mb-2">
                     <p class="text-rose-300 font-semibold mb-1">🔴 ${loiHsct.length} hộ có Số HSCT bị lưu nhầm thành địa chỉ</p>
                     <div class="max-h-40 overflow-y-auto text-[11px] space-y-1 mb-2">
-                        ${loiHsct.map(ho => `<div class="text-gray-300">• <span class="text-rose-400 font-mono">${escHtml(ho.hsct.slice(0, 60))}${ho.hsct.length > 60 ? '…' : ''}</span> — Chủ hộ: ${escHtml(ho.chuHo || '?')}</div>`).join('')}
+                        ${loiHsct.map(ho => `<div class="text-gray-300">• <span class="text-rose-400 font-mono">${cheSo(ho.hsct.slice(0, 60))}${ho.hsct.length > 60 ? '…' : ''}</span> — Chủ hộ: ${escHtml(ho.chuHo || '?')}</div>`).join('')}
                     </div>
                     <button onclick='suaLoiHsctHangLoat(${JSON.stringify(loiHsct.map(h => h.id))})' class="bg-rose-700 hover:bg-rose-600 px-2.5 py-1.5 rounded font-medium">🔧 Tự Sửa Ngay (tạo lại mã HSCT chuẩn cho ${loiHsct.length} hộ này)</button>
                 </div>`;
@@ -13253,7 +13564,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
                 html += `<div class="bg-orange-950/30 border border-orange-700/50 rounded-lg p-2.5 mb-2">
                     <p class="text-orange-300 font-semibold mb-1">🟠 ${loiHsctSaiDien.length} hộ diện Tạm trú/Lưu trú/NOHN nhưng vẫn đang có Số HSCT (theo quy định chỉ Thường trú mới có HSCT)</p>
                     <div class="max-h-40 overflow-y-auto text-[11px] space-y-1 mb-2">
-                        ${loiHsctSaiDien.map(ho => `<div class="text-gray-300">• <span class="text-orange-400 font-mono">${escHtml(ho.hsct)}</span> — ${escHtml(ho.dienNghiepVu)} — Chủ hộ: ${escHtml(ho.chuHo || '?')}</div>`).join('')}
+                        ${loiHsctSaiDien.map(ho => `<div class="text-gray-300">• <span class="text-orange-400 font-mono">${cheSo(ho.hsct)}</span> — ${escHtml(ho.dienNghiepVu)} — Chủ hộ: ${escHtml(ho.chuHo || '?')}</div>`).join('')}
                     </div>
                     <button onclick='suaLoiHsctHangLoat(${JSON.stringify(loiHsctSaiDien.map(h => h.id))})' class="bg-orange-700 hover:bg-orange-600 px-2.5 py-1.5 rounded font-medium">🔧 Xóa Số HSCT Sai (đưa về đúng "không áp dụng") cho ${loiHsctSaiDien.length} hộ này</button>
                 </div>`;
@@ -13262,7 +13573,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
                 html += `<div class="bg-amber-950/30 border border-amber-700/50 rounded-lg p-2.5 mb-2">
                     <p class="text-amber-300 font-semibold mb-1">🟡 ${loiChuHo.length} hộ có tên Chủ hộ đang là từ chỉ quan hệ (VD "Con", "Cháu"...), không phải tên người thật</p>
                     <div class="max-h-40 overflow-y-auto text-[11px] space-y-1">
-                        ${loiChuHo.map(ho => `<div class="text-gray-300">• HSCT ${escHtml(ho.hsct)} — hiện ghi "Chủ hộ: <span class="text-amber-400">${escHtml(ho.chuHo)}</span>" — <button onclick="moModalChiTietHoTheoId('${ho.id}')" class="text-blue-400 hover:text-blue-300 underline">Sửa tay ▸</button></div>`).join('')}
+                        ${loiChuHo.map(ho => `<div class="text-gray-300">• HSCT ${cheSo(ho.hsct)} — hiện ghi "Chủ hộ: <span class="text-amber-400">${escHtml(ho.chuHo)}</span>" — <button onclick="moModalChiTietHoTheoId('${ho.id}')" class="text-blue-400 hover:text-blue-300 underline">Sửa tay ▸</button></div>`).join('')}
                     </div>
                     <p class="text-gray-500 mt-1">Cần chọn tay đúng người vì phần mềm không tự đoán được ai là chủ hộ thật trong trường hợp này — bấm "Sửa tay" để mở đúng hồ sơ.</p>
                 </div>`;
