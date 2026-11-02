@@ -13085,7 +13085,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
         //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
         // ======================================================================================================
-        const PHIEN_BAN_APP = '2026.10.32';
+        const PHIEN_BAN_APP = '2026.11.01';
         const SB_NHOM = [
             { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
             { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
@@ -13749,6 +13749,558 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
   };
   setInterval(window.nmCapNhat,1500); document.addEventListener('DOMContentLoaded',function(){ setTimeout(window.nmCapNhat,300); });
 })();
+</script>
+<script id="cskvBoSung">
+/* ==========================================================================
+   cskv-bo-sung.js — BẢN BỔ SUNG 2026.11.01 cho "Hệ thống Quản lý địa bàn CSKV"
+   Đã NHÚNG thẳng vào QuanLyDiaBan_TanAn.html (khối script id="cskvBoSung", đặt cuối trang, sau mã chính).
+   Khối này thay/bọc một số hàm toàn cục lúc chạy, không sửa mã chính. Gỡ bỏ: xóa khối script đó.
+
+   1) NHẬT KÝ: mỗi dòng ghi thêm khu vực + Ô (nếu có). CSKV chỉ đọc nhật ký thuộc khu vực/Ô mình.
+   2) DẤU NGƯỜI XUẤT: mỗi file xuất (Excel, Word, bản in/PDF) ghi 1 dòng "Xuất bởi ..." + mã xuất,
+      đồng thời ghi nhật ký (để truy vết file bị lộ). Có thể: luôn ghi / hỏi mỗi lần / tắt
+      (nút "Dấu người xuất" trong menu Hệ thống). Dòng này xóa tay được trong file.
+   3) BẢN ĐỒ: mỗi cán bộ vẽ "khu vực của tôi", mỗi người 1 màu khác nhau trong cùng phường.
+      Ranh giới phường và trụ sở vẫn sửa như cũ (không đổi).
+   ========================================================================== */
+(function () {
+  'use strict';
+  if (window.__cskvBoSung20261101) return;
+  window.__cskvBoSung20261101 = true;
+
+  var PB_BO_SUNG = '2026.11.01';
+
+  /* ---------------------------- tiện ích dùng chung ---------------------------- */
+  function U() { try { return typeof currentUser !== 'undefined' ? currentUser : null; } catch (e) { return null; } }
+  function FB() { try { return (typeof CHE_DO_FIREBASE !== 'undefined' && CHE_DO_FIREBASE && typeof dbFirestore !== 'undefined' && dbFirestore) ? dbFirestore : null; } catch (e) { return null; } }
+  function PHUONG() { try { return typeof khuVucHienTai !== 'undefined' ? khuVucHienTai : ''; } catch (e) { return ''; } }
+  function BANDO() { try { return typeof mainMiniMapInstance !== 'undefined' ? mainMiniMapInstance : null; } catch (e) { return null; } }
+  function esc(s) {
+    if (s === undefined || s === null) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function p2(n) { return (n < 10 ? '0' : '') + n; }
+  function fmtNgayGio(d) { return p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes()); }
+  function boDau(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D'); }
+  function slug(s) { return boDau(s).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''); }
+  function toast(msg) { try { if (typeof soCheToast === 'function') soCheToast(msg); else console.log(msg); } catch (e) { } }
+  function thoiGianGiay(r) { try { return (r && r.thoiGian && (r.thoiGian.seconds || (r.thoiGian.toMillis && r.thoiGian.toMillis() / 1000))) || 0; } catch (e) { return 0; } }
+
+  var hoTenToi = '';
+  async function taiHoTenToi() {
+    var u = U(), db = FB();
+    if (hoTenToi || !u || !db || !u.email) return;
+    try {
+      var doc = await db.collection('permissions').doc(u.email.toLowerCase()).get();
+      if (doc.exists && doc.data().hoTen) hoTenToi = String(doc.data().hoTen).slice(0, 80);
+    } catch (e) { /* không chặn */ }
+  }
+
+  /* ============================ 1) NHẬT KÝ CÓ KHU VỰC / Ô ============================ */
+
+  // Khu vực/Ô gắn vào 1 dòng nhật ký: ưu tiên của hộ liên quan, sau đó của CSKV. Không bao giờ hỏi (prompt).
+  function phamViNhatKy(hoId) {
+    var u = U(), out = {}, ho = null;
+    try {
+      if (hoId && typeof danhSachHoGiaDinh !== 'undefined' && Array.isArray(danhSachHoGiaDinh)) {
+        ho = danhSachHoGiaDinh.find(function (h) { return h && String(h.id) === String(hoId); }) || null;
+      }
+    } catch (e) { }
+    var kv = ho && ho.khuVuc ? String(ho.khuVuc) : '';
+    var o = ho && ho.o ? String(ho.o) : '';
+    if (u && u.role === 'can_bo') {
+      if (!kv && Array.isArray(u.khuVucPhuTrach) && u.khuVucPhuTrach.length) kv = String(u.khuVucPhuTrach[0]);
+      if (!o && Array.isArray(u.oPhuTrach) && u.oPhuTrach.length) {
+        var c = '';
+        try { c = sessionStorage.getItem('oDangChon_' + u.email) || ''; } catch (e) { }
+        o = u.oPhuTrach.indexOf(c) >= 0 ? c : String(u.oPhuTrach[0]);
+      }
+    }
+    if (kv) out.khuVuc = kv;
+    if (o) out.o = o;
+    return out;
+  }
+
+  window.ghiNhatKy = function (hanhDong, chiTiet, hoId) {
+    var db = FB(), u = U();
+    if (!db || !u || !u.email) return;
+    var rec = {
+      email: u.email.toLowerCase(),
+      hanhDong: String(hanhDong || '').slice(0, 300),
+      chiTiet: String(chiTiet || '').slice(0, 1500),
+      phuong: PHUONG(),
+      thoiGian: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if (hoId) rec.hoId = String(hoId);
+    var pv = phamViNhatKy(hoId);
+    if (pv.khuVuc) rec.khuVuc = pv.khuVuc;
+    if (pv.o) rec.o = pv.o;
+    db.collection('activity_log').add(rec).catch(function (err) { console.warn('Không ghi được nhật ký:', err.message); });
+  };
+
+  function bangNhatKy(ds) {
+    var h = '<table class="w-full text-[11px]"><thead class="bg-gray-800 text-gray-300 sticky top-0"><tr>' +
+      '<th class="p-1.5 text-left">Thời gian</th><th class="p-1.5 text-left">Tài khoản</th><th class="p-1.5 text-left">Hành động</th>' +
+      '<th class="p-1.5 text-left">Chi tiết</th><th class="p-1.5 text-left">Khu vực / Ô</th><th class="p-1.5 text-left">Phường</th></tr></thead>' +
+      '<tbody class="divide-y divide-gray-800 text-gray-300">';
+    ds.forEach(function (r) {
+      var t = '...';
+      try { if (r.thoiGian && r.thoiGian.toDate) t = r.thoiGian.toDate().toLocaleString('vi-VN'); } catch (e) { }
+      var kvo = [r.khuVuc, r.o].filter(Boolean).join(' / ');
+      h += '<tr><td class="p-1.5 font-mono">' + esc(t) + '</td><td class="p-1.5">' + esc(r.email) + '</td>' +
+        '<td class="p-1.5 ' + (String(r.hanhDong || '').indexOf('⚠️') === 0 ? 'text-red-400 font-bold' : 'text-blue-300') + '">' + esc(r.hanhDong) + '</td>' +
+        '<td class="p-1.5">' + esc(r.chiTiet) + '</td><td class="p-1.5 text-amber-300">' + esc(kvo) + '</td>' +
+        '<td class="p-1.5 text-gray-500">' + esc(r.phuong) + '</td></tr>';
+    });
+    return h + '</tbody></table>';
+  }
+
+  window.moModalNhatKy = async function () {
+    var db = FB(), u = U();
+    if (!db) return alert('Nhật ký hoạt động chỉ khả dụng khi đã kết nối máy chủ.');
+    var el = document.getElementById('noiDungNhatKy');
+    el.innerHTML = '<p class="text-gray-500 p-3">Đang tải...</p>';
+    document.getElementById('nhatKyModal').classList.remove('hidden');
+    var laCSKV = u && u.role === 'can_bo';
+    var toanTP = u && (u.role === 'admin' || u.role === 'chi_huy_tp');
+    function tao(coSapXep) {
+      var q = db.collection('activity_log');
+      if (!toanTP) q = q.where('phuong', '==', PHUONG());
+      if (laCSKV && typeof apDungPhamViCSKV === 'function') q = apDungPhamViCSKV(q);
+      if (coSapXep) q = q.orderBy('thoiGian', 'desc');
+      return q.limit(coSapXep ? 200 : 400);
+    }
+    try {
+      var snap;
+      try { snap = await tao(true).get(); }
+      catch (e1) {
+        // thiếu chỉ mục tổng hợp (khu vực + Ô + thời gian): lấy không sắp xếp rồi sắp xếp ngay trên máy
+        if (e1 && e1.code === 'failed-precondition') snap = await tao(false).get(); else throw e1;
+      }
+      var ds = snap.docs.map(function (d) { return d.data(); })
+        .sort(function (a, b) { return thoiGianGiay(b) - thoiGianGiay(a); }).slice(0, 200);
+      if (!ds.length) { el.innerHTML = '<p class="text-gray-500 p-3">Chưa có hoạt động nào được ghi nhận' + (laCSKV ? ' trong khu vực/Ô của bạn' : '') + '.</p>'; return; }
+      el.innerHTML = bangNhatKy(ds) + (laCSKV ? '<p class="text-[10px] text-gray-500 p-2">Bạn chỉ thấy nhật ký thuộc khu vực/Ô được giao. Nhật ký ghi trước 01/11/2026 chưa có khu vực/Ô nên chỉ Chỉ huy xem được.</p>' : '');
+    } catch (err) {
+      el.innerHTML = '<p class="text-rose-400 p-3">❌ Lỗi tải nhật ký: ' + esc(err.code === 'permission-denied' ? 'không đủ quyền (cần đăng firestore.rules v2.1)' : err.message) + '</p>';
+    }
+  };
+
+  window.lichSuSuaHo = async function () {
+    var db = FB(), u = U();
+    if (!db) return alert('Lịch sử chỉnh sửa chỉ khả dụng khi đã kết nối máy chủ.');
+    var ho = danhSachHoGiaDinh[currentSelectedHoIndex];
+    if (!ho || !ho.id) return;
+    var el = document.getElementById('lsHoNoiDung');
+    document.getElementById('lsHoTen').innerText = (ho.chuHo || '') + ' — ' + (ho.diaChi || '');
+    el.innerHTML = '<p class="text-gray-500 p-3">Đang tải...</p>';
+    document.getElementById('lsHoModal').classList.remove('hidden');
+    try {
+      var q = db.collection('activity_log').where('phuong', '==', PHUONG()).where('hoId', '==', ho.id);
+      if (u && u.role === 'can_bo' && typeof apDungPhamViCSKV === 'function') q = apDungPhamViCSKV(q);
+      var snap = await q.limit(300).get();
+      var ds = []; snap.forEach(function (d) { ds.push(d.data()); });
+      ds.sort(function (a, b) { return thoiGianGiay(b) - thoiGianGiay(a); });
+      if (!ds.length) {
+        el.innerHTML = '<p class="text-gray-400 p-3">Chưa có thao tác nào gắn với hộ này. Chỉ các thao tác từ phiên bản 2026.10.16 trở đi mới được gắn theo hộ' + (u && u.role === 'can_bo' ? '; CSKV chỉ thấy thao tác ghi từ 01/11/2026 (có khu vực/Ô)' : '') + '.</p>';
+        return;
+      }
+      var h = '<table class="w-full text-left border-collapse text-[11px]"><thead><tr class="text-gray-400 border-b border-gray-700"><th class="p-1.5">Thời gian</th><th class="p-1.5">Người làm</th><th class="p-1.5">Thao tác</th><th class="p-1.5">Chi tiết</th></tr></thead><tbody>';
+      ds.forEach(function (l) {
+        var t = ''; try { t = l.thoiGian && l.thoiGian.toDate ? l.thoiGian.toDate().toLocaleString('vi-VN') : ''; } catch (e) { }
+        h += '<tr class="border-b border-gray-800"><td class="p-1.5 whitespace-nowrap text-gray-300">' + esc(t) + '</td><td class="p-1.5 text-gray-400">' + esc(l.email || '') +
+          '</td><td class="p-1.5 text-white">' + esc(l.hanhDong || '') + '</td><td class="p-1.5 text-gray-400">' + esc(l.chiTiet || '') + '</td></tr>';
+      });
+      el.innerHTML = h + '</tbody></table><p class="text-[10px] text-gray-500 mt-2">Nhật ký chỉ được thêm, không ai sửa hoặc xóa được.</p>';
+    } catch (e) {
+      el.innerHTML = '<p class="text-red-400 p-3">Lỗi tải lịch sử: ' + esc(e.code === 'permission-denied' ? 'không đủ quyền đọc nhật ký' : e.message) + '</p>';
+    }
+  };
+
+  /* ============================ 2) DẤU NGƯỜI XUẤT TRÊN MỌI FILE ============================ */
+  var KEY_DAU = 'dauXuatV1';
+  function cheDoDau() { try { var v = localStorage.getItem(KEY_DAU); return (v === 'tat' || v === 'hoi') ? v : 'luon'; } catch (e) { return 'luon'; } }
+  function maXuat() { return 'XK-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase(); }
+  function dongDau(ma) {
+    var u = U(), pv = phamViNhatKy(null);
+    var bits = ['Xuất bởi: ' + (hoTenToi ? hoTenToi + ' — ' : '') + (u && u.email ? u.email : '?')];
+    if (PHUONG()) bits.push(PHUONG());
+    if (pv.khuVuc) bits.push(pv.khuVuc);
+    if (pv.o) bits.push(pv.o);
+    bits.push(fmtNgayGio(new Date()));
+    bits.push('Mã xuất ' + ma);
+    bits.push('PM Quản lý địa bàn CSKV' + (typeof PHIEN_BAN_APP !== 'undefined' ? ' ' + PHIEN_BAN_APP : ''));
+    return bits.join(' · ');
+  }
+  function quyetDinhGhiDau(loai) {
+    var m = cheDoDau();
+    if (m === 'tat') return false;
+    if (m === 'hoi') { try { return confirm('Ghi dấu "Xuất bởi ..." vào file ' + loai + ' này?\n\nOK = ghi dấu (khuyến nghị)\nHủy = không ghi (vẫn được ghi vào nhật ký hệ thống)'); } catch (e) { return true; } }
+    return true;
+  }
+  function ghiNhatKyXuat(loai, ten, ma, coDau) {
+    try { window.ghiNhatKy('Xuất file (' + loai + ')', String(ten || '') + ' · mã ' + ma + (coDau ? '' : ' · không ghi dấu trong file')); } catch (e) { }
+  }
+  function chenDauVaoHtml(html, ma) {
+    var dong = '<p style="margin:14pt 0 0 0;padding-top:3pt;border-top:1px solid #bbb;font:8pt Arial,sans-serif;color:#666;text-indent:0;text-align:left">' + esc(dongDau(ma)) + '</p>';
+    var i = html.toLowerCase().lastIndexOf('</body>');
+    return i >= 0 ? html.slice(0, i) + dong + html.slice(i) : html + dong;
+  }
+  function tieuDeHtml(html) { var m = /<title>([\s\S]*?)<\/title>/i.exec(html); return m ? m[1].replace(/\s+/g, ' ').trim().slice(0, 120) : 'văn bản'; }
+
+  // --- Excel: thêm 1 sheet "NguonXuat" (xóa sheet này là xong) ---
+  function caiXLSX() {
+    if (typeof XLSX === 'undefined' || !XLSX || typeof XLSX.writeFile !== 'function' || XLSX.__cskvDau) return false;
+    var goc = XLSX.writeFile;
+    XLSX.writeFile = function (wb, ten, opts) {
+      try {
+        var laCsv = /\.(csv|txt)$/i.test(String(ten || ''));
+        var laMau = wb && wb.SheetNames && wb.SheetNames.indexOf('Huong_Dan') >= 0; // file mẫu trống
+        if (wb && wb.SheetNames && !laCsv && !laMau) {
+          var ma = maXuat(), ghi = quyetDinhGhiDau('Excel');
+          if (ghi && wb.SheetNames.indexOf('NguonXuat') < 0) {
+            var u = U(), pv = phamViNhatKy(null);
+            var ws = XLSX.utils.aoa_to_sheet([
+              ['Dấu người xuất (xóa sheet này nếu không cần)'],
+              ['Xuất bởi', (hoTenToi ? hoTenToi + ' — ' : '') + (u && u.email ? u.email : '')],
+              ['Phường', PHUONG()], ['Khu vực', pv.khuVuc || ''], ['Ô', pv.o || ''],
+              ['Thời điểm', fmtNgayGio(new Date())], ['Mã xuất', ma],
+              ['Phần mềm', 'Quản lý địa bàn CSKV ' + (typeof PHIEN_BAN_APP !== 'undefined' ? PHIEN_BAN_APP : '')]
+            ]);
+            ws['!cols'] = [{ wch: 16 }, { wch: 70 }];
+            XLSX.utils.book_append_sheet(wb, ws, 'NguonXuat');
+          }
+          ghiNhatKyXuat('Excel', ten, ma, ghi);
+        }
+      } catch (e) { console.warn('Không ghi được dấu xuất Excel:', e); }
+      return goc.call(XLSX, wb, ten, opts);
+    };
+    XLSX.__cskvDau = true;
+    return true;
+  }
+
+  // --- Word (.doc): các nơi tạo Blob 'application/msword' ---
+  (function caiBlob() {
+    if (!window.Blob || window.Blob.__cskvDau) return;
+    var BlobGoc = window.Blob;
+    function BlobBoc(parts, opts) {
+      try {
+        if (opts && opts.type === 'application/msword' && Array.isArray(parts)) {
+          var idx = -1;
+          for (var i = 0; i < parts.length; i++) if (typeof parts[i] === 'string' && /<\/body>/i.test(parts[i])) idx = i;
+          if (idx >= 0) {
+            var ma = maXuat(), ghi = quyetDinhGhiDau('Word');
+            if (ghi) { parts = parts.slice(); parts[idx] = chenDauVaoHtml(parts[idx], ma); }
+            ghiNhatKyXuat('Word', tieuDeHtml(String(parts[idx])), ma, ghi);
+          }
+        }
+      } catch (e) { console.warn('Không ghi được dấu xuất Word:', e); }
+      return new BlobGoc(parts, opts);
+    }
+    BlobBoc.prototype = BlobGoc.prototype;
+    BlobBoc.__cskvDau = true;
+    window.Blob = BlobBoc;
+  })();
+
+  // --- In / PDF: các cửa sổ window.open('') rồi document.write(html) ---
+  (function caiWindowOpen() {
+    if (window.open.__cskvDau) return;
+    var openGoc = window.open;
+    function openBoc(url) {
+      var w = openGoc.apply(window, arguments);
+      try {
+        if (w && (!url || url === '') && w.document && !w.document.__cskvDau) {
+          var writeGoc = w.document.write.bind(w.document), daXuLy = false;
+          w.document.write = function () {
+            var args = Array.prototype.slice.call(arguments);
+            if (!daXuLy) {
+              for (var i = 0; i < args.length; i++) {
+                if (typeof args[i] === 'string' && /<html/i.test(args[i]) && /<\/body>/i.test(args[i])) {
+                  daXuLy = true;
+                  var ma = maXuat(), ghi = quyetDinhGhiDau('bản in / PDF');
+                  if (ghi) args[i] = chenDauVaoHtml(args[i], ma);
+                  ghiNhatKyXuat('in/PDF', tieuDeHtml(args[i]), ma, ghi);
+                  break;
+                }
+              }
+            }
+            return writeGoc.apply(null, args);
+          };
+          w.document.__cskvDau = true;
+        }
+      } catch (e) { /* cửa sổ khác nguồn: bỏ qua */ }
+      return w;
+    }
+    openBoc.__cskvDau = true;
+    window.open = openBoc;
+  })();
+
+  // --- Nút đổi chế độ trong menu Hệ thống (nhân bản nút "Xuất file: che số") ---
+  var TEN_CHE_DO = { luon: '🏷️ Dấu người xuất: LUÔN ghi', hoi: '🏷️ Dấu người xuất: HỎI mỗi lần', tat: '🏷️ Dấu người xuất: TẮT' };
+  var MOTA_CHE_DO = { luon: 'Mọi file xuất ra đều có dòng "Xuất bởi ..." — bấm để chuyển sang hỏi mỗi lần', hoi: 'Hỏi khi tải từng file — bấm để chuyển sang tắt', tat: 'Không ghi dấu trong file (nhật ký hệ thống vẫn ghi) — bấm để bật lại' };
+  function capNhatNutDau() {
+    var b = document.getElementById('btnDauXuat');
+    if (!b) return;
+    var m = cheDoDau(), t = b.querySelector('.nm-t'), sm = b.querySelector('small');
+    if (t) t.textContent = TEN_CHE_DO[m];
+    if (sm) sm.textContent = MOTA_CHE_DO[m];
+  }
+  window.cskvDoiDauXuat = function () {
+    var m = cheDoDau(), moi = m === 'luon' ? 'hoi' : (m === 'hoi' ? 'tat' : 'luon');
+    try { localStorage.setItem(KEY_DAU, moi); } catch (e) { }
+    try { window.ghiNhatKy('Đổi chế độ dấu người xuất', moi); } catch (e) { }
+    capNhatNutDau();
+    toast(moi === 'tat' ? 'Đã tắt dấu người xuất trong file (nhật ký xuất file vẫn được ghi).' : (moi === 'hoi' ? 'Sẽ hỏi trước khi ghi dấu vào từng file.' : 'Mọi file xuất ra sẽ có dòng "Xuất bởi ...".'));
+  };
+  function caiNutDau() {
+    if (document.getElementById('btnDauXuat')) return true;
+    var goc = document.getElementById('btnXuatCheSo');
+    if (!goc) return false;
+    var b = goc.cloneNode(true);
+    b.id = 'btnDauXuat';
+    b.setAttribute('onclick', 'cskvDoiDauXuat()');
+    goc.insertAdjacentElement('afterend', b);
+    capNhatNutDau();
+    return true;
+  }
+
+  /* ============================ 3) BẢN ĐỒ: KHU VỰC CỦA TỪNG CÁN BỘ, MỖI NGƯỜI 1 MÀU ============================ */
+  var COL_KV = 'ranh_gioi_khu_vuc';
+  var BANG_MAU = ['#e6194b', '#4363d8', '#f58231', '#911eb4', '#42d4f4', '#f032e6', '#9a6324', '#008080', '#800000', '#808000', '#000075', '#b36bff'];
+  var dsKV = [], loiKV = '', lopKV = null, daAn = {}, dangVeKV = null, banDoGan = null, dieuKhienKV = null, vungMoRong = true;
+
+  function mauHopLe(m) {
+    m = String(m || '');
+    if (/^#[0-9a-f]{6}$/i.test(m) || /^hsl\(\d{1,3},\s?\d{1,3}%,\s?\d{1,3}%\)$/.test(m)) return m;
+    return '#64748b';
+  }
+  function idDocCuaToi() { var u = U(); return slug(PHUONG()) + '__' + slug(u && u.email); }
+  function banGhiCuaToi() { var id = idDocCuaToi(); return dsKV.find(function (x) { return x.id === id; }) || null; }
+  function laQuanLy() { var u = U(); return !!u && ['admin', 'chi_huy_tp', 'chi_huy', 'can_bo_du_lieu'].indexOf(u.role) >= 0; }
+  function duocVe() { var u = U(); return !!u && ['admin', 'chi_huy_tp', 'chi_huy', 'can_bo_du_lieu', 'can_bo'].indexOf(u.role) >= 0; }
+  function chonMauMoi(boQua) {
+    var dung = {}; dsKV.forEach(function (x) { if (x.mau && x.mau !== boQua) dung[x.mau] = 1; });
+    for (var i = 0; i < BANG_MAU.length; i++) if (!dung[BANG_MAU[i]]) return BANG_MAU[i];
+    return 'hsl(' + Math.round((dsKV.length * 137.508) % 360) + ',70%,45%)';
+  }
+  function nhanCanBo(x) {
+    var ten = x.hoTen || String(x.email || '').split('@')[0];
+    var pv = [].concat(x.khuVuc || [], x.o || []).filter(Boolean).join(' / ');
+    return ten + (pv ? ' — ' + pv : '');
+  }
+
+  async function taiKV() {
+    var db = FB(); dsKV = []; loiKV = '';
+    if (!db || !PHUONG()) return;
+    try {
+      var snap = await db.collection(COL_KV).where('phuong', '==', PHUONG()).get();
+      dsKV = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+    } catch (e) {
+      loiKV = e && e.code === 'permission-denied' ? 'Chưa mở quyền máy chủ cho tính năng này (Admin cần đăng firestore.rules v2.1).' : (e && e.message) || 'lỗi';
+      console.warn('Không tải được khu vực cán bộ:', e);
+    }
+  }
+
+  function veLaiKV() {
+    var map = BANDO();
+    if (!map || typeof L === 'undefined') return;
+    if (lopKV) { try { map.removeLayer(lopKV); } catch (e) { } }
+    lopKV = L.featureGroup().addTo(map);
+    dsKV.forEach(function (x) {
+      if (daAn[x.id]) return;
+      var geo; try { geo = JSON.parse(x.geo); } catch (e) { return; }
+      var mau = mauHopLe(x.mau);
+      var lop;
+      try { lop = L.geoJSON(geo, { style: { color: mau, weight: 3, opacity: 0.95, fillColor: mau, fillOpacity: 0.22 } }); } catch (e) { return; }
+      lop.eachLayer(function (l) {
+        l.bindTooltip(nhanCanBo(x), { permanent: true, direction: 'center', className: 'cskv-nhan-kv', opacity: 0.9 });
+        var nd = document.createElement('div');
+        var tt = document.createElement('b'); tt.style.color = mau; tt.textContent = '👤 ' + nhanCanBo(x); nd.appendChild(tt);
+        var ph = document.createElement('div'); ph.style.cssText = 'font-size:10px;color:#64748b;margin-top:2px';
+        var tg = ''; try { if (x.capNhat && x.capNhat.toDate) tg = fmtNgayGio(x.capNhat.toDate()); } catch (e) { }
+        ph.textContent = 'Khu vực do cán bộ tự vẽ' + (tg ? ' · cập nhật ' + tg : ''); nd.appendChild(ph);
+        l.bindPopup(nd);
+      });
+      lopKV.addLayer(lop);
+    });
+    capNhatChuGiai();
+  }
+
+  function themNut(cha, nhan, onclick, tieuDe) {
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = nhan; if (tieuDe) b.title = tieuDe;
+    b.style.cssText = 'display:block;width:100%;text-align:left;margin-top:4px;padding:4px 6px;border-radius:6px;border:1px solid #475569;background:#1e293b;color:#e2e8f0;font-size:11px;cursor:pointer';
+    b.addEventListener('click', function (ev) { ev.stopPropagation(); onclick(); });
+    cha.appendChild(b); return b;
+  }
+
+  function capNhatChuGiai() {
+    if (!dieuKhienKV) return;
+    var div = dieuKhienKV.getContainer(); if (!div) return;
+    div.textContent = '';
+    var tieu = document.createElement('div'); tieu.style.cssText = 'font-weight:700;font-size:12px;cursor:pointer;display:flex;justify-content:space-between;gap:8px';
+    var a = document.createElement('span'); a.textContent = '👥 Khu vực cán bộ (' + dsKV.length + ')';
+    var b = document.createElement('span'); b.textContent = vungMoRong ? '▾' : '▸';
+    tieu.appendChild(a); tieu.appendChild(b);
+    tieu.addEventListener('click', function () { vungMoRong = !vungMoRong; capNhatChuGiai(); });
+    div.appendChild(tieu);
+    if (!vungMoRong) return;
+    if (loiKV) { var e = document.createElement('div'); e.style.cssText = 'color:#fca5a5;font-size:10px;margin-top:4px;max-width:230px'; e.textContent = loiKV; div.appendChild(e); }
+    var u = U(), cuaToi = banGhiCuaToi();
+    dsKV.slice().sort(function (p, q) { return nhanCanBo(p).localeCompare(nhanCanBo(q), 'vi'); }).forEach(function (x) {
+      var hang = document.createElement('div'); hang.style.cssText = 'display:flex;align-items:center;gap:5px;margin-top:4px;font-size:11px;max-width:260px';
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !daAn[x.id];
+      cb.addEventListener('change', function () { daAn[x.id] = !cb.checked; veLaiKV(); });
+      var cham = document.createElement('span'); cham.style.cssText = 'flex:none;width:11px;height:11px;border-radius:50%;background:' + mauHopLe(x.mau);
+      var ten = document.createElement('span'); ten.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer'; ten.textContent = nhanCanBo(x); ten.title = nhanCanBo(x);
+      ten.addEventListener('click', function () {
+        try { var g = L.geoJSON(JSON.parse(x.geo)); if (g.getBounds().isValid()) BANDO().fitBounds(g.getBounds(), { padding: [30, 30] }); } catch (er) { }
+      });
+      hang.appendChild(cb); hang.appendChild(cham); hang.appendChild(ten);
+      if (laQuanLy() || (u && String(x.email || '').toLowerCase() === String(u.email || '').toLowerCase())) {
+        var xoa = document.createElement('span'); xoa.textContent = '🗑️'; xoa.title = 'Xóa khu vực này'; xoa.style.cursor = 'pointer';
+        xoa.addEventListener('click', function () { xoaKV(x); });
+        hang.appendChild(xoa);
+      }
+      div.appendChild(hang);
+    });
+    if (duocVe()) {
+      themNut(div, '✏️ Vẽ khu vực của tôi', batDauVeKV, 'Vẽ đường bao khu vực bạn phụ trách; mỗi cán bộ 1 màu riêng');
+      if (cuaToi) themNut(div, '🎨 Đổi màu của tôi', doiMauKV);
+    }
+  }
+
+  function xuatHienCss() {
+    if (document.getElementById('cskvKvCss')) return;
+    var st = document.createElement('style'); st.id = 'cskvKvCss';
+    st.textContent = '.cskv-nhan-kv{background:rgba(15,23,42,.78);color:#fff;border:0;border-radius:4px;font-size:10px;padding:1px 5px;box-shadow:none}' +
+      '.cskv-nhan-kv:before{display:none}' +
+      '.cskv-chugiai{background:rgba(15,23,42,.92);color:#e2e8f0;border:1px solid #475569;border-radius:10px;padding:8px 10px;max-height:46vh;overflow:auto;min-width:170px}';
+    document.head.appendChild(st);
+  }
+
+  function ganBanDo() {
+    var map = BANDO();
+    if (!map || typeof L === 'undefined' || banDoGan === map) return !!map && banDoGan === map;
+    xuatHienCss();
+    banDoGan = map; lopKV = null;
+    var DK = L.Control.extend({
+      options: { position: 'bottomleft' },
+      onAdd: function () { var d = L.DomUtil.create('div', 'cskv-chugiai'); L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d); return d; }
+    });
+    dieuKhienKV = new DK(); map.addControl(dieuKhienKV);
+    map.on('draw:created', function (e) {
+      if (!dangVeKV) return;
+      var cau = dangVeKV; dangVeKV = null;
+      try { if (typeof drawnItems !== 'undefined' && drawnItems) drawnItems.removeLayer(e.layer); } catch (er) { } // không để lẫn vào ranh giới chính
+      luuKV(e.layer.toGeoJSON(), cau.mau);
+    });
+    map.on('draw:drawstop', function () { dangVeKV = null; });
+    return true;
+  }
+
+  async function capNhatKV() {
+    if (!ganBanDo()) return;
+    await taiKV();
+    veLaiKV();
+  }
+
+  async function batDauVeKV() {
+    var db = FB();
+    if (!db) return alert('Tính năng này cần kết nối máy chủ để mọi cán bộ cùng thấy.');
+    if (!duocVe()) return alert('Tài khoản của bạn chưa được cấp quyền vẽ khu vực.');
+    var map = BANDO();
+    if (!map || typeof L === 'undefined' || !L.Draw || !L.Draw.Polygon) return alert('Bản đồ chưa sẵn sàng, vui lòng thử lại sau vài giây.');
+    await taiHoTenToi(); await taiKV();
+    var cu = banGhiCuaToi(), mau = cu ? mauHopLe(cu.mau) : chonMauMoi();
+    alert('✏️ Vẽ khu vực của bạn\n\nBấm từng điểm quanh đường bao khu vực bạn phụ trách (nên bật lớp Vệ Tinh), bấm lại điểm đầu để khép kín.' + (cu ? '\n\nBạn đã có khu vực: vẽ xong sẽ hỏi THÊM vào hay THAY THẾ.' : '') + '\n\nMàu của bạn trong phường này: sẽ hiện ngay sau khi lưu. Bấm Esc để hủy.');
+    dangVeKV = { mau: mau };
+    new L.Draw.Polygon(map, { allowIntersection: true, shapeOptions: { color: mau, weight: 3, fillOpacity: 0.2 } }).enable();
+  }
+
+  async function luuKV(feature, mau) {
+    var db = FB(), u = U();
+    if (!db || !u) return;
+    try {
+      await taiHoTenToi(); await taiKV();
+      var cu = banGhiCuaToi(), features = [];
+      if (cu) {
+        var cuF = []; try { cuF = (JSON.parse(cu.geo).features) || []; } catch (e) { }
+        if (cuF.length && confirm('Bạn đã có khu vực đã vẽ.\n\nOK = THÊM vùng vừa vẽ vào khu vực cũ\nHủy = THAY THẾ toàn bộ bằng vùng vừa vẽ')) features = cuF;
+      }
+      features.push(feature);
+      var geo = JSON.stringify({ type: 'FeatureCollection', features: features });
+      if (geo.length > 150000) return alert('Hình vẽ quá phức tạp (quá nhiều điểm). Hãy vẽ đơn giản hơn.');
+      var mauLuu = cu ? mauHopLe(cu.mau) : mauHopLe(mau);
+      var rec = {
+        phuong: PHUONG(), email: String(u.email).toLowerCase(), hoTen: hoTenToi || '',
+        khuVuc: (Array.isArray(u.khuVucPhuTrach) ? u.khuVucPhuTrach : []).map(String).slice(0, 10),
+        o: (Array.isArray(u.oPhuTrach) ? u.oPhuTrach : []).map(String).slice(0, 10),
+        mau: mauLuu, geo: geo, capNhat: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      await db.collection(COL_KV).doc(idDocCuaToi()).set(rec);
+      window.ghiNhatKy('Vẽ khu vực cán bộ', (rec.khuVuc.join(', ') || '(không gán khu vực)') + (rec.o.length ? ' / ' + rec.o.join(', ') : ''));
+      await taiKV(); veLaiKV();
+      toast('✅ Đã lưu khu vực của bạn — mọi cán bộ trong phường đều thấy.');
+    } catch (e) {
+      alert('❌ Không lưu được khu vực: ' + (e.code === 'permission-denied' ? 'chưa có quyền máy chủ (Admin cần đăng firestore.rules v2.1)' : (e.message || e.code)));
+    }
+  }
+
+  async function xoaKV(x) {
+    var db = FB();
+    if (!db || !confirm('Xóa khu vực "' + nhanCanBo(x) + '"? Không thể hoàn tác.')) return;
+    try {
+      await db.collection(COL_KV).doc(x.id).delete();
+      window.ghiNhatKy('Xóa khu vực cán bộ', nhanCanBo(x));
+      await taiKV(); veLaiKV();
+    } catch (e) { alert('❌ Không xóa được: ' + (e.message || e.code)); }
+  }
+
+  async function doiMauKV() {
+    var db = FB(), cu = banGhiCuaToi();
+    if (!db || !cu) return;
+    var hienTai = mauHopLe(cu.mau), i = BANG_MAU.indexOf(hienTai), mau = null;
+    var dung = {}; dsKV.forEach(function (x) { if (x.id !== cu.id) dung[x.mau] = 1; });
+    for (var k = 1; k <= BANG_MAU.length; k++) { var c = BANG_MAU[(i + k + BANG_MAU.length) % BANG_MAU.length]; if (!dung[c]) { mau = c; break; } }
+    if (!mau) return toast('Không còn màu trống để đổi.');
+    try {
+      var rec = Object.assign({}, cu); delete rec.id; rec.mau = mau; rec.capNhat = firebase.firestore.FieldValue.serverTimestamp();
+      await db.collection(COL_KV).doc(cu.id).set(rec);
+      await taiKV(); veLaiKV();
+    } catch (e) { alert('❌ Không đổi được màu: ' + (e.message || e.code)); }
+  }
+
+  // Bọc hàm vẽ lại ranh giới của phần mềm: mỗi lần bản đồ vẽ lại thì vẽ luôn khu vực cán bộ
+  (function bocVeLai() {
+    var goc = window.veLaiRanhGioiPhuong;
+    if (typeof goc !== 'function' || goc.__cskvKv) return;
+    var moi = async function () {
+      var kq = await goc.apply(this, arguments);
+      try { banDoGan = (banDoGan === BANDO()) ? banDoGan : null; await capNhatKV(); } catch (e) { console.warn(e); }
+      return kq;
+    };
+    moi.__cskvKv = true;
+    window.veLaiRanhGioiPhuong = moi;
+  })();
+
+  /* ============================ KHỞI ĐỘNG (chờ phần mềm chính dựng xong) ============================ */
+  var lan = 0;
+  var tick = setInterval(function () {
+    lan++;
+    try {
+      caiXLSX();
+      caiNutDau();
+      if (U() && U().email && !hoTenToi) taiHoTenToi();
+      if (BANDO() && banDoGan !== BANDO()) capNhatKV();
+    } catch (e) { }
+    if (lan > 600) clearInterval(tick); // ~15 phút rồi dừng; các hook đã cài từ lâu
+  }, 1500);
+
+  window.__cskvBoSungPhienBan = PB_BO_SUNG;
+  // Để kiểm thử
+  window.__cskvTest = { phamViNhatKy: phamViNhatKy, chenDauVaoHtml: chenDauVaoHtml, chonMauMoi: chonMauMoi, mauHopLe: mauHopLe, slug: slug, _setDs: function (d) { dsKV = d; } };
+})();
+
 </script>
 </body>
 </html>
