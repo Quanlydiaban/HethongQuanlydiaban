@@ -3472,7 +3472,7 @@ button.dt-chip{cursor:pointer}
                 if (ho.hsct) hoTheoHsct[ho.hsct] = ho;
                 (ho.thanhVien || []).forEach(tv => { if (tv.cccd) hoTheoCccd[tv.cccd] = ho; });
             });
-            let soHoCapNhat = 0, soHoTaoMoi = 0, soNgoaiPhamVi = 0;
+            let soHoCapNhat = 0, soHoTaoMoi = 0, soNgoaiPhamVi = 0; const viDuNgoai = [];
             const hoCuNgoaiQuyen = [];   // hộ ĐÃ CÓ trong phần mềm nhưng nằm ngoài khu vực/Ô của CSKV -> Firestore sẽ từ chối, nên bỏ qua & báo riêng
             const choGhiDuoc = h => !(currentUser.role === 'can_bo') || trongPhamViGiaoCSKV(h);
 
@@ -3480,8 +3480,12 @@ button.dt-chip{cursor:pointer}
                 const lo = dbFirestore.batch();
                 danhSachMoi.slice(i, i + CO_LO).forEach(hoMoi => {
                     hoMoi.khuVuc = layNhanKhuVucTuDiaChi(hoMoi.diaChi, hoMoi.phuong) || 'Khu Vực 1';
-                    if (currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length && !currentUser.khuVucPhuTrach.includes(hoMoi.khuVuc)) { soNgoaiPhamVi++; return; }
-                    if (currentUser.role === 'can_bo' && Array.isArray(currentUser.phuongPhuTrach) && currentUser.phuongPhuTrach.length && !currentUser.phuongPhuTrach.includes(hoMoi.phuong)) { soNgoaiPhamVi++; return; }   // sai phường được giao -> Firestore sẽ từ chối cả lô
+                    if (currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length && !currentUser.khuVucPhuTrach.includes(hoMoi.khuVuc)) { soNgoaiPhamVi++; if (viDuNgoai.length < 5) viDuNgoai.push('[' + hoMoi.khuVuc + '] ' + (hoMoi.chuHo || '') + ' — ' + (hoMoi.diaChi || '')); return; }
+                    if (currentUser.role === 'can_bo' && Array.isArray(currentUser.phuongPhuTrach) && currentUser.phuongPhuTrach.length && !currentUser.phuongPhuTrach.includes(hoMoi.phuong)) {
+                        // CSKV chỉ phụ trách đúng 1 phường/xã: hộ trong file của họ thuộc phường/xã đó -> gắn đúng phường được giao thay vì bỏ hộ
+                        if (currentUser.phuongPhuTrach.length === 1) hoMoi.phuong = currentUser.phuongPhuTrach[0];
+                        else { soNgoaiPhamVi++; if (viDuNgoai.length < 5) viDuNgoai.push('[phường ' + hoMoi.phuong + '] ' + (hoMoi.chuHo || '')); return; }
+                    }   // sai phường được giao -> Firestore sẽ từ chối cả lô
                     dongDauPhamViO(hoMoi);
                     let hoTrung = kh ? (kh.dich.get(hoMoi) || null) : ((hoMoi.hsct && hoTheoHsct[hoMoi.hsct]) || null);
                     if (!hoTrung && !kh) {
@@ -3528,7 +3532,7 @@ button.dt-chip{cursor:pointer}
                     await lo.commit();
                 }
             }
-            return { soHoCapNhat, soHoTaoMoi, soNgoaiPhamVi, hoCuNgoaiQuyen };
+            return { soHoCapNhat, soHoTaoMoi, soNgoaiPhamVi, hoCuNgoaiQuyen, viDuNgoai };
         }
 
         // Xóa toàn bộ hộ của phường đang chọn trên Firestore (dùng cho nút "🗑️ Xóa DL")
@@ -5867,7 +5871,7 @@ button.dt-chip{cursor:pointer}
                         : `\n\n🔎 CHẨN ĐOÁN CỘT: Đã dò được đầy đủ các cột quan trọng (HSCT, Chủ hộ, Quan hệ, CCCD, Phường/Xã).`;
                     if (window.__soHoChuanKV) { alert('ℹ️ ' + window.__soHoChuanKV + ' hộ có địa chỉ thiếu/khác khu vực nên đã được tự gắn đúng "' + currentUser.khuVucPhuTrach[0] + '"' + (cskvCoO() ? ' và Ô theo phân quyền' : '') + '. Địa chỉ gốc trong file được lưu ở Ghi chú của hộ.'); window.__soHoChuanKV = 0; }
                     if (ketQuaLuu.hoCuNgoaiQuyen && ketQuaLuu.hoCuNgoaiQuyen.length) alert('⚠️ ' + ketQuaLuu.hoCuNgoaiQuyen.length + ' hộ trong file ĐÃ CÓ trong phần mềm nhưng đang nằm ngoài khu vực/Ô bạn được giao (hoặc chưa được gán khu vực/Ô) nên KHÔNG ghi đè được — đã bỏ qua để các hộ còn lại vẫn nhập bình thường.\n\nVD: ' + ketQuaLuu.hoCuNgoaiQuyen.slice(0, 5).join('\n') + '\n\nCách xử lý: dùng mục "Gán Ô cho hộ đã có" hoặc nhờ Admin/Chỉ huy phường sửa khu vực/Ô của các hộ này rồi nhập lại.');
-                    if (ketQuaLuu.soNgoaiPhamVi) alert('⚠️ Đã BỎ QUA ' + ketQuaLuu.soNgoaiPhamVi + ' hộ có địa chỉ thuộc khu vực/ô ngoài phạm vi bạn được giao phụ trách (không được phép nhập).');
+                    if (ketQuaLuu.soNgoaiPhamVi) alert('⚠️ Đã BỎ QUA ' + ketQuaLuu.soNgoaiPhamVi + ' hộ có địa chỉ thuộc khu vực/ô ngoài phạm vi bạn được giao phụ trách (không được phép nhập).\n\nVí dụ:\n' + (ketQuaLuu.viDuNgoai || []).join('\n') + '\n\nBạn được giao: ' + ((currentUser.khuVucPhuTrach || []).join(', ') || '—') + '. Nếu đây đúng là hộ của bạn: kiểm tra ô "Khu vực phụ trách" trong phân quyền (phải đúng tên như Ấp Long Lợi / Khu Vực 8) rồi nhập lại.');
                     alert(`✅ Đã xử lý ${danhSachMoi.length} hộ trong file — ${ketQuaLuu.soHoTaoMoi} hộ MỚI, ${ketQuaLuu.soHoCapNhat} hộ ĐÃ CÓ SẴN được cập nhật lại đúng diện cư trú/thông tin mới nhất (không tạo trùng lặp).\n🔎 Đối chiếu: ${dcTomTat(khDc)}.${ghiChuKV}${ghiChuDiaChi}${ghiChuPhuong}${ghiChuCCCD}${ghiChuChanDoan}`);
                 } catch (err) {
                     if (err.code === 'permission-denied' || /permission/i.test(err.message || '')) {
@@ -13263,7 +13267,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
         //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
         // ======================================================================================================
-        const PHIEN_BAN_APP = '2026.11.10';
+        const PHIEN_BAN_APP = '2026.11.11';
         const SB_NHOM = [
             { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
             { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
