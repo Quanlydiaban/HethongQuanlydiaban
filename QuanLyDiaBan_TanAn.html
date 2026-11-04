@@ -1657,6 +1657,7 @@ button.dt-chip{cursor:pointer}
             </div>
             <div class="flex flex-wrap justify-end gap-2 border-t border-gray-700 pt-2 mt-2">
                 <button onclick="document.getElementById('cdvModal').classList.add('hidden')" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded">Đóng</button>
+                <label class="flex items-center gap-1 text-xs text-amber-300 mr-auto" title="Che 10 ký tự đầu của số CCCD/HSCT trong văn bản xuất ra"><input type="checkbox" id="cdvChe" onchange="cdVePreview()"> Che 10 ký tự đầu CCCD/HSCT</label>
                 <button onclick="cdXuat('in')" class="btn-phu px-4 py-2 rounded font-bold">🖨️ In</button>
                 <button onclick="cdXuat('word')" class="btn-chinh px-4 py-2 rounded font-bold">📥 Tải Word (.doc)</button>
             </div>
@@ -7910,9 +7911,10 @@ button.dt-chip{cursor:pointer}
         // Biểu mẫu in/xuất chính thức (CT01, DC01, CĐ...) vẫn giữ nguyên số đầy đủ vì là văn bản nghiệp vụ.
         const _soCheM = {}; let _soCheN = 0;
         function soCheDuocXem() { return !!currentUser && ['admin', 'chi_huy', 'can_bo_du_lieu', 'can_bo'].includes(currentUser.role); }
+        // Che 10 ký tự đầu (CCCD 12 số → **********56). Số ngắn hơn: luôn chừa lại 2 ký tự cuối.
         function cheSoRaw(v) {
             v = String(v == null ? '' : v).trim(); if (!v || !/^[\w\-\/.]+$/.test(v)) return v;
-            const n = v.length; if (n >= 12) return v.slice(0, 5) + '***' + v.slice(-4); if (n >= 10) return v.slice(0, 3) + '***' + v.slice(-3); if (n >= 6) return v.slice(0, 2) + '***' + v.slice(-2); return v.slice(0, 1) + '***';
+            const n = v.length; if (n <= 3) return v; const k = Math.min(10, n - 2); return '*'.repeat(k) + v.slice(k);
         }
         function cheSo(v) {
             v = String(v == null ? '' : v).trim(); if (!v) return ''; if (cheSoRaw(v) === v) return escHtml(v);
@@ -7942,11 +7944,11 @@ button.dt-chip{cursor:pointer}
         function soCheToast(msg) {
             try { const t = document.createElement('div'); t.textContent = msg; t.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:2147483001;background:#1e3a5f;color:#fff;border:1px solid #60a5fa;border-radius:10px;padding:8px 14px;font-size:12px;max-width:90vw'; document.body.appendChild(t); setTimeout(() => t.remove(), 4500); } catch (e) { }
         }
-        function capNhatNutXuatCheSo() { const b = document.getElementById('btnXuatCheSo'); if (b) { const t = b.querySelector('.nm-t'), sm = b.querySelector('small'); if (t) t.textContent = xuatCheSoBat() ? '🙈 Xuất file: ĐANG che số' : '👁️ Xuất file: đầy đủ số'; if (sm) sm.textContent = xuatCheSoBat() ? 'Bấm để chuyển sang xuất đầy đủ CCCD/HSCT' : 'Bấm để chuyển sang xuất che số (gửi ngoài đơn vị)'; } }
+        function capNhatNutXuatCheSo() { const b = document.getElementById('btnXuatCheSo'); if (b) { const t = b.querySelector('.nm-t'), sm = b.querySelector('small'); if (t) t.textContent = xuatCheSoBat() ? '🙈 Xuất file: ĐANG che 10 số đầu CCCD/HSCT' : '👁️ Xuất file: đầy đủ số'; if (sm) sm.textContent = xuatCheSoBat() ? 'Bấm để chuyển sang xuất đầy đủ CCCD/HSCT' : 'Bấm để chuyển sang xuất che số (gửi ngoài đơn vị)'; } }
         function doiXuatCheSo() {
             const moi = !xuatCheSoBat(); try { localStorage.setItem('xuatCheSoV1', moi ? '1' : '0'); } catch (e) { }
             try { ghiNhatKy('Đổi chế độ xuất file', moi ? 'Che số CCCD/HSCT' : 'Xuất đầy đủ số'); } catch (e) { }
-            capNhatNutXuatCheSo(); soCheToast(moi ? 'Các file Excel xuất ra sẽ che số CCCD/HSCT.' : 'Các file Excel xuất ra sẽ có số đầy đủ. Chú ý khi gửi ngoài đơn vị.');
+            capNhatNutXuatCheSo(); soCheToast(moi ? 'Excel, Word và bản in sẽ che 10 ký tự đầu của CCCD/HSCT.' : 'Excel, Word và bản in sẽ có số đầy đủ. Chú ý khi gửi ngoài đơn vị.');
         }
         function cheOXuat(v) { const t = String(v).trim(); const m = cheSoRaw(t); return m; }
         function cheSheetJS(wb) {
@@ -7975,6 +7977,21 @@ button.dt-chip{cursor:pointer}
                 }));
             });
             return dem;
+        }
+        // --- Che số trong văn bản Word/in (HTML): che 10 ký tự đầu CCCD/CMND (9, 12 số) và số đứng sau nhãn HSCT/hồ sơ cư trú; có thể truyền thêm các số đã biết ---
+        function cheVbBat() { return (typeof window.__cheVbTam === 'boolean') ? window.__cheVbTam : xuatCheSoBat(); }
+        function cheVanBanHtml(html, bietTruoc) {
+            let dem = 0; const che = x => { const m = cheSoRaw(x); if (m !== x) dem++; return m; };
+            const ds = (bietTruoc || []).map(x => String(x || '').trim()).filter(x => x.length >= 6);
+            const p = String(html).split(/(<style[\s\S]*?<\/style>|<head[\s\S]*?<\/head>|<[^>]*>)/i);
+            for (let i = 0; i < p.length; i += 2) {
+                let t = p[i]; if (!t) continue;
+                ds.forEach(g => { if (t.indexOf(g) >= 0) t = t.split(g).join(che(g)); });
+                t = t.replace(/(CCCD\/CC\/Hộ chiếu|HSCT|hồ sơ cư trú|sổ hộ khẩu|hộ chiếu)([^<\d\w]{0,25}?)([A-Za-z]{0,2}\d[\w\-\/.]{4,}|TAM-[\w\-]+)/gi, (m, a, b, c) => a + b + che(c));
+                t = t.replace(/(?<![\d*])(?:\d{12}|\d{9})(?!\d)/g, m => che(m));
+                p[i] = t;
+            }
+            return { html: p.join(''), dem };
         }
         function xuatXlsx(wb, ten, opts) {
             if (xuatCheSoBat()) { const n = cheSheetJS(wb); if (n) soCheToast('Đã che ' + n + ' số CCCD/HSCT trong file (Hệ thống ▸ Xuất file để đổi).'); }
@@ -8605,8 +8622,8 @@ function xsNgayNghiLe() {
             const luat = '<p class="tl">Căn cứ Luật Cư trú số 68/2020/QH14 ngày 13/11/2020 của Quốc hội, có hiệu lực thi hành ngày 01/7/2021;</p>';
             const nghiDinh = (kt) => '<p class="tl">Căn cứ Nghị định số 154/2024/NĐ-CP ngày 26/11/2024 của chính phủ Quy định chi tiết một số điều và biện pháp thi hành Luật Cư trú năm 2020' + kt + '</p>';
             const doan = s => String(s || '').split(/\n+/).filter(x => x.trim()).map(x => '<p class="tl">' + o(x) + '</p>').join('');
-            const duongKe = pc => `<table align="center" width="${pc}%" style="border-collapse:collapse;margin:0 auto"><tr><td style="border-top:1px solid #000;font-size:1pt;line-height:1pt;height:1pt;padding:0">&nbsp;</td></tr></table>`;
-            const dauTrang = (tieuDe) => `<table class="dau"><tr><td width="42%" align="center" valign="top" style="font-size:12pt;white-space:nowrap">${o(c.capTren || 'CÔNG AN THÀNH PHỐ CẦN THƠ')}<br><b>${o(donVi)}</b>${duongKe(45)}</td><td width="58%" align="center" valign="top"><b style="font-size:12pt;white-space:nowrap">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><table align="center" style="border-collapse:collapse;margin:0 auto"><tr><td style="border-bottom:1px solid #000;padding:0 2pt 1pt 2pt;font-size:14pt;white-space:nowrap"><b>Độc lập - Tự do - Hạnh phúc</b></td></tr></table></td></tr><tr><td align="center" valign="top" style="font-size:13pt;padding-top:4pt">Số: ${o(soHienTai)}/${kyHieu}-${o(hau)}</td><td align="center" valign="top" style="font-size:14pt;padding-top:4pt"><i>${o(ten)}, ${xsNgayChu(ngayCua)}</i></td></tr></table><p align="center" style="text-align:center;margin:12pt 0 0 0"><b style="font-size:14pt">${tieuDe}</b></p><p align="center" style="text-align:center;margin:0"><b style="font-size:14pt">Về việc xóa đăng ký ${dk}</b></p>${duongKe(17)}<p style="margin:0;font-size:6pt">&nbsp;</p>`;
+            const duongKe = pc => `<p style="margin:3pt ${pc >= 40 ? 2.5 : 6.5}cm 0 ${pc >= 40 ? 2.5 : 6.5}cm;font-size:2pt;line-height:2pt;text-indent:0;border:none;border-bottom:solid windowtext .75pt;padding:0cm 0cm 1pt 0cm;mso-border-bottom-alt:solid windowtext .75pt;mso-padding-alt:0cm 0cm 1pt 0cm">&nbsp;</p>`;
+            const dauTrang = (tieuDe) => `<table class="dau"><tr><td width="42%" align="center" valign="top" style="font-size:12pt;white-space:nowrap">${o(c.capTren || 'CÔNG AN THÀNH PHỐ CẦN THƠ')}<br><b>${o(donVi)}</b>${duongKe(45)}</td><td width="58%" align="center" valign="top"><b style="font-size:12pt;white-space:nowrap">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><p align="center" style="text-align:center;margin:0;text-indent:0"><b style="font-size:13pt"><u>Độc lập - Tự do - Hạnh phúc</u></b></p></td></tr><tr><td align="center" valign="top" style="font-size:13pt;padding-top:4pt">Số: ${o(soHienTai)}/${kyHieu}-${o(hau)}</td><td align="center" valign="top" style="font-size:14pt;padding-top:4pt"><i>${o(ten)}, ${xsNgayChu(ngayCua)}</i></td></tr></table><p align="center" style="text-align:center;margin:12pt 0 0 0"><b style="font-size:14pt">${tieuDe}</b></p><p align="center" style="text-align:center;margin:0"><b style="font-size:14pt">Về việc xóa đăng ký ${dk}</b></p>${duongKe(17)}<p style="margin:0;font-size:6pt">&nbsp;</p>`;
             const canBo = `<p class="tl"><b><u>Chúng tôi gồm</u></b>:</p><p class="tl">1) Đ/c ${cb(c.canBo1)}, Chức vụ: ${o((c.canBo1 || {}).chucVu || '……')}, Đơn vị: ${o(caPh)}, TP. ${o(tp)}.</p><p class="tl">2) Đ/c ${cb(c.canBo2)}, Chức vụ: ${o((c.canBo2 || {}).chucVu || '……')}, Đơn vị: ${o(caPh)}, TP. ${o(tp)}.</p>`;
             const lap = '<p class="tl" style="page-break-after:avoid">Biên bản lập xong hồi ………… giờ ………… cùng ngày, lập thành 02 bản, đã đọc lại cho những người có tên người cùng nghe, đồng ý và thống nhất cùng ký tên./.</p>';
             const hoXoa = nk ? `nhân khẩu thuộc hộ ông/bà ${o(g.ch)}` : `hộ ông/bà ${o(g.ch)}`;
@@ -8646,18 +8663,18 @@ function xsNgayNghiLe() {
 <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
 <style>
 /* Thể thức theo Nghị định 30/2020/NĐ-CP: A4; lề trên 20mm, dưới 20mm, trái 30mm, phải 20mm; Times New Roman 13; số trang ở giữa lề trên từ trang 2 */
-@page WordSection1 { size: 21.0cm 29.7cm; margin: 2.0cm 2.0cm 2.0cm 3.0cm; mso-header-margin: 1.0cm; mso-footer-margin: 1.0cm; ${choWord ? 'mso-header: h1; mso-first-header: fh1; mso-title-page: yes;' : ''} }
-div.WordSection1 { page: WordSection1; }
+${nd30Trang(choWord)}
 body { font-family: "Times New Roman", serif; font-size: 13pt; }
 p { margin: 0 0 6pt 0; line-height: 112%; }
 p.tl { text-align: justify; text-indent: 1.27cm; }
 p.gi { text-align: center; margin-top: 6pt; }
+table, td, th { font-family: "Times New Roman", serif; font-size: 13pt; }
 table.dau, table.ky { width: 100%; border-collapse: collapse; }
 table.dau td { font-family: "Times New Roman", serif; padding: 0 2pt; }
 table.ky { margin-top: 6pt; }
 table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2pt; }
 </style></head>
-<body><div class="WordSection1">${dauTrang(tieuDe)}${thanBai}</div>${choWord ? `
+<body>${nd30Meo(!choWord)}<div class="WordSection1">${dauTrang(tieuDe)}${thanBai}<!--CSKV_DAU--></div>${choWord ? `
 <div style="mso-element:header" id="h1"><p align="center" style="text-align:center;margin:0"><span style="mso-field-code:' PAGE '"><span style="mso-no-proof:yes">2</span></span></p></div>
 <div style="mso-element:header" id="fh1"><p style="margin:0">&nbsp;</p></div>` : ''}</body></html>`;
         }
@@ -10051,19 +10068,37 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
         const CD_DIEN = 'Cấm đi khỏi nơi cư trú';
         const CD_LUAT = 'Luật Thi hành tạm giữ, tạm giam và cấm đi khỏi nơi cư trú';
         const CD_KEY_CH = 'cdCauHinhV1_';
+        // Hồ sơ cán bộ tự khai (permissions/{email}): họ tên, chức vụ, đơn vị, SĐT — tự điền vào văn bản
+        window._cdHoSoCB = window._cdHoSoCB || null;
+        async function cdTaiHoSoCanBo() {
+            try {
+                if (window._cdHoSoCB || !CHE_DO_FIREBASE || !currentUser || !currentUser.email) return window._cdHoSoCB;
+                const doc = await dbFirestore.collection('permissions').doc(currentUser.email.toLowerCase()).get();
+                if (doc.exists) { const r = doc.data(); window._cdHoSoCB = { hoTen: r.hoTen || '', chucVu: r.chucVu || '', donVi: r.donVi || '', sdt: r.sdt || '' }; }
+            } catch (e) { }
+            return window._cdHoSoCB;
+        }
+        const CD_KEY_CB = 'cdCanBoV1_';
+        const CD_TRUONG_CB = ['canBoTen', 'capBac', 'chucVu', 'khuVucPT', 'donViCB', 'sdtCB'];
         function cdCauHinhMacDinh() {
             const p = khuVucHienTai || '', ten = xsTenNgan(), laTanAn = p === 'Phường Tân An';
             const laAdmin = (typeof ADMIN_EMAILS !== 'undefined') && currentUser && ADMIN_EMAILS.includes((currentUser.email || '').toLowerCase());
+            const hs = window._cdHoSoCB || {};
+            let kv = ''; try { const a = (currentUser && currentUser.khuVucPhuTrach) || []; if (a.length && xsSoKV(a[0])) kv = 'Cảnh sát khu vực ' + xsSoKV(a[0]); } catch (e) { }
             return {
-                capTren: laTanAn ? 'CÔNG AN TP CẦN THƠ' : 'CÔNG AN ……………', donVi: 'CÔNG AN ' + p.toUpperCase(), tenPhuong: xsPhThuong(), tp: laTanAn ? 'Cần Thơ' : '……',
+                capTren: laTanAn ? 'CÔNG AN THÀNH PHỐ CẦN THƠ' : 'CÔNG AN ……………', donVi: 'CÔNG AN ' + p.toUpperCase(), tenPhuong: xsPhThuong(), tp: laTanAn ? 'Cần Thơ' : '……',
                 diaDanh: ten, truSo: laTanAn ? 'số 02 Nguyễn Tri Phương, phường Tân An, thành phố Cần Thơ' : '', truongCA: '',
-                canBoTen: laTanAn && laAdmin ? 'Nguyễn Văn Thảo' : '', capBac: laTanAn && laAdmin ? 'Đại úy' : '', chucVu: laTanAn && laAdmin ? 'Cán bộ' : 'Cán bộ',
-                khuVucPT: '', toCSKV: 'TỔ CẢNH SÁT KHU VỰC', ttSo: '59/2026/TT-BCA', ttNgay: '15/5/2026', maCa: xsMaCa()
+                canBoTen: hs.hoTen || (laTanAn && laAdmin ? 'Nguyễn Văn Thảo' : ''), capBac: laTanAn && laAdmin ? 'Đại úy' : '', chucVu: hs.chucVu || 'Cán bộ',
+                donViCB: hs.donVi || ('Công an ' + xsPhThuong()), sdtCB: hs.sdt || '',
+                khuVucPT: kv, toCSKV: 'TỔ CẢNH SÁT KHU VỰC', ttSo: '59/2026/TT-BCA', ttNgay: '15/5/2026', maCa: xsMaCa()
             };
         }
         function cdCauHinh() {
-            let luu = {}; try { luu = JSON.parse(localStorage.getItem(CD_KEY_CH + (khuVucHienTai || '')) || '{}'); } catch (e) { }
-            return Object.assign(cdCauHinhMacDinh(), luu);
+            const doc = k => { try { return JSON.parse(localStorage.getItem(k) || '{}') || {}; } catch (e) { return {}; } };
+            const r = cdCauHinhMacDinh();
+            [doc(CD_KEY_CH + (khuVucHienTai || '')), doc(CD_KEY_CB + ((currentUser && currentUser.email) || '').toLowerCase())].forEach(o => Object.keys(o).forEach(k => { if (o[k] != null && String(o[k]).trim() !== '') r[k] = String(o[k]).trim(); }));
+            r.capTren = String(r.capTren || '').replace(/\bTP\.?(?=\s)/g, 'THÀNH PHỐ');
+            return r;
         }
         const CD_O = s => escHtml(String(s == null ? '' : s));
         const cdTr = (s, g) => (s && String(s).trim()) ? CD_O(String(s).trim()) : (g || '……………………');
@@ -10117,17 +10152,25 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
         }
 
         // ---- thành phần dùng chung của văn bản ----
-        const cdDuongKe = pc => `<table align="center" width="${pc}%" style="border-collapse:collapse;margin:0 auto"><tr><td style="border-top:1px solid #000;font-size:1pt;line-height:1pt;height:1pt;padding:0">&nbsp;</td></tr></table>`;
+        // Đường kẻ ngang đặt DƯỚI dòng chữ (có khe hở), rộng pc% của khung chứa — đúng thể thức NĐ 30/2020: kẻ dưới tên cơ quan và dưới trích yếu
+        const cdDuongKe = pc => { const m = pc >= 40 ? 2.5 : 5.75; return `<p style="margin:3pt ${m}cm 0 ${m}cm;font-size:2pt;line-height:2pt;text-indent:0;border:none;border-bottom:solid windowtext .75pt;padding:0cm 0cm 1pt 0cm;mso-border-bottom-alt:solid windowtext .75pt;mso-padding-alt:0cm 0cm 1pt 0cm">&nbsp;</p>`; };
+        const cdTieuNgu = `<p align="center" style="text-align:center;margin:0;text-indent:0"><b style="font-size:13pt"><u>Độc lập - Tự do - Hạnh phúc</u></b></p>`;
+        const cdRutTieu = t => String(t || '').replace(/(CÔNG AN (?:PHƯỜNG|XÃ))\s+[^<]*/g, '$1');
+        const cdDonViCB = c => { const d = String(c.ch.donViCB || c.ca || '').trim(); return CD_O(d) + (/thành phố|tỉnh/i.test(d) ? '' : ', thành phố ' + cdTr(c.ch.tp)); };
         function cdMaMau(c, ma) { return `<p align="right" style="text-align:right;margin:0 0 4pt 0;font-size:10pt;line-height:110%">Mẫu ${CD_O(ma)}<br>BH theo TT số ${CD_O(c.ch.ttSo)}<br>ngày ${CD_O(c.ch.ttNgay)}</p>`; }
-        function cdQuocHieu() { return `<p align="center" style="text-align:center;margin:0"><b style="font-size:12pt">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b></p><p align="center" style="text-align:center;margin:0"><b style="font-size:13pt;border-bottom:1px solid #000">Độc lập - Tự do - Hạnh phúc</b></p>`; }
+        function cdQuocHieu() { return `<p align="center" style="text-align:center;margin:0"><b style="font-size:12pt">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b></p>${cdTieuNgu}`; }
         function cdDauHC(c, o) {
-            // o: {kyHieu, so, ngay, toCSKV, boSo}
-            const left = `${CD_O(o.capTren || c.ch.capTren)}<br><b>${CD_O(o.donVi || c.ch.donVi)}</b>${o.toCSKV ? '<br><b>' + CD_O(c.ch.toCSKV) + '</b>' : ''}${cdDuongKe(45)}`;
+            // o: {kyHieu, so, ngay, toCSKV, boSo} — thể thức NĐ 30/2020/NĐ-CP: cơ quan chủ quản (thường), tên cơ quan (đậm, in hoa), đường kẻ 1/3–1/2 độ dài chữ
+            const capTren = o.capTren || c.ch.capTren, donVi = o.donVi || c.ch.donVi;
+            const left = `${capTren ? '<span style="font-size:12pt">' + CD_O(capTren) + '</span><br>' : ''}<b style="font-size:12pt">${CD_O(donVi)}</b>${o.toCSKV ? '<br><b style="font-size:12pt">' + CD_O(c.ch.toCSKV) + '</b>' : ''}${cdDuongKe(40)}`;
             const ngay = o.ngay ? xsNgayChu(o.ngay) : 'ngày …… tháng …… năm ……';
-            return `<table class="dau"><tr><td width="40%" align="center" valign="top" style="font-size:12pt">${left}</td><td width="60%" align="center" valign="top"><b style="font-size:12pt;white-space:nowrap">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><table align="center" style="border-collapse:collapse;margin:0 auto"><tr><td style="border-bottom:1px solid #000;padding:0 2pt 1pt 2pt;font-size:13pt;white-space:nowrap"><b>Độc lập - Tự do - Hạnh phúc</b></td></tr></table></td></tr><tr><td align="center" valign="top" style="font-size:13pt;padding-top:4pt">${o.boSo ? '&nbsp;' : 'Số: ' + (o.so ? CD_O(o.so) : '.............') + '/' + CD_O(o.kyHieu)}</td><td align="center" valign="top" style="font-size:13pt;padding-top:4pt"><i>${CD_O(c.ch.diaDanh)}, ${ngay}</i></td></tr></table>`;
+            return `<table class="dau" cellspacing="0" cellpadding="0"><tr><td width="44%" align="center" valign="top" style="font-size:12pt">${left}</td><td width="56%" align="center" valign="top"><b style="font-size:12pt;white-space:nowrap">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b>${cdTieuNgu}</td></tr><tr><td align="center" valign="top" style="font-size:13pt;padding-top:4pt">${o.boSo ? '&nbsp;' : 'Số: ' + (o.so ? CD_O(o.so) : '.............') + '/' + CD_O(o.kyHieu)}</td><td align="center" valign="top" style="font-size:13pt;padding-top:4pt"><i>${CD_O(c.ch.diaDanh)}, ${ngay}</i></td></tr></table>`;
         }
         function cdTieuDe(ten, trichYeu, kyDuong) {
-            return `<p align="center" style="text-align:center;margin:12pt 0 0 0"><b style="font-size:14pt">${ten}</b></p>` + (trichYeu ? `<p align="center" style="text-align:center;margin:0"><b style="font-size:14pt">${trichYeu}</b></p>` : '') + (kyDuong ? cdDuongKe(kyDuong) : '') + '<p style="margin:0;font-size:6pt">&nbsp;</p>';
+            // Tên loại (đậm, in hoa 14pt) + trích yếu "Về việc …" (đậm, in thường 14pt) + đường kẻ dưới trích yếu
+            let ty = String(trichYeu || '').trim();
+            if (ty && !/^(Về việc|V\/v)/i.test(ty)) { ty = ty.replace(/^Việc\s+/i, ''); ty = 'Về việc ' + ty.charAt(0).toLowerCase() + ty.slice(1); }
+            return `<p align="center" style="text-align:center;margin:14pt 0 0 0"><b style="font-size:14pt">${ten}</b></p>` + (ty ? `<p align="center" style="text-align:center;margin:0"><b style="font-size:13pt">${ty}</b></p>` + cdDuongKe(33) : '') + '<p style="margin:0;font-size:6pt">&nbsp;</p>';
         }
         const cdP = s => `<p class="tl">${s}</p>`, cdPL = s => `<p style="text-align:left;margin:0 0 3pt 0">${s}</p>`;
         function cdKhoi(c, o) {
@@ -10158,7 +10201,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             return `<table class="ky" style="page-break-inside:avoid"><tr><td width="50%" valign="top" style="text-align:left">${nn}</td><td width="50%" align="center" valign="top"><b>${chucDanh}</b><br><i style="font-size:12pt">(Ký, ghi rõ họ tên, đóng dấu)</i></td></tr><tr><td></td><td align="center" valign="bottom" height="70" style="height:70pt"><b>${tenKy ? CD_O(tenKy) : ''}</b></td></tr></table>`;
         }
         function cdKyCot(cot, cao) {
-            return `<table class="ky" style="page-break-inside:avoid"><tr>${cot.map(x => `<td width="${Math.floor(100 / cot.length)}%" align="center" valign="top"><b>${x.tieu}</b><br><i style="font-size:12pt">${x.ghi || '(Ký, ghi rõ họ tên)'}</i></td>`).join('')}</tr><tr><td colspan="${cot.length}" height="${cao || 64}" style="height:${cao || 64}pt">&nbsp;</td></tr><tr>${cot.map(x => `<td align="center" valign="top"><b>${x.ten ? CD_O(x.ten) : ''}</b></td>`).join('')}</tr></table>`;
+            return `<table class="ky" style="page-break-inside:avoid"><tr>${cot.map(x => `<td width="${Math.floor(100 / cot.length)}%" align="center" valign="top"><b>${cdRutTieu(x.tieu)}</b><br><i style="font-size:12pt">${x.ghi || '(Ký, ghi rõ họ tên)'}</i></td>`).join('')}</tr><tr><td colspan="${cot.length}" height="${cao || 64}" style="height:${cao || 64}pt">&nbsp;</td></tr><tr>${cot.map(x => `<td align="center" valign="top"><b>${x.ten ? CD_O(x.ten) : ''}</b></td>`).join('')}</tr></table>`;
         }
         const cdTruongCA = c => 'TRƯỞNG ' + c.ch.donVi.replace(/^CÔNG AN\s*/i, 'CÔNG AN ');
         const cdChucTruong = c => 'TRƯỞNG CÔNG AN ' + String(c.ch.tenPhuong || '').toUpperCase().split(' ')[0];
@@ -10190,7 +10233,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                   `<p align="center" style="text-align:center"><b>TRƯỞNG CÔNG AN ${CD_O(String(c.ch.tenPhuong).toUpperCase())}</b></p>` + cdP(c.canCuTT) +
                   `<p align="center" style="text-align:center"><b>QUYẾT ĐỊNH:</b></p>` + cdP('<b>Điều 1.</b> Phân công đồng chí:') +
                   cdPL('Họ và tên: ' + cdTr(c.ch.canBoTen)) + `<table style="width:100%;border-collapse:collapse"><tr><td width="50%">Cấp bậc: ${cdTr(c.ch.capBac, '………')}</td><td>Chức vụ: ${cdTr(c.ch.chucVu, '………')}</td></tr></table>` +
-                  cdPL('Đơn vị công tác: ' + CD_O(c.ca) + ', thành phố ' + cdTr(c.ch.tp)) + cdP('Thực hiện việc quản lý, theo dõi và kiểm tra, xác minh đối với người bị cấm đi khỏi nơi cư trú sau:') + cdKhoi(c) +
+                  cdPL('Đơn vị công tác: ' + cdDonViCB(c)) + cdP('Thực hiện việc quản lý, theo dõi và kiểm tra, xác minh đối với người bị cấm đi khỏi nơi cư trú sau:') + cdKhoi(c) +
                   cdP('<b>Điều 2.</b> Quyết định này có hiệu lực kể từ ngày ký. Những người có tên tại Điều 1 chịu trách nhiệm thi hành Quyết định này./.') + cdKyPhai(c, cdChucTruong(c), cdNoiNhanLuu('Như Điều 1'), c.ch.truongCA) },
 
             { id: 'BCDX1', ma: 'Báo cáo đề xuất', gd: 1, ten: 'Báo cáo đề xuất phân công quản lý, theo dõi', kyHieu: 'BC-ĐX', mauTT: false, truong: [],
@@ -10208,7 +10251,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
 
             { id: 'KH', ma: 'Kế hoạch', gd: 1, ten: 'Kế hoạch quản lý, giám sát, giáo dục, giúp đỡ của CSKV', kyHieu: '', mauTT: false,
               truong: [cdText('khuVucPT', 'Khu vực phụ trách', c => c.ch.khuVucPT || '')],
-              build: c => cdDauHC(c, { boSo: true, toCSKV: true, donVi: c.ch.donVi, capTren: c.ch.donVi, ngay: c.v.ngay }).replace(/<b>[^<]*<\/b>(?=<br><b>)/, '') + cdTieuDe('KẾ HOẠCH', 'Quản lý, giám sát, giáo dục, giúp đỡ người bị cấm đi khỏi nơi cư trú') +
+              build: c => cdDauHC(c, { boSo: true, donVi: c.ch.toCSKV, capTren: c.ch.donVi, ngay: c.v.ngay }).replace(/<b>[^<]*<\/b>(?=<br><b>)/, '') + cdTieuDe('KẾ HOẠCH', 'Quản lý, giám sát, giáo dục, giúp đỡ người bị cấm đi khỏi nơi cư trú') +
                   cdP('Căn cứ ' + CD_O(cdThongTu(c.ch)) + ';') + cdP(`${c.v.khuVucPT ? CD_O(c.v.khuVucPT) : 'Cảnh sát khu vực ……'} xây dựng kế hoạch quản lý, giám sát, giáo dục, giúp đỡ người bị cấm đi khỏi nơi cư trú trên địa bàn phụ trách cụ thể như sau:`) +
                   '<p style="text-align:left;margin:6pt 0 3pt 0"><b>I. MỤC ĐÍCH, YÊU CẦU</b></p>' +
                   cdP('- Quản lý chặt chẽ biến động cư trú, sinh hoạt của đối tượng nhằm bảo đảm công tác thi hành biện pháp cấm đi khỏi nơi cư trú tuân thủ đúng pháp luật.') +
@@ -10367,27 +10410,41 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
         const CD_GD = { 1: '1. Mở hồ sơ và phân công', 2: '2. Trong thời gian quản lý, theo dõi', 3: '3. Kết thúc quản lý' };
         const DT_BO_MAU = { [CD_DIEN]: { ten: 'Cấm đi khỏi nơi cư trú', mau: CD_MAU, gd: CD_GD } };
 
-        function cdHtml(mau, d, v, choWord) {
+        // ---- Thể thức trang chung theo NĐ 30/2020/NĐ-CP cho mọi văn bản Word/in của phần mềm ----
+        function nd30Trang(choWord) {
+            return 'u { text-decoration-skip-ink: none; }\n' + (choWord
+                ? `@page WordSection1 { size: 21.0cm 29.7cm; margin: 2.0cm 2.0cm 2.0cm 3.0cm; mso-header-margin: 1.0cm; mso-footer-margin: 1.0cm; mso-header: h1; mso-first-header: fh1; mso-title-page: yes; }
+div.WordSection1 { page: WordSection1; }`
+                : `@page { size: A4 portrait; margin: 2.0cm 2.0cm 2.0cm 3.0cm; @top-center { content: counter(page); font: 13pt "Times New Roman", serif; } }
+@page :first { @top-center { content: none; } }
+@media print { .khong-in { display: none !important; } }`);
+        }
+        function nd30Meo(choIn) {
+            return choIn ? '<div class="khong-in" style="font:12px Arial,sans-serif;background:#fff8d6;border:1px solid #e0c200;padding:6px 10px;margin:0 0 10px 0">Để in đúng thể thức: <b>Khổ A4</b> · <b>Bố cục Dọc</b> · <b>Lề: Mặc định</b> · <b>BỎ chọn “Đầu trang và chân trang”</b>. (Dòng này không in ra giấy.)</div>' : '';
+        }
+        function cdHtml(mau, d, v, choWord, choIn) {
             const c = cdBoiCanh(d, v);
             const body = mau.build(c);
             const tenFile = mau.ma + ' ' + mau.ten;
+            const cssTrang = nd30Trang(choWord);
+            const meo = nd30Meo(choIn);
             return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="utf-8"><title>${CD_O(tenFile)}</title>
 <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
 <style>
-/* Thể thức theo Nghị định 30/2020/NĐ-CP: A4; lề trên 20mm, dưới 20mm, trái 30mm, phải 20mm; Times New Roman 13; số trang ở giữa lề trên từ trang 2 */
-@page WordSection1 { size: 21.0cm 29.7cm; margin: 2.0cm 2.0cm 2.0cm 3.0cm; mso-header-margin: 1.0cm; mso-footer-margin: 1.0cm; ${choWord ? 'mso-header: h1; mso-first-header: fh1; mso-title-page: yes;' : ''} }
-div.WordSection1 { page: WordSection1; }
+/* Thể thức theo Nghị định 30/2020/NĐ-CP: A4 dọc; lề trên 20mm, dưới 20mm, trái 30mm, phải 20mm; Times New Roman 13; số trang ở giữa lề trên từ trang 2 */
+${cssTrang}
 body { font-family: "Times New Roman", serif; font-size: 13pt; }
 p { margin: 0 0 6pt 0; line-height: 112%; }
 p.tl { text-align: justify; text-indent: 1.27cm; }
+table, td, th { font-family: "Times New Roman", serif; font-size: 13pt; }
 table.dau, table.ky, table.kh { width: 100%; border-collapse: collapse; }
-table.dau td, table.kh td { font-family: "Times New Roman", serif; padding: 0 2pt; }
-table.kh td { font-size: 13pt; padding: 1pt 2pt; }
+table.dau td, table.kh td { padding: 0 2pt; }
+table.kh td { padding: 1pt 2pt; vertical-align: top; }
 table.ky { margin-top: 6pt; }
-table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2pt; }
+table.ky td { padding: 2pt; }
 </style></head>
-<body><div class="WordSection1">${body}</div>${choWord ? `
+<body>${meo}<div class="WordSection1">${body}<!--CSKV_DAU--></div>${choWord ? `
 <div style="mso-element:header" id="h1"><p align="center" style="text-align:center;margin:0"><span style="mso-field-code:' PAGE '"><span style="mso-no-proof:yes">2</span></span></p></div>
 <div style="mso-element:header" id="fh1"><p style="margin:0">&nbsp;</p></div>` : ''}</body></html>`;
         }
@@ -10433,14 +10490,18 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             return v;
         }
         let cdDangVe = null;
-        function cdMoLap(id) {
+        async function cdMoLap(id) {
             const bo = dtBoMauCuaDien(document.getElementById('dt_dienDoiTuong').value); if (!bo) return;
             const mau = bo.mau.find(m => m.id === id); if (!mau) return;
             if (!document.getElementById('dtId').value) return alert('Hãy lưu hồ sơ trước khi lập văn bản.');
             if (!(document.getElementById('dt_hoTen').value || '').trim()) return alert('Hồ sơ chưa có họ tên.');
+            await cdTaiHoSoCanBo();
             cdMauHienTai = mau; const d = cdBanGhiTuForm();
             document.getElementById('cdvTieuDe').innerText = mau.ma + ' — ' + mau.ten;
             document.getElementById('cdvTruong').innerHTML = cdVeTruong(mau, d);
+            { const k = cdCauHinh(), thieu = [!k.canBoTen && 'họ tên cán bộ', !k.capBac && 'cấp bậc', !k.truongCA && 'họ tên Trưởng Công an'].filter(Boolean);
+              if (thieu.length) document.getElementById('cdvTruong').insertAdjacentHTML('afterbegin', `<div class="cd-f cd-r" style="color:#fbbf24;font-size:12px">⚠️ Chưa khai: ${thieu.join(', ')}. Bấm “⚙️ Thông tin đơn vị &amp; cán bộ” để điền một lần, các văn bản sau tự có.</div>`);
+              const ck = document.getElementById('cdvChe'); if (ck) ck.checked = xuatCheSoBat(); }
             const kt = mau.gd === 3;
             const kk = document.getElementById('cdvKetThuc'); kk.classList.toggle('hidden', !kt);
             if (kt) {
@@ -10457,12 +10518,12 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             cdDangVe = setTimeout(() => {
                 if (!cdMauHienTai) return;
                 const f = document.getElementById('cdvXem'); if (!f) return;
-                try { f.srcdoc = cdHtml(cdMauHienTai, cdBanGhiTuForm(), cdDocV(cdMauHienTai), false); } catch (e) { f.srcdoc = '<p style="font:14px sans-serif;color:#b00">Lỗi dựng xem trước: ' + CD_O(e.message) + '</p>'; }
+                try { const dd = cdBanGhiTuForm(); let h = cdHtml(cdMauHienTai, dd, cdDocV(cdMauHienTai), false); const ck = document.getElementById('cdvChe'); if (ck && ck.checked) h = cheVanBanHtml(h, [dd.soDinhDanh]).html; f.srcdoc = h; } catch (e) { f.srcdoc = '<p style="font:14px sans-serif;color:#b00">Lỗi dựng xem trước: ' + CD_O(e.message) + '</p>'; }
             }, 150);
         }
         async function cdXuat(kieu) {
             const mau = cdMauHienTai; if (!mau) return;
-            const d = cdBanGhiTuForm(), v = cdDocV(mau), html = cdHtml(mau, d, v, kieu !== 'in');
+            const d = cdBanGhiTuForm(), v = cdDocV(mau), html = cdHtml(mau, d, v, kieu !== 'in', kieu === 'in'); const ckChe = document.getElementById('cdvChe'); window.__cheVbTam = ckChe ? !!ckChe.checked : undefined;
             const tenFile = (mau.ma + '_' + boDauTiengViet(d.hoTen || '').replace(/[^\w]+/g, '_')).replace(/_+$/, '').replace(/Đ/g, 'D');
             if (kieu === 'in') {
                 const w = window.open('', '_blank'); if (!w) return alert('Trình duyệt đang chặn cửa sổ bật lên (pop-up). Hãy cho phép rồi bấm lại.');
@@ -10471,6 +10532,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                 const blob = new Blob(['﻿', html], { type: 'application/msword' }), url = URL.createObjectURL(blob), a = document.createElement('a');
                 a.href = url; a.download = tenFile + '.doc'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 2500);
             }
+            window.__cheVbTam = undefined;
             await cdGhiNhan(mau, d, v);
         }
         // Ghi vào hồ sơ: nhật ký văn bản đã lập; số/ngày QĐ phân công cán bộ (CĐ1); kết thúc quản lý + đổi diện (nếu được chọn)
@@ -10503,15 +10565,17 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
 
         // ---- thông tin đơn vị & cán bộ ----
         const CD_CH_TRUONG = [['capTren', 'Cơ quan chủ quản (in hoa)'], ['donVi', 'Tên đơn vị (in hoa)'], ['tenPhuong', 'Tên đơn vị trong câu văn (VD: phường Tân An)'], ['tp', 'Thành phố/tỉnh'], ['diaDanh', 'Địa danh ghi ở ngày tháng'], ['truSo', 'Địa chỉ trụ sở'],
-            ['truongCA', 'Họ tên Trưởng Công an'], ['canBoTen', 'Họ tên cán bộ CSKV'], ['capBac', 'Cấp bậc'], ['chucVu', 'Chức vụ'], ['khuVucPT', 'Khu vực phụ trách (VD: Cảnh sát khu vực 7)'], ['toCSKV', 'Tên tổ (in hoa)'], ['maCa', 'Ký hiệu đơn vị trong số văn bản (VD: CAP)'], ['ttSo', 'Số Thông tư căn cứ'], ['ttNgay', 'Ngày ban hành Thông tư']];
-        function cdMoCauHinh() {
+            ['truongCA', 'Họ tên Trưởng Công an'], ['maCa', 'Ký hiệu đơn vị trong số văn bản (VD: CAP)'], ['toCSKV', 'Tên tổ (in hoa)'], ['ttSo', 'Số Thông tư căn cứ'], ['ttNgay', 'Ngày ban hành Thông tư'],
+            ['canBoTen', 'Họ tên cán bộ quản lý (CSKV)'], ['capBac', 'Cấp bậc'], ['chucVu', 'Chức vụ'], ['donViCB', 'Đơn vị công tác của cán bộ'], ['khuVucPT', 'Khu vực phụ trách (VD: Cảnh sát khu vực 7)'], ['sdtCB', 'Số điện thoại cán bộ']];
+        async function cdMoCauHinh() {
+            await cdTaiHoSoCanBo();
             const ch = cdCauHinh();
-            document.getElementById('cdchTruong').innerHTML = CD_CH_TRUONG.map(([k, n]) => `<div class="cd-f"><label for="cdch_${k}">${CD_O(n)}</label><input id="cdch_${k}" class="cd-o" value="${CD_O(ch[k] || '')}"></div>`).join('');
+            document.getElementById('cdchTruong').innerHTML = '<p class="cd-gc cd-r" style="grid-column:1/-1">Họ tên, chức vụ, đơn vị lấy tự động từ hồ sơ khai báo của tài khoản; chỉnh lại ở đây nếu cần. Thông tin cán bộ lưu riêng theo tài khoản trên máy này.</p>' + CD_CH_TRUONG.map(([k, n]) => `<div class="cd-f"><label for="cdch_${k}">${CD_O(n)}</label><input id="cdch_${k}" class="cd-o" value="${CD_O(ch[k] || '')}"></div>`).join('');
             document.getElementById('cdchModal').classList.remove('hidden');
         }
         function cdLuuCauHinh() {
-            const o = {}; CD_CH_TRUONG.forEach(([k]) => { o[k] = (document.getElementById('cdch_' + k).value || '').trim(); });
-            try { localStorage.setItem(CD_KEY_CH + (khuVucHienTai || ''), JSON.stringify(o)); } catch (e) { return alert('Không lưu được trên trình duyệt này.'); }
+            const dv = {}, cb = {}; CD_CH_TRUONG.forEach(([k]) => { (CD_TRUONG_CB.includes(k) ? cb : dv)[k] = (document.getElementById('cdch_' + k).value || '').trim(); });
+            try { localStorage.setItem(CD_KEY_CH + (khuVucHienTai || ''), JSON.stringify(dv)); localStorage.setItem(CD_KEY_CB + ((currentUser && currentUser.email) || '').toLowerCase(), JSON.stringify(cb)); } catch (e) { return alert('Không lưu được trên trình duyệt này.'); }
             document.getElementById('cdchModal').classList.add('hidden');
             if (!document.getElementById('cdvModal').classList.contains('hidden') && cdMauHienTai) cdMoLap(cdMauHienTai.id);
         }
@@ -11392,7 +11456,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                 const hn = new Date();
                 const soKH = document.getElementById('bc_soKyHieu').value.trim();
                 const chucDanh = document.getElementById('bc_chucDanh').value;
-                const hoTenKy = document.getElementById('bc_hoTenKy').value.trim();
+                await cdTaiHoSoCanBo(); const hoTenKy = document.getElementById('bc_hoTenKy').value.trim() || (chucDanh === 'CẢNH SÁT KHU VỰC' ? (cdCauHinh().canBoTen || '') : '');
                 const kySo = (document.getElementById('bc_hinhThucKy') || {}).value === 'so';
                 const phamViChu = (currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length) ? currentUser.khuVucPhuTrach.join(', ') + ' — ' + khuVucHienTai : khuVucHienTai;
 
@@ -11400,8 +11464,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
 <head><meta charset="utf-8"><title>Báo cáo công tác ${o(ky.nhan)}</title>
 <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
 <style>
-@page WordSection1 { size: 21.0cm 29.7cm; margin: 2.0cm 2.0cm 2.0cm 3.0cm; mso-header-margin: 1.0cm; mso-footer-margin: 1.0cm; ${dinhDang === 'pdf' ? '' : 'mso-header: h1; mso-first-header: fh1; mso-title-page: yes;'} }
-div.WordSection1 { page: WordSection1; }
+${nd30Trang(dinhDang !== 'pdf')}
 body { font-family: "Times New Roman", serif; font-size: 14pt; }
 p { margin: 0 0 6pt 0; text-align: justify; text-indent: 1.27cm; line-height: 125%; }
 td, th { font-family: "Times New Roman", serif; font-size: 13pt; padding: 3pt 5pt; }
@@ -11410,9 +11473,9 @@ table.luoi td, table.luoi th { border: 1px solid #000; }
 table.luoi th { background: #E8ECF3; }
 h3 { font-size: 14pt; font-weight: bold; margin: 10pt 0 4pt 0; }
 </style></head>
-<body><div class="WordSection1">
-${(() => { const dk = pc => `<table align="center" width="${pc}%" style="border-collapse:collapse;margin:0 auto"><tr><td style="border:none;border-top:1px solid #000;font-size:1pt;line-height:1pt;height:1pt;padding:0">&nbsp;</td></tr></table>`; return `<table width="100%" style="border:none;border-collapse:collapse"><tr><td width="42%" valign="top" align="center" style="border:none;font-size:12pt;text-indent:0">CÔNG AN THÀNH PHỐ CẦN THƠ<br><b>CÔNG AN ${o(donViHoa)}</b>${dk(45)}</td><td width="58%" valign="top" align="center" style="border:none"><b style="font-size:12pt">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><table align="center" style="border-collapse:collapse;margin:0 auto"><tr><td style="border:none;border-bottom:1px solid #000;padding:0 2pt 1pt 2pt;font-size:14pt;white-space:nowrap"><b>Độc lập - Tự do - Hạnh phúc</b></td></tr></table></td></tr><tr><td align="center" valign="top" style="border:none;font-size:13pt;padding-top:4pt">Số: ${soKH ? o(soKH) : '……/BC-CA'}</td><td align="center" valign="top" style="border:none;font-size:14pt;padding-top:4pt"><i>${o(xsTenNgan())}, ${xsNgayChu(xsIso(hn))}</i></td></tr></table>`; })()}
-<p align="center" style="text-align:center;text-indent:0;margin:12pt 0 0 0"><b style="font-size:14pt">BÁO CÁO</b></p><p align="center" style="text-align:center;text-indent:0;margin:0"><b style="font-size:14pt">Kết quả công tác ${o(chucDanh === 'CẢNH SÁT KHU VỰC' ? 'Cảnh sát khu vực' : 'Công an ' + khuVucHienTai)} ${o(ky.nhan)}</b></p><table align="center" width="30%" style="border-collapse:collapse;margin:0 auto"><tr><td style="border:none;border-top:1px solid #000;font-size:1pt;line-height:1pt;height:1pt;padding:0">&nbsp;</td></tr></table><p align="center" style="text-align:center;text-indent:0;margin:4pt 0 8pt 0"><i style="font-size:12pt">(Từ ${o(ky.khoangNgay.replace(' – ', ' đến '))} — phạm vi: ${o(phamViChu)})</i></p>
+<body>${nd30Meo(dinhDang === 'pdf')}<div class="WordSection1">
+${(() => { const dk = pc => `<p style="margin:3pt ${pc >= 40 ? 2.5 : 6.5}cm 0 ${pc >= 40 ? 2.5 : 6.5}cm;font-size:2pt;line-height:2pt;text-indent:0;border:none;border-bottom:solid windowtext .75pt;padding:0cm 0cm 1pt 0cm;mso-border-bottom-alt:solid windowtext .75pt;mso-padding-alt:0cm 0cm 1pt 0cm">&nbsp;</p>`; return `<table width="100%" style="border:none;border-collapse:collapse"><tr><td width="42%" valign="top" align="center" style="border:none;font-size:12pt;text-indent:0">CÔNG AN THÀNH PHỐ CẦN THƠ<br><b>CÔNG AN ${o(donViHoa)}</b>${dk(45)}</td><td width="58%" valign="top" align="center" style="border:none"><b style="font-size:12pt">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><p align="center" style="text-align:center;margin:0;text-indent:0"><b style="font-size:13pt"><u>Độc lập - Tự do - Hạnh phúc</u></b></p></td></tr><tr><td align="center" valign="top" style="border:none;font-size:13pt;padding-top:4pt">Số: ${soKH ? o(soKH) : '……/BC-CA'}</td><td align="center" valign="top" style="border:none;font-size:14pt;padding-top:4pt"><i>${o(xsTenNgan())}, ${xsNgayChu(xsIso(hn))}</i></td></tr></table>`; })()}
+<p align="center" style="text-align:center;text-indent:0;margin:12pt 0 0 0"><b style="font-size:14pt">BÁO CÁO</b></p><p align="center" style="text-align:center;text-indent:0;margin:0"><b style="font-size:14pt">Kết quả công tác ${o(chucDanh === 'CẢNH SÁT KHU VỰC' ? 'Cảnh sát khu vực' : 'Công an ' + khuVucHienTai)} ${o(ky.nhan)}</b></p><p style="margin:3pt 5.75cm 0 5.75cm;font-size:2pt;line-height:2pt;text-indent:0;border:none;border-bottom:solid windowtext .75pt;padding:0cm 0cm 1pt 0cm;mso-border-bottom-alt:solid windowtext .75pt;mso-padding-alt:0cm 0cm 1pt 0cm">&nbsp;</p><p align="center" style="text-align:center;text-indent:0;margin:4pt 0 8pt 0"><i style="font-size:12pt">(Từ ${o(ky.khoangNgay.replace(' – ', ' đến '))} — phạm vi: ${o(phamViChu)})</i></p>
 
 <h3>I. TÌNH HÌNH DÂN CƯ, ĐỊA BÀN</h3>
 <p>Tại thời điểm báo cáo, địa bàn quản lý có <b>${tongHo.toLocaleString('vi-VN')}</b> hộ, <b>${tongNk.toLocaleString('vi-VN')}</b> nhân khẩu, phân theo diện cư trú như sau:</p>
@@ -11447,7 +11510,7 @@ ${(document.getElementById('bc_phuongHuong').value || '').trim() ? noiDung(docum
 <td width="50%" valign="top" align="center" style="border:none"><b>${o(chucDanh)}</b>${kySo ? '<br>'.repeat(9) : '<br><br><br><br><br>'}${hoTenKy ? '<b>' + o(hoTenKy) + '</b>' : ''}</td>
 </tr></table>
 ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự thảo do phần mềm Quản Lý Địa Bàn CSKV tự tổng hợp từ số liệu tại thời điểm ${hn.toLocaleString('vi-VN')}; cán bộ cần đối chiếu, bổ sung và xác nhận trước khi ký, gửi.</i></p>`}
-</div>${dinhDang === 'pdf' ? '' : `
+<!--CSKV_DAU--></div>${dinhDang === 'pdf' ? '' : `
 <div style="mso-element:header" id="h1"><p align="center" style="text-align:center;margin:0;text-indent:0"><span style="mso-field-code:' PAGE '"><span style="mso-no-proof:yes">2</span></span></p></div>
 <div style="mso-element:header" id="fh1"><p style="margin:0;text-indent:0">&nbsp;</p></div>`}</body></html>`;
 
@@ -13085,7 +13148,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
         //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
         // ======================================================================================================
-        const PHIEN_BAN_APP = '2026.11.01';
+        const PHIEN_BAN_APP = '2026.11.04';
         const SB_NHOM = [
             { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
             { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
@@ -13941,8 +14004,19 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
   function ghiNhatKyXuat(loai, ten, ma, coDau) {
     try { window.ghiNhatKy('Xuất file (' + loai + ')', String(ten || '') + ' · mã ' + ma + (coDau ? '' : ' · không ghi dấu trong file')); } catch (e) { }
   }
+  function cheHtmlXuat(html) {
+    try {
+      if (typeof cheVbBat === 'function' && typeof cheVanBanHtml === 'function' && cheVbBat()) {
+        var r = cheVanBanHtml(html);
+        if (r.dem && typeof soCheToast === 'function') soCheToast('Đã che 10 ký tự đầu của ' + r.dem + ' số CCCD/HSCT trong văn bản (Hệ thống ▸ Xuất file để đổi).');
+        return r.html;
+      }
+    } catch (e) { console.warn('Không che được số trong văn bản:', e); }
+    return html;
+  }
   function chenDauVaoHtml(html, ma) {
-    var dong = '<p style="margin:14pt 0 0 0;padding-top:3pt;border-top:1px solid #bbb;font:8pt Arial,sans-serif;color:#666;text-indent:0;text-align:left">' + esc(dongDau(ma)) + '</p>';
+    var dong = '<p style="margin:10pt 0 0 0;font:8pt Arial,sans-serif;color:#666;text-indent:0;text-align:left;page-break-before:avoid">' + esc(dongDau(ma)) + '</p>';
+    if (html.indexOf('<!--CSKV_DAU-->') >= 0) return html.replace('<!--CSKV_DAU-->', dong);
     var i = html.toLowerCase().lastIndexOf('</body>');
     return i >= 0 ? html.slice(0, i) + dong + html.slice(i) : html + dong;
   }
@@ -13990,7 +14064,8 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
           for (var i = 0; i < parts.length; i++) if (typeof parts[i] === 'string' && /<\/body>/i.test(parts[i])) idx = i;
           if (idx >= 0) {
             var ma = maXuat(), ghi = quyetDinhGhiDau('Word');
-            if (ghi) { parts = parts.slice(); parts[idx] = chenDauVaoHtml(parts[idx], ma); }
+            parts = parts.slice(); parts[idx] = cheHtmlXuat(parts[idx]);
+            if (ghi) parts[idx] = chenDauVaoHtml(parts[idx], ma);
             ghiNhatKyXuat('Word', tieuDeHtml(String(parts[idx])), ma, ghi);
           }
         }
@@ -14018,6 +14093,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
                 if (typeof args[i] === 'string' && /<html/i.test(args[i]) && /<\/body>/i.test(args[i])) {
                   daXuLy = true;
                   var ma = maXuat(), ghi = quyetDinhGhiDau('bản in / PDF');
+                  args[i] = cheHtmlXuat(args[i]);
                   if (ghi) args[i] = chenDauVaoHtml(args[i], ma);
                   ghiNhatKyXuat('in/PDF', tieuDeHtml(args[i]), ma, ghi);
                   break;
