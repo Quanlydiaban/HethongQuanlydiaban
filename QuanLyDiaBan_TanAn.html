@@ -10088,7 +10088,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             return {
                 capTren: laTanAn ? 'CÔNG AN THÀNH PHỐ CẦN THƠ' : 'CÔNG AN ……………', donVi: 'CÔNG AN ' + p.toUpperCase(), tenPhuong: xsPhThuong(), tp: laTanAn ? 'Cần Thơ' : '……',
                 diaDanh: ten, truSo: laTanAn ? 'số 02 Nguyễn Tri Phương, phường Tân An, thành phố Cần Thơ' : '', truongCA: '',
-                canBoTen: hs.hoTen || (laTanAn && laAdmin ? 'Nguyễn Văn Thảo' : ''), capBac: laTanAn && laAdmin ? 'Đại úy' : '', chucVu: hs.chucVu || 'Cán bộ',
+                canBoTen: hs.hoTen || '', capBac: '', chucVu: hs.chucVu || 'Cán bộ',
                 donViCB: hs.donVi || ('Công an ' + xsPhThuong()), sdtCB: hs.sdt || '',
                 khuVucPT: kv, toCSKV: 'TỔ CẢNH SÁT KHU VỰC', ttSo: '59/2026/TT-BCA', ttNgay: '15/5/2026', maCa: xsMaCa()
             };
@@ -10137,6 +10137,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
         }
         function cdBoiCanh(d, v) {
             const ch = cdCauHinh(), cd = d.cd || {};
+            if (v) { if (v.cbTen != null) ch.canBoTen = v.cbTen; if (v.cbCap != null) ch.capBac = v.cbCap; if (v.cbCV != null) ch.chucVu = v.cbCV; if (v.cbDV != null) ch.donViCB = v.cbDV; if (v.tcaTen != null) ch.truongCA = v.tcaTen; }
             const c = {
                 ch, v: v || {}, d, cd, hoTen: (d.hoTen || '').trim(), gt: d.gioiTinh || 'Nam', ngaySinh: cdDMY(d.sinhNgay), tenKhac: d.tenGoiKhac || '', thuongTru: d.noiThuongTru || '', noiO: d.noiOHienTai || '',
                 quocTich: d.quocTich || 'Việt Nam', danToc: d.danToc || '', tonGiao: d.tonGiao || '', ngheNghiep: d.ngheNghiep || '', noiLamViec: cd.noiLamViec || '', cccd: d.soDinhDanh || '', ngayCap: cdDMY(d.ngayCap), noiCap: d.noiCap || '',
@@ -10474,22 +10475,43 @@ table.ky td { padding: 2pt; }
             const c = cdBoiCanh(d, {});
             const chung = [{ k: 'so', nhan: 'Số văn bản (để trống nếu chưa có)', loai: 'text', mac: () => '' }, { k: 'ngay', nhan: 'Ngày ban hành/lập', loai: 'date', mac: () => cdHomNay() }];
             const ds = (mau.kyHieu === '' && ['CD3', 'CD4', 'CD6', 'CD13'].includes(mau.id) ? [] : (mau.id === 'KH' ? [chung[1]] : chung)).concat(mau.truong);
-            return ds.map(t => {
+            const cbO = (k, nhan, val) => `<div class="cd-f"><label for="cdv_${k}">${CD_O(nhan)}</label><input type="text" id="cdv_${k}" class="cd-o" value="${CD_O(val || '')}"></div>`;
+            const khoiCB = `<div class="cd-f cd-r" style="font-weight:700;color:#93c5fd;margin-top:2px">👮 Cán bộ lập văn bản &amp; người ký</div>` + cbO('cbTen', 'Họ và tên cán bộ quản lý', c.ch.canBoTen) + cbO('cbCap', 'Cấp bậc (VD: Đại úy)', c.ch.capBac) + cbO('cbCV', 'Chức vụ (VD: Cảnh sát khu vực)', c.ch.chucVu) + cbO('cbDV', 'Đơn vị công tác', c.ch.donViCB) + cbO('tcaTen', 'Họ tên Trưởng Công an (người ký)', c.ch.truongCA);
+            return khoiCB + ds.map(t => {
                 let val = t.mac ? t.mac(c) : ''; const id = 'cdv_' + t.k;
                 let inp;
-                if (t.loai === 'area') inp = `<textarea id="${id}" rows="4" class="cd-o">${CD_O(val)}</textarea>`;
+                if (t.loai === 'area') inp = `<textarea id="${id}" rows="4" class="cd-o" data-mac="${CD_O(val)}">${CD_O(val)}</textarea>`;
                 else if (t.loai === 'chk') inp = `<label class="cd-chk"><input type="checkbox" id="${id}"${val ? ' checked' : ''}> ${CD_O(t.nhan)}</label>`;
                 else if (t.loai === 'sel') inp = `<select id="${id}" class="cd-o">${t.opts.map(o => `<option${o === val ? ' selected' : ''}>${CD_O(o)}</option>`).join('')}</select>`;
-                else inp = `<input type="${t.loai === 'date' ? 'date' : t.loai === 'time' ? 'time' : 'text'}" id="${id}" class="cd-o" value="${CD_O(val)}">`;
+                else inp = `<input type="${t.loai === 'date' ? 'date' : t.loai === 'time' ? 'time' : 'text'}" id="${id}" class="cd-o" value="${CD_O(val)}" data-mac="${CD_O(val)}">`;
                 return t.loai === 'chk' ? `<div class="cd-f cd-r">${inp}</div>` : `<div class="cd-f${t.rong || t.loai === 'area' ? ' cd-r' : ''}"><label for="${id}">${CD_O(t.nhan)}</label>${inp}</div>`;
             }).join('');
         }
         function cdDocV(mau) {
             const v = {}; const ds = [{ k: 'so', loai: 'text' }, { k: 'ngay', loai: 'date' }].concat(mau.truong);
             ds.forEach(t => { const e = document.getElementById('cdv_' + t.k); if (e) v[t.k] = t.loai === 'chk' ? e.checked : (e.value || '').trim(); });
+            ['cbTen', 'cbCap', 'cbCV', 'cbDV', 'tcaTen'].forEach(k => { const e = document.getElementById('cdv_' + k); if (e) v[k] = (e.value || '').trim(); });
             return v;
         }
         let cdDangVe = null;
+        // Lưu nhanh thông tin cán bộ ngay trong hộp thoại lập văn bản và cập nhật các ô mặc định phụ thuộc (Cán bộ làm việc, Chức danh…)
+        function cdLuuCanBoNhanh() {
+            const g = k => ((document.getElementById('cdcb_' + k) || {}).value || '').trim();
+            try {
+                const kc = CD_KEY_CB + ((currentUser && currentUser.email) || '').toLowerCase(), cu = JSON.parse(localStorage.getItem(kc) || '{}') || {};
+                ['canBoTen', 'capBac', 'chucVu', 'donViCB'].forEach(k => { cu[k] = g(k); });
+                localStorage.setItem(kc, JSON.stringify(cu));
+                const kd = CD_KEY_CH + (khuVucHienTai || ''), du = JSON.parse(localStorage.getItem(kd) || '{}') || {};
+                du.truongCA = g('truongCA'); localStorage.setItem(kd, JSON.stringify(du));
+            } catch (e) { }
+            if (!cdMauHienTai) return;
+            const c = cdBoiCanh(cdBanGhiTuForm(), {});
+            (cdMauHienTai.truong || []).forEach(t => {
+                const e = document.getElementById('cdv_' + t.k); if (!e || !t.mac || e.dataset.mac == null) return;
+                const m = String(t.mac(c) == null ? '' : t.mac(c));
+                if (e.value === e.dataset.mac) { e.value = m; e.dataset.mac = m; }
+            });
+        }
         async function cdMoLap(id) {
             const bo = dtBoMauCuaDien(document.getElementById('dt_dienDoiTuong').value); if (!bo) return;
             const mau = bo.mau.find(m => m.id === id); if (!mau) return;
@@ -10499,8 +10521,9 @@ table.ky td { padding: 2pt; }
             cdMauHienTai = mau; const d = cdBanGhiTuForm();
             document.getElementById('cdvTieuDe').innerText = mau.ma + ' — ' + mau.ten;
             document.getElementById('cdvTruong').innerHTML = cdVeTruong(mau, d);
-            { const k = cdCauHinh(), thieu = [!k.canBoTen && 'họ tên cán bộ', !k.capBac && 'cấp bậc', !k.truongCA && 'họ tên Trưởng Công an'].filter(Boolean);
-              if (thieu.length) document.getElementById('cdvTruong').insertAdjacentHTML('afterbegin', `<div class="cd-f cd-r" style="color:#fbbf24;font-size:12px">⚠️ Chưa khai: ${thieu.join(', ')}. Bấm “⚙️ Thông tin đơn vị &amp; cán bộ” để điền một lần, các văn bản sau tự có.</div>`);
+            { const k = cdCauHinh();
+              const o = (id, nhan, v, ph) => `<div class="cd-f"><label for="cdcb_${id}">${CD_O(nhan)}</label><input id="cdcb_${id}" class="cd-o" value="${CD_O(v || '')}" placeholder="${CD_O(ph || '')}" oninput="cdLuuCanBoNhanh()"></div>`;
+              document.getElementById('cdvTruong').insertAdjacentHTML('afterbegin', `<div class="cd-r" style="grid-column:1/-1;border:1px solid #b45309;border-radius:8px;padding:6px 8px"><div style="font-weight:bold;color:#fbbf24;font-size:12px;margin-bottom:4px">👮 Cán bộ lập văn bản &amp; đơn vị (nhập một lần, tự lưu cho các lần sau)</div><div class="cd-luoi-f">${o('canBoTen', 'Họ và tên cán bộ', k.canBoTen, 'VD: Nguyễn Văn A')}${o('capBac', 'Cấp bậc', k.capBac, 'VD: Thượng úy')}${o('chucVu', 'Chức vụ', k.chucVu, 'VD: Cảnh sát khu vực')}${o('donViCB', 'Đơn vị công tác', k.donViCB)}${o('truongCA', 'Họ tên Trưởng Công an (người ký)', k.truongCA, 'VD: Nguyễn Văn B')}</div></div>`);
               const ck = document.getElementById('cdvChe'); if (ck) ck.checked = xuatCheSoBat(); }
             const kt = mau.gd === 3;
             const kk = document.getElementById('cdvKetThuc'); kk.classList.toggle('hidden', !kt);
@@ -10533,6 +10556,10 @@ table.ky td { padding: 2pt; }
                 a.href = url; a.download = tenFile + '.doc'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 2500);
             }
             window.__cheVbTam = undefined;
+            try {
+                const em = ((currentUser && currentUser.email) || '').toLowerCase(), cu = JSON.parse(localStorage.getItem(CD_KEY_CB + em) || '{}'), ph = JSON.parse(localStorage.getItem(CD_KEY_CH + (khuVucHienTai || '')) || '{}');
+                if (v.cbTen != null) { Object.assign(cu, { canBoTen: v.cbTen, capBac: v.cbCap, chucVu: v.cbCV, donViCB: v.cbDV }); ph.truongCA = v.tcaTen; localStorage.setItem(CD_KEY_CB + em, JSON.stringify(cu)); localStorage.setItem(CD_KEY_CH + (khuVucHienTai || ''), JSON.stringify(ph)); }
+            } catch (e) { }
             await cdGhiNhan(mau, d, v);
         }
         // Ghi vào hồ sơ: nhật ký văn bản đã lập; số/ngày QĐ phân công cán bộ (CĐ1); kết thúc quản lý + đổi diện (nếu được chọn)
