@@ -3473,18 +3473,25 @@ button.dt-chip{cursor:pointer}
                 (ho.thanhVien || []).forEach(tv => { if (tv.cccd) hoTheoCccd[tv.cccd] = ho; });
             });
             let soHoCapNhat = 0, soHoTaoMoi = 0, soNgoaiPhamVi = 0;
+            const hoCuNgoaiQuyen = [];   // hộ ĐÃ CÓ trong phần mềm nhưng nằm ngoài khu vực/Ô của CSKV -> Firestore sẽ từ chối, nên bỏ qua & báo riêng
+            const choGhiDuoc = h => !(currentUser.role === 'can_bo') || trongPhamViGiaoCSKV(h);
 
             for (let i = 0; i < danhSachMoi.length; i += CO_LO) {
                 const lo = dbFirestore.batch();
                 danhSachMoi.slice(i, i + CO_LO).forEach(hoMoi => {
                     hoMoi.khuVuc = layNhanKhuVucTuDiaChi(hoMoi.diaChi, hoMoi.phuong) || 'Khu Vực 1';
                     if (currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length && !currentUser.khuVucPhuTrach.includes(hoMoi.khuVuc)) { soNgoaiPhamVi++; return; }
+                    if (currentUser.role === 'can_bo' && Array.isArray(currentUser.phuongPhuTrach) && currentUser.phuongPhuTrach.length && !currentUser.phuongPhuTrach.includes(hoMoi.phuong)) { soNgoaiPhamVi++; return; }   // sai phường được giao -> Firestore sẽ từ chối cả lô
                     dongDauPhamViO(hoMoi);
                     let hoTrung = kh ? (kh.dich.get(hoMoi) || null) : ((hoMoi.hsct && hoTheoHsct[hoMoi.hsct]) || null);
                     if (!hoTrung && !kh) {
                         for (const tv of (hoMoi.thanhVien || [])) {
                             if (tv.cccd && hoTheoCccd[tv.cccd]) { hoTrung = hoTheoCccd[tv.cccd]; break; }
                         }
+                    }
+                    if (hoTrung && hoTrung.id && !choGhiDuoc(hoTrung)) {
+                        hoCuNgoaiQuyen.push((hoMoi.hsct || '') + ' ' + (hoMoi.chuHo || '') + ' (đang lưu: ' + (hoTrung.khuVuc || 'chưa có khu vực') + (hoTrung.o ? ', ' + hoTrung.o : ', chưa gán Ô') + ')');
+                        return;
                     }
                     if (hoTrung && hoTrung.id) {
                         // CẬP NHẬT hộ đã có — CHỈ ghi đè các trường Excel thật sự cung cấp (diện cư trú, địa
@@ -3514,14 +3521,14 @@ button.dt-chip{cursor:pointer}
                 await lo.commit();
             }
             if (kh) {
-                const dsCu = [...kh.hoCu.entries()].filter(([h]) => h.id);
+                const dsCu = [...kh.hoCu.entries()].filter(([h]) => h.id && choGhiDuoc(h));
                 for (let i = 0; i < dsCu.length; i += CO_LO) {
                     const lo = dbFirestore.batch();
                     dsCu.slice(i, i + CO_LO).forEach(([h, t]) => lo.set(dbFirestore.collection('households').doc(h.id), { thanhVien: t }, { merge: true }));
                     await lo.commit();
                 }
             }
-            return { soHoCapNhat, soHoTaoMoi, soNgoaiPhamVi };
+            return { soHoCapNhat, soHoTaoMoi, soNgoaiPhamVi, hoCuNgoaiQuyen };
         }
 
         // Xóa toàn bộ hộ của phường đang chọn trên Firestore (dùng cho nút "🗑️ Xóa DL")
@@ -5752,7 +5759,7 @@ button.dt-chip{cursor:pointer}
                         const khuVucLa = khuVucLaTrongFile.filter(k => !dsKhuVucDuocGiao.includes(k));
                         if (khuVucLa.length > 0) {
                             const tiepTuc = confirm(
-                                `⚠️ CẢNH BÁO KHU VỰC KHÔNG KHỚP\n\nFile "${file.name}" chứa địa chỉ thuộc khu vực: ${khuVucLa.join(', ')}\n— trong khi tài khoản này chỉ được phân công: ${dsKhuVucDuocGiao.join(', ')}.\n\nRất có thể đây là dữ liệu của khu vực KHÁC (đã/sẽ được cán bộ phụ trách khu vực đó tự nhập), nhập chồng lên sẽ gây TRÙNG LẶP.\n\nBấm OK nếu chắc chắn muốn nhập (VD: được nhờ nhập hộ). Bấm Hủy để dừng lại và kiểm tra.`
+                                `⚠️ CẢNH BÁO KHU VỰC KHÔNG KHỚP\n\nFile "${file.name}" chứa địa chỉ thuộc khu vực: ${khuVucLa.join(', ')}\n(${danhSachMoi.filter(h => khuVucLa.includes(layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1')).length} hộ, VD địa chỉ thường trú: ${danhSachMoi.filter(h => khuVucLa.includes(layNhanKhuVucTuDiaChi(h.diaChi, h.phuong) || 'Khu Vực 1')).slice(0, 3).map(h => '"' + h.diaChi + '"').join('; ')})\n— trong khi tài khoản này chỉ được phân công: ${dsKhuVucDuocGiao.join(', ')}.\n\nRất có thể đây là dữ liệu của khu vực KHÁC (đã/sẽ được cán bộ phụ trách khu vực đó tự nhập), nhập chồng lên sẽ gây TRÙNG LẶP.\n\nBấm OK nếu chắc chắn muốn nhập (VD: được nhờ nhập hộ). Bấm Hủy để dừng lại và kiểm tra.`
                             );
                             if (!tiepTuc) { event.target.value = ""; return; }
                         }
@@ -5827,6 +5834,7 @@ button.dt-chip{cursor:pointer}
                     const ghiChuChanDoan = canhBaoCotThieu.length > 0
                         ? `\n\n🔎 CHẨN ĐOÁN CỘT: Không dò được tiêu đề của các cột sau trong file — ${canhBaoCotThieu.join('; ')}. Nếu file CÓ các cột này nhưng phần mềm không nhận ra, hãy kiểm tra lại đúng chính tả tiêu đề dòng đầu tiên của file.`
                         : `\n\n🔎 CHẨN ĐOÁN CỘT: Đã dò được đầy đủ các cột quan trọng (HSCT, Chủ hộ, Quan hệ, CCCD, Phường/Xã).`;
+                    if (ketQuaLuu.hoCuNgoaiQuyen && ketQuaLuu.hoCuNgoaiQuyen.length) alert('⚠️ ' + ketQuaLuu.hoCuNgoaiQuyen.length + ' hộ trong file ĐÃ CÓ trong phần mềm nhưng đang nằm ngoài khu vực/Ô bạn được giao (hoặc chưa được gán khu vực/Ô) nên KHÔNG ghi đè được — đã bỏ qua để các hộ còn lại vẫn nhập bình thường.\n\nVD: ' + ketQuaLuu.hoCuNgoaiQuyen.slice(0, 5).join('\n') + '\n\nCách xử lý: dùng mục "Gán Ô cho hộ đã có" hoặc nhờ Admin/Chỉ huy phường sửa khu vực/Ô của các hộ này rồi nhập lại.');
                     if (ketQuaLuu.soNgoaiPhamVi) alert('⚠️ Đã BỎ QUA ' + ketQuaLuu.soNgoaiPhamVi + ' hộ có địa chỉ thuộc khu vực/ô ngoài phạm vi bạn được giao phụ trách (không được phép nhập).');
                     alert(`✅ Đã xử lý ${danhSachMoi.length} hộ trong file — ${ketQuaLuu.soHoTaoMoi} hộ MỚI, ${ketQuaLuu.soHoCapNhat} hộ ĐÃ CÓ SẴN được cập nhật lại đúng diện cư trú/thông tin mới nhất (không tạo trùng lặp).\n🔎 Đối chiếu: ${dcTomTat(khDc)}.${ghiChuKV}${ghiChuDiaChi}${ghiChuPhuong}${ghiChuCCCD}${ghiChuChanDoan}`);
                 } catch (err) {
@@ -13223,7 +13231,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
         //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
         // ======================================================================================================
-        const PHIEN_BAN_APP = '2026.11.07';
+        const PHIEN_BAN_APP = '2026.11.08';
         const SB_NHOM = [
             { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
             { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
