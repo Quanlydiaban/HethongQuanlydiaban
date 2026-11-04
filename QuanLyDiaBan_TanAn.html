@@ -4160,7 +4160,13 @@ button.dt-chip{cursor:pointer}
         }
 
         function chuanHoaNhanKhuVuc(s) {
-            return layNhanKhuVucTuDiaChi(s) || s.trim();
+            const t = String(s || '').trim();
+            if (!t) return '';
+            // Có số ("Ấp 3", "KV 8") hoặc có tiền tố + tên ("Ấp Long Lợi") -> nhận diện như địa chỉ.
+            if (/(khu\s*vực|khu\s*vuc|kv|khu\s*phố|khu\s*pho|ấp|ap|khóm|khom|thôn|thon)\s*\.?\s*\d+/i.test(t) || /^(ấp|khóm|thôn)\s+\S/i.test(t)) return layNhanKhuVucTuDiaChi(/^(ấp|khóm|thôn)\s+\S[^\d,]*$/i.test(t) ? t + ',' : t) || t;
+            // Chỉ gõ TÊN ("Long Lợi"): KHÔNG được tự đổi về "Khu Vực 1" — với xã thì hiểu là "Ấp <tên>".
+            const ph = (document.getElementById('inputPhuongCSKV') || {}).value || '';
+            return (loaiHinhTuTenDonVi(ph) === 'xa' ? 'Ấp ' : '') + tieuDeTen(t);
         }
 
         async function themPhanQuyenCSKV() {
@@ -5310,6 +5316,7 @@ button.dt-chip{cursor:pointer}
             return loaiHinhTuTenDonVi(tenPhuongXa || khuVucHienTai) === 'xa' ? 'Ấp/Khóm/Thôn' : 'Khu Vực';
         }
 
+        function tieuDeTen(t) { return String(t || '').trim().toLowerCase().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '); }
         function layNhanKhuVucTuDiaChi(diaChi, tenPhuongGoiY) {
             // Thay dấu gạch dưới/gạch ngang/chấm bằng khoảng trắng trước khi so khớp, vì \b coi "_" là ký tự chữ
             // nên "Thuong_tru_KV_7.xlsx" trước đây KHÔNG khớp được mẫu "kv" (gây lỗi tự đổi thành Khu Vực 1).
@@ -5333,7 +5340,12 @@ button.dt-chip{cursor:pointer}
                 const m = s.match(mau.re);
                 if (m) { khop = { soKV: parseInt(m[1], 10), nhan: mau.nhan }; break; }
             }
-            if (!khop) return donViMacDinhTheoLoaiHinh(tenPhuongGoiY || khuVucHienTai);
+            if (!khop) {
+                // Ấp/Khóm/Thôn đặt theo TÊN (không có số), VD "Ấp Long Lợi", "Khóm Bình Thạnh" — thường gặp ở XÃ.
+                const mt = String(diaChi || '').match(/(?<![\p{L}\d])(ấp|khóm|thôn)\s+([\p{L}]+(?:\s+[\p{L}]+){0,2}?)\s*(?=,|;|\.|$|(?:xã|phường|thị trấn|huyện|quận|tỉnh|thành phố|tp)(?![\p{L}]))/iu);
+                if (mt) return tieuDeTen(mt[1]) + ' ' + tieuDeTen(mt[2]);
+                return donViMacDinhTheoLoaiHinh(tenPhuongGoiY || khuVucHienTai);
+            }
             let soKV = khop.soKV;
 
             // ĐỔI TÊN KHU VỰC DO TRÙNG TÊN SAU SÁP NHẬP: nếu địa chỉ còn nhắc tên phường/xã CŨ (VD "An Khánh")
@@ -13251,7 +13263,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
         //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
         // ======================================================================================================
-        const PHIEN_BAN_APP = '2026.11.09';
+        const PHIEN_BAN_APP = '2026.11.10';
         const SB_NHOM = [
             { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
             { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
