@@ -5487,12 +5487,19 @@ button.dt-chip{cursor:pointer}
                     const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
                     const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
                     
-                    let mapCol = { hsct: -1, hoTen: -1, ngaySinh: -1, quanHe: -1, diaChi: -1, phuongXa: -1, chuHo: -1, cccd: -1, gioiTinh: -1, dienNV: -1, danToc: -1, tonGiao: -1, queQuan: -1, ngheNghiep: -1, sdt: -1, quocTich: -1, ngayHetHan: -1, noiThuongTruGoc: -1, noiOHienTai: -1, cmnd: -1, cccdChuHo: -1, sdt2: -1, queTinh: -1, noXa: -1, noTinh: -1 };
-                    
+                    let mapCol = { hsct: -1, hoTen: -1, ngaySinh: -1, quanHe: -1, diaChi: -1, phuongXa: -1, chuHo: -1, cccd: -1, gioiTinh: -1, dienNV: -1, danToc: -1, tonGiao: -1, queQuan: -1, ngheNghiep: -1, sdt: -1, quocTich: -1, ngayHetHan: -1, noiThuongTruGoc: -1, noiOHienTai: -1, cmnd: -1, cccdChuHo: -1, sdt2: -1, queTinh: -1, noXa: -1, noTinh: -1, tamTru: -1, thuongTru: -1 };
+                    const tenCot = {}; // tên tiêu đề gốc của từng cột — để báo cáo rõ cột nào được dùng/bỏ qua
                     for (let i = 0; i < Math.min(20, rows.length); i++) {
                         let r = rows[i] || [];
                         r.forEach((text, j) => {
                             let t = String(text).toLowerCase().replace(/\s+/g, '');
+                            if (text !== undefined && text !== null && String(text).trim() !== '' && tenCot[j] === undefined) tenCot[j] = String(text).trim();
+                            // Phân loại cột địa chỉ: THƯỜNG TRÚ / TẠM TRÚ / NƠI Ở HIỆN NAY (3 loại khác hẳn nhau, không được lẫn)
+                            const laTam = t.includes('tạm') && t.includes('trú') && !t.includes('thường');
+                            const laThuong = t.includes('thường') && t.includes('trú') && (t.includes('nơi') || t.includes('địa') || t.includes('hộkhẩu') || t === 'thườngtrú' || t === 'ttrú');
+                            const laHienNay = !laTam && !laThuong && ((t.includes('hiện') && (t.includes('nơi') || t.includes('chỗ') || t.includes('địa'))) || t.includes('nơiở') || t.includes('chỗở'));
+                            if (laTam && mapCol.tamTru === -1) mapCol.tamTru = j;
+                            if (laThuong && mapCol.thuongTru === -1) mapCol.thuongTru = j;
                             // Dò theo TỪ KHÓA RIÊNG LẺ (không yêu cầu liền kề) để chịu được tiêu đề có chữ nối như
                             // "Họ VÀ Tên", "Số ĐIỆN thoại"... - lỗi liền-kề-tuyệt-đối trước đây là nguyên nhân chính
                             // khiến việc dò cột thất bại và rơi về vị trí mặc định sai, gây sai lệch cả cột Giới tính.
@@ -5500,25 +5507,25 @@ button.dt-chip{cursor:pointer}
                             if (mapCol.hoTen === -1 && ((t.includes('họ') && t.includes('tên')) || t === 'tên' || t === 'hoten')) mapCol.hoTen = j;
                             if (mapCol.ngaySinh === -1 && ((t.includes('ngày') && t.includes('sinh')) || t === 'ns' || t === 'ngaysinh')) mapCol.ngaySinh = j;
                             if (mapCol.quanHe === -1 && (t.includes('quan') && t.includes('hệ'))) mapCol.quanHe = j;
-                            if (mapCol.diaChi === -1 && ((t.includes('địa') && t.includes('chỉ')) || (t.includes('nơi') && t.includes('cư')) || (t.includes('tạm') && t.includes('trú')))) mapCol.diaChi = j;
+                            if (mapCol.diaChi === -1 && !laTam && !laThuong && !laHienNay && ((t.includes('địa') && t.includes('chỉ')) || (t.includes('nơi') && t.includes('cư')))) mapCol.diaChi = j;
                             // Cột "Nơi thường trú" / "Địa chỉ thường trú gốc": ĐỊA CHỈ GỐC nơi công dân đăng ký
                             // thường trú (thường ở phường/tỉnh KHÁC) — khác hẳn cột "diện cư trú" (chỉ ghi 1 từ
                             // trạng thái). Trước đây khai báo biến nhưng CHƯA từng dò cột này, dữ liệu bị bỏ sót.
-                            if (mapCol.noiThuongTruGoc === -1 && t.includes('nơi') && t.includes('thường') && t.includes('trú')) mapCol.noiThuongTruGoc = j;
+                            if (mapCol.noiThuongTruGoc === -1 && laThuong) mapCol.noiThuongTruGoc = j;
                             // MỚI THÊM THEO YÊU CẦU: cột "Nơi ở hiện tại" của TỪNG NGƯỜI — khác "Địa chỉ" (địa
                             // chỉ đăng ký cư trú chung của cả hộ) và khác "Nơi thường trú gốc" (nơi đăng ký
                             // thường trú ở phường/tỉnh KHÁC). Trước đây cột này hoàn toàn bị bỏ qua khi nhập —
                             // không gây đếm sai khẩu (mỗi DÒNG luôn = đúng 1 người, không phụ thuộc số cột),
                             // nhưng dữ liệu cán bộ đã nhập bị mất vì chưa có chỗ lưu. Từ khóa dò ưu tiên đủ cả
                             // "nơi"+"hiện"+"tại" để không lẫn với "nơi thường trú" ở trên.
-                            if (mapCol.noiOHienTai === -1 && t.includes('nơi') && t.includes('hiện') && t.includes('tại')) mapCol.noiOHienTai = j;
+                            if (mapCol.noiOHienTai === -1 && laHienNay) mapCol.noiOHienTai = j;
                             if (mapCol.phuongXa === -1 && (t.includes('phường') || t.includes('xã'))) mapCol.phuongXa = j;
                             if (mapCol.chuHo === -1 && (t.includes('chủ') && t.includes('hộ')) && !(t.includes('quan') && t.includes('hệ'))) mapCol.chuHo = j;
                             if (mapCol.cccdChuHo === -1 && t.includes('cccd') && t.includes('chủ') && t.includes('hộ')) mapCol.cccdChuHo = j;
                             if (mapCol.cmnd === -1 && t.includes('cmnd') && !/cha|mẹ|vk|ck|vợ|chồng|chủhộ/.test(t)) mapCol.cmnd = j;
                             if (mapCol.cccd === -1 && (t.includes('cccd') || (t.includes('định') && t.includes('danh')) || t === 'đdcn') && !/cha|mẹ|vk\/ck|vợ|chồng|chủhộ/.test(t)) mapCol.cccd = j;
                             if (t === 'ttxã' || t === 'thườngtrúxã') mapCol.phuongXa = j;
-                            if (t === 'địachỉthườngtrú') mapCol.diaChi = j;
+                            if (t === 'địachỉthườngtrú') mapCol.thuongTru = j;
                             if (mapCol.sdt2 === -1 && (t.includes('sdt') || t.includes('sđt')) ) mapCol.sdt2 = j;
                             if (mapCol.queTinh === -1 && t.includes('quê') && t.includes('tỉnh')) mapCol.queTinh = j;
                             if (mapCol.noXa === -1 && t === 'noxã') mapCol.noXa = j;
@@ -5543,6 +5550,7 @@ button.dt-chip{cursor:pointer}
 
                     let mapHoMoi = {};
                     let soThanhVienThieuCCCD = 0;
+                    let soDongThuongTru = 0;
                     let soHoPhuongKhongTraDuoc = 0; // Số hộ có ghi Phường/Xã trong file nhưng KHÔNG tra được về 1 trong 103 phường/xã hiện hành -> phải dùng dự phòng khuVucHienTai
                     let soHoPhuongKhacHienTai = 0;  // Số hộ tra được phường TỪ FILE nhưng KHÁC với phường đang chọn trên màn hình -> cán bộ cần biết để kiểm tra lại
                     for (let i = 0; i < rows.length; i++) {
@@ -5550,7 +5558,7 @@ button.dt-chip{cursor:pointer}
                         if (!r || !r[mapCol.hoTen]) continue;
                         
                         let hoTenVal = String(r[mapCol.hoTen] || '').trim();
-                        if (hoTenVal.toLowerCase() === 'họ và tên' || hoTenVal.toLowerCase() === 'tên' || hoTenVal === '') continue;
+                        if (['họ và tên', 'họ tên', 'tên', 'hovaten', 'hoten'].includes(hoTenVal.toLowerCase()) || hoTenVal === '') continue;
 
                         let hsct = (mapCol.hsct !== -1 && mapCol.hsct !== undefined) ? String(r[mapCol.hsct] || '').trim() : '';
                         // SỬA LỖI: cột HSCT đôi khi bị đọc NHẦM thành cả câu địa chỉ (do file nguồn thiếu ô/lệch
@@ -5588,6 +5596,14 @@ button.dt-chip{cursor:pointer}
                             dienNV = 'Thường trú';
                         }
                         
+                        // ĐỊA CHỈ THEO DIỆN CỦA TỪNG DÒNG: file THƯỜNG TRÚ chỉ dùng địa chỉ thường trú — cột "Tạm trú"/"Nơi ở hiện nay" chỉ LƯU theo từng nhân khẩu, không làm địa chỉ hộ
+                        // (trước đây cột "Tạm trú" bị nhận nhầm làm địa chỉ hộ). Diện Tạm/Lưu trú vẫn dùng địa chỉ tạm trú như cũ.
+                        const oC = c => (c !== -1 && c !== undefined && r[c] != null) ? String(r[c]).trim() : '';
+                        const laThuongTru = dienNV === 'Thường trú';
+                        diaChiGoc = laThuongTru
+                            ? (oC(mapCol.thuongTru) || oC(mapCol.diaChi) || oC(mapCol.noiThuongTruGoc))
+                            : (oC(mapCol.tamTru) || oC(mapCol.diaChi) || oC(mapCol.noiOHienTai) || oC(mapCol.thuongTru));
+                        if (laThuongTru) soDongThuongTru++;
                         let laChuHoDongNay = quanHe.toLowerCase().includes('chủ hộ'); // dòng hiện tại có phải chính chủ hộ không (theo cột Quan hệ)
                         let chuHoFinal = tenChuHoCol || hoTenVal; // dùng tạm lúc tạo hộ mới; sẽ được ghi đè đúng bên dưới nếu cần
 
@@ -5616,7 +5632,7 @@ button.dt-chip{cursor:pointer}
                                 phuong: phuongTuFile || khuVucHienTai, // Ưu tiên phường ĐỌC ĐƯỢC TỪ FILE, không còn ép cứng theo màn hình
                                 chuHo: chuHoFinal, 
                                 dienNghiepVu: dienNV,
-                                diaChiThuongTruGoc: (mapCol.noiThuongTruGoc !== -1 && r[mapCol.noiThuongTruGoc]) ? String(r[mapCol.noiThuongTruGoc]).trim() : '', // Nơi đăng ký thường trú GỐC (thường ở nơi khác) — quan trọng với hồ sơ Tạm trú/Lưu trú
+                                diaChiThuongTruGoc: (dienNV !== 'Thường trú' && mapCol.noiThuongTruGoc !== -1 && r[mapCol.noiThuongTruGoc]) ? String(r[mapCol.noiThuongTruGoc]).trim() : '', // Nơi đăng ký thường trú GỐC (thường ở nơi khác) — quan trọng với hồ sơ Tạm trú/Lưu trú
                                 ghiChu: '', 
                                 anhNha: '', 
                                 thanhVien: [], 
@@ -5633,8 +5649,9 @@ button.dt-chip{cursor:pointer}
                         if (!tenChuHoCol && laChuHoDongNay) {
                             mapHoMoi[key].chuHo = hoTenVal;
                         }
-                        if (tenChuHoCol) (mapHoMoi[key]._aj = mapHoMoi[key]._aj || []).push(tenChuHoCol);
-                        { const ccChu = (mapCol.cccdChuHo !== -1 && mapCol.cccdChuHo !== undefined) ? String(r[mapCol.cccdChuHo] || '').trim() : ''; if (ccChu) (mapHoMoi[key]._cc = mapHoMoi[key]._cc || []).push(ccChu); }
+                        const boQuaCotChuHo = laThuongTru && mapCol.quanHe !== -1;   // thường trú: tin cột Quan hệ, cột Chủ hộ trong file có thể sai (sửa trực tiếp trên phần mềm)
+                        if (tenChuHoCol && !boQuaCotChuHo) (mapHoMoi[key]._aj = mapHoMoi[key]._aj || []).push(tenChuHoCol);
+                        { const ccChu = (mapCol.cccdChuHo !== -1 && mapCol.cccdChuHo !== undefined) ? String(r[mapCol.cccdChuHo] || '').trim() : ''; if (ccChu && !boQuaCotChuHo) (mapHoMoi[key]._cc = mapHoMoi[key]._cc || []).push(ccChu); }
                         
                         // SỬ DỤNG HÀM XỬ LÝ NGÀY THÁNG ĐỘC LẬP CHÍNH XÁC CHO EXCEL
                         let ngaySinhRaw = r[mapCol.ngaySinh];
@@ -5696,6 +5713,8 @@ button.dt-chip{cursor:pointer}
                         let noiOHienTaiVal = (mapCol.noiOHienTai !== -1 && mapCol.noiOHienTai !== undefined) ? String(r[mapCol.noiOHienTai] || '').trim() : '';
                         if (noiOHienTaiVal) [mapCol.noXa, mapCol.noTinh].forEach(c => { if (c !== -1 && c !== undefined) { const v = String(r[c] || '').trim(); if (v && !noiOHienTaiVal.includes(v)) noiOHienTaiVal += ', ' + v; } });
 
+                        // Thường trú: GIỮ cột Tạm trú / Nơi ở hiện nay của TỪNG NGƯỜI để hiển thị ở chi tiết hộ & nhân khẩu (không dùng làm địa chỉ hộ)
+                        const noiTamTruVal = laThuongTru ? oC(mapCol.tamTru) : '';
                         mapHoMoi[key].thanhVien.push({ 
                             hoTen: hoTenVal, 
                             quanHe: quanHe, 
@@ -5708,12 +5727,19 @@ button.dt-chip{cursor:pointer}
                             danToc: danTocVal,
                             tonGiao: tonGiaoVal,
                             quocTich: quocTichVal,
-                            noiOHienTai: noiOHienTaiVal
+                            noiOHienTai: noiOHienTaiVal,
+                            noiTamTru: noiTamTruVal
                         });
                     }
 
                     let danhSachMoi = Object.values(mapHoMoi);
                     const loiChuHoFile = dcChuanHoaChuHo(danhSachMoi);
+                    // Sắp xếp thành viên trong từng hộ: Chủ hộ → Vợ/Chồng → Cha/Mẹ → Con → khác; cùng nhóm thì người lớn tuổi trước
+                    danhSachMoi.forEach(H => {
+                        const hang = t => { const q = boDauTiengViet(t.quanHe || '').toLowerCase(); return /chu ho/.test(q) ? 0 : /\b(vo|chong)\b/.test(q) ? 1 : /\b(cha|me|bo)\b/.test(q) ? 2 : /\bcon\b/.test(q) ? 3 : 4; };
+                        const nam = t => parseInt(((String(t.ngaySinh || '').match(/(\d{4})/) || [])[1]) || '9999', 10);
+                        (H.thanhVien || []).sort((a, b) => hang(a) - hang(b) || nam(a) - nam(b));
+                    });
                     if (danhSachMoi.length === 0) return alert("Không tìm thấy dữ liệu hợp lệ trong file Excel!");
 
                     // NHẮC LẦN 2: sau khi đã đọc xong file, đối chiếu KHU VỰC suy ra từ ĐỊA CHỈ THẬT trong Excel
@@ -5785,6 +5811,14 @@ button.dt-chip{cursor:pointer}
                     // CHẨN ĐOÁN DÒ CỘT: liệt kê rõ những cột QUAN TRỌNG không dò được tiêu đề trong file — để
                     // anh/chị phát hiện ngay lập tức nếu phần mềm đọc nhầm/đọc thiếu cột (nguyên nhân phổ biến
                     // gây trống CCCD, sai Chủ hộ/Quan hệ hàng loạt), thay vì phải tự dò từng dòng dữ liệu.
+                    const tc = k => (mapCol[k] !== -1 && mapCol[k] !== undefined && tenCot[mapCol[k]]) ? '“' + tenCot[mapCol[k]] + '”' : '';
+                    let ghiChuDiaChi = '';
+                    if (soDongThuongTru > 0) {
+                        const dung = tc('thuongTru') || tc('diaChi') || tc('noiThuongTruGoc'), luu = [tc('tamTru'), tc('noiOHienTai')].filter(Boolean);
+                        ghiChuDiaChi = '\n🏠 Diện Thường trú: địa chỉ hộ lấy từ cột ' + (dung || '(KHÔNG tìm thấy cột địa chỉ thường trú!)') + (luu.length ? '; cột ' + luu.join(', ') + ' được LƯU riêng cho từng nhân khẩu (xem ở chi tiết hộ), KHÔNG dùng làm địa chỉ hộ.' : '.');
+                        const soHoThieuDc = danhSachMoi.filter(h => h.dienNghiepVu === 'Thường trú' && !h.diaChi).length;
+                        if (soHoThieuDc) ghiChuDiaChi += '\n⚠️ ' + soHoThieuDc + ' hộ thường trú chưa có địa chỉ — kiểm tra lại tiêu đề cột địa chỉ thường trú trong file.';
+                    }
                     const canhBaoCotThieu = [];
                     if (mapCol.cccd === -1) canhBaoCotThieu.push('Số Định Danh/CCCD');
                     if (mapCol.chuHo === -1) canhBaoCotThieu.push('Chủ hộ (sẽ tự suy ra từ cột Quan hệ)');
@@ -5794,7 +5828,7 @@ button.dt-chip{cursor:pointer}
                         ? `\n\n🔎 CHẨN ĐOÁN CỘT: Không dò được tiêu đề của các cột sau trong file — ${canhBaoCotThieu.join('; ')}. Nếu file CÓ các cột này nhưng phần mềm không nhận ra, hãy kiểm tra lại đúng chính tả tiêu đề dòng đầu tiên của file.`
                         : `\n\n🔎 CHẨN ĐOÁN CỘT: Đã dò được đầy đủ các cột quan trọng (HSCT, Chủ hộ, Quan hệ, CCCD, Phường/Xã).`;
                     if (ketQuaLuu.soNgoaiPhamVi) alert('⚠️ Đã BỎ QUA ' + ketQuaLuu.soNgoaiPhamVi + ' hộ có địa chỉ thuộc khu vực/ô ngoài phạm vi bạn được giao phụ trách (không được phép nhập).');
-                    alert(`✅ Đã xử lý ${danhSachMoi.length} hộ trong file — ${ketQuaLuu.soHoTaoMoi} hộ MỚI, ${ketQuaLuu.soHoCapNhat} hộ ĐÃ CÓ SẴN được cập nhật lại đúng diện cư trú/thông tin mới nhất (không tạo trùng lặp).\n🔎 Đối chiếu: ${dcTomTat(khDc)}.${ghiChuKV}${ghiChuPhuong}${ghiChuCCCD}${ghiChuChanDoan}`);
+                    alert(`✅ Đã xử lý ${danhSachMoi.length} hộ trong file — ${ketQuaLuu.soHoTaoMoi} hộ MỚI, ${ketQuaLuu.soHoCapNhat} hộ ĐÃ CÓ SẴN được cập nhật lại đúng diện cư trú/thông tin mới nhất (không tạo trùng lặp).\n🔎 Đối chiếu: ${dcTomTat(khDc)}.${ghiChuKV}${ghiChuDiaChi}${ghiChuPhuong}${ghiChuCCCD}${ghiChuChanDoan}`);
                 } catch (err) {
                     if (err.code === 'permission-denied' || /permission/i.test(err.message || '')) {
                         alert("⛔ KHÔNG THỂ NHẬP: Tài khoản này chưa được Admin cấp quyền cho " + khuVucHienTai + ".\n\nĐây KHÔNG phải lỗi hỏng file — đây là tính năng bảo mật đang hoạt động đúng: hệ thống chặn ghi dữ liệu khi tài khoản chưa được phân quyền. Vui lòng liên hệ Admin để được cấp quyền trước khi nhập.");
@@ -6728,6 +6762,7 @@ button.dt-chip{cursor:pointer}
                         <td class="p-1.5 text-center text-gray-400">${i+1}</td>
                         <td class="p-1.5">
                             <input type="text" value="${tv.hoTen || ''}" onchange="capNhatTV(${i}, 'hoTen', this.value)" class="bg-transparent border-b border-gray-600 w-full text-white px-1">
+                            <input type="text" placeholder="+ Nơi tạm trú" value="${escHtml(tv.noiTamTru || '')}" onchange="capNhatTV(${i}, 'noiTamTru', this.value)" class="no-print bg-transparent text-[9px] text-amber-300 placeholder-gray-600 w-full px-1 mt-0.5 border-none focus:outline-none">
                             <input type="text" placeholder="+ Nơi ở hiện tại (nếu khác nơi đăng ký)" value="${escHtml(tv.noiOHienTai || '')}" onchange="capNhatTV(${i}, 'noiOHienTai', this.value)" class="no-print bg-transparent text-[9px] text-cyan-300 placeholder-gray-600 w-full px-1 mt-0.5 border-none focus:outline-none focus:ring-0">
                             <div id="dtChip_${i}" class="no-print">${dtChipNguoi(ho, tv, i)}</div>
                         </td>
@@ -13188,7 +13223,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
         //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
         // ======================================================================================================
-        const PHIEN_BAN_APP = '2026.11.05';
+        const PHIEN_BAN_APP = '2026.11.07';
         const SB_NHOM = [
             { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
             { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
