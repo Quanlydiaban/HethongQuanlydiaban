@@ -5764,6 +5764,25 @@ button.dt-chip{cursor:pointer}
                             if (!tiepTuc) { event.target.value = ""; return; }
                         }
                     }
+                    // TỰ ĐỘNG gắn đúng KV/ấp và Ô theo PHÂN QUYỀN vào địa chỉ hộ (CSKV phụ trách đúng 1 khu vực): địa chỉ thiếu hoặc ghi KV khác
+                    // (đã bấm OK ở cảnh báo trên) được chuẩn về khu vực được giao để hộ KHÔNG bị loại; địa chỉ gốc trong file lưu vào Ghi chú hộ.
+                    // Chỉ sửa địa chỉ HỘ; Tạm trú / Nơi ở hiện nay của từng nhân khẩu giữ nguyên.
+                    if (currentUser.role === 'can_bo' && Array.isArray(currentUser.khuVucPhuTrach) && currentUser.khuVucPhuTrach.length === 1) {
+                        const kvGiao = currentUser.khuVucPhuTrach[0];
+                        const reKV = /(?<![\p{L}\d])(khu\s*vực|khu\s*vuc|kv|khu\s*phố|khu\s*pho|ấp|ap|khóm|khom|thôn|thon)\s*\.?\s*0*\d+/iu;
+                        const oGiao = (Array.isArray(currentUser.oPhuTrach) && currentUser.oPhuTrach.length === 1) ? currentUser.oPhuTrach[0] : '';
+                        let soChuanKV = 0;
+                        danhSachMoi.forEach(h => {
+                            const goc = h.diaChi || '';
+                            if ((layNhanKhuVucTuDiaChi(goc, h.phuong) || '') !== kvGiao) {
+                                h.ghiChu = (h.ghiChu ? h.ghiChu + ' | ' : '') + 'Địa chỉ trong file: ' + goc;
+                                h.diaChi = reKV.test(goc) ? goc.replace(reKV, kvGiao) : (goc ? goc + ', ' + kvGiao : kvGiao);
+                                soChuanKV++;
+                            }
+                            if (oGiao && !/(^|[\s,])[oô]\s*\d+/i.test(h.diaChi)) h.diaChi += ', ' + oGiao;
+                        });
+                        if (soChuanKV) window.__soHoChuanKV = soChuanKV;
+                    }
 
                     const coCotDc = k => mapCol[k] !== -1 && mapCol[k] !== undefined;
                     const khDc = await dcDoiChieuVaXacNhan(danhSachMoi, { loiChuHo: loiChuHoFile, coCot: { gioiTinh: coCotDc('gioiTinh'), danToc: coCotDc('danToc'), tonGiao: coCotDc('tonGiao'), quocTich: coCotDc('quocTich') } });
@@ -5834,6 +5853,7 @@ button.dt-chip{cursor:pointer}
                     const ghiChuChanDoan = canhBaoCotThieu.length > 0
                         ? `\n\n🔎 CHẨN ĐOÁN CỘT: Không dò được tiêu đề của các cột sau trong file — ${canhBaoCotThieu.join('; ')}. Nếu file CÓ các cột này nhưng phần mềm không nhận ra, hãy kiểm tra lại đúng chính tả tiêu đề dòng đầu tiên của file.`
                         : `\n\n🔎 CHẨN ĐOÁN CỘT: Đã dò được đầy đủ các cột quan trọng (HSCT, Chủ hộ, Quan hệ, CCCD, Phường/Xã).`;
+                    if (window.__soHoChuanKV) { alert('ℹ️ ' + window.__soHoChuanKV + ' hộ có địa chỉ thiếu/khác khu vực nên đã được tự gắn đúng "' + currentUser.khuVucPhuTrach[0] + '"' + (cskvCoO() ? ' và Ô theo phân quyền' : '') + '. Địa chỉ gốc trong file được lưu ở Ghi chú của hộ.'); window.__soHoChuanKV = 0; }
                     if (ketQuaLuu.hoCuNgoaiQuyen && ketQuaLuu.hoCuNgoaiQuyen.length) alert('⚠️ ' + ketQuaLuu.hoCuNgoaiQuyen.length + ' hộ trong file ĐÃ CÓ trong phần mềm nhưng đang nằm ngoài khu vực/Ô bạn được giao (hoặc chưa được gán khu vực/Ô) nên KHÔNG ghi đè được — đã bỏ qua để các hộ còn lại vẫn nhập bình thường.\n\nVD: ' + ketQuaLuu.hoCuNgoaiQuyen.slice(0, 5).join('\n') + '\n\nCách xử lý: dùng mục "Gán Ô cho hộ đã có" hoặc nhờ Admin/Chỉ huy phường sửa khu vực/Ô của các hộ này rồi nhập lại.');
                     if (ketQuaLuu.soNgoaiPhamVi) alert('⚠️ Đã BỎ QUA ' + ketQuaLuu.soNgoaiPhamVi + ' hộ có địa chỉ thuộc khu vực/ô ngoài phạm vi bạn được giao phụ trách (không được phép nhập).');
                     alert(`✅ Đã xử lý ${danhSachMoi.length} hộ trong file — ${ketQuaLuu.soHoTaoMoi} hộ MỚI, ${ketQuaLuu.soHoCapNhat} hộ ĐÃ CÓ SẴN được cập nhật lại đúng diện cư trú/thông tin mới nhất (không tạo trùng lặp).\n🔎 Đối chiếu: ${dcTomTat(khDc)}.${ghiChuKV}${ghiChuDiaChi}${ghiChuPhuong}${ghiChuCCCD}${ghiChuChanDoan}`);
@@ -13231,7 +13251,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
         //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
         // ======================================================================================================
-        const PHIEN_BAN_APP = '2026.11.08';
+        const PHIEN_BAN_APP = '2026.11.09';
         const SB_NHOM = [
             { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
             { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
