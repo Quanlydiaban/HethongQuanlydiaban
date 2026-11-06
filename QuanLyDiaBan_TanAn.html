@@ -3505,6 +3505,7 @@ button.dt-chip{cursor:pointer}
                         lo.set(ref, {
                             hsct: hoMoi.hsct, diaChi: hoMoi.diaChi, phuong: hoMoi.phuong, khuVuc: hoMoi.khuVuc,
                             chuHo: hoMoi.chuHo, dienNghiepVu: hoMoi.dienNghiepVu,
+                            ...((hoMoi.ghiChu && hoMoi.ghiChu.indexOf('CẦN KIỂM TRA CHỦ HỘ') >= 0) ? { ghiChu: ((hoTrung.ghiChu && hoTrung.ghiChu.indexOf('CẦN KIỂM TRA CHỦ HỘ') < 0) ? hoMoi.ghiChu + ' | ' + hoTrung.ghiChu : hoMoi.ghiChu) } : {}),
                             diaChiThuongTruGoc: hoMoi.diaChiThuongTruGoc, ngayHetHan: hoMoi.ngayHetHan || '',
                             thanhVien: hoMoi.thanhVien
                         }, { merge: true });
@@ -3851,12 +3852,39 @@ button.dt-chip{cursor:pointer}
             localStorage.setItem("lanHoatDongCuoiGIS_V5", String(Date.now()));
             kichHoatGiaoDienChinh();
         }
+        // BẢO MẬT: dữ liệu hộ/nhân khẩu được Firestore lưu đệm (IndexedDB) trên chính máy để chạy ngoại tuyến — KHÔNG mã hóa.
+        // Khi đăng xuất / hết phiên phải XÓA, nếu không người dùng kế tiếp trên cùng trình duyệt có thể đọc lại bằng công cụ lập trình (F12).
+        async function xoaBoNhoDemTrenMay() {
+            try {
+                if (dbFirestore) {
+                    try { await Promise.race([dbFirestore.waitForPendingWrites(), new Promise(r => setTimeout(r, 6000))]); } catch (e) { }   // cho thao tác đang chờ đồng bộ nốt (tối đa 6 giây)
+                    await dbFirestore.terminate();
+                    await dbFirestore.clearPersistence();
+                }
+            } catch (e) { /* trình duyệt không hỗ trợ / đang mở tab khác: bỏ qua */ }
+            try { localStorage.removeItem("danhSachHoGiaDinhCacheGIS_V5"); } catch (e) { }
+            try { sessionStorage.clear(); } catch (e) { }
+        }
+        // Tự đăng xuất khi không thao tác (áp dụng CẢ chế độ máy chủ — trước đây chỉ chạy ở chế độ cục bộ nên phiên Firebase không bao giờ hết hạn).
+        const PHIEN_KHONG_THAO_TAC_TOI_DA_MS = 60 * 60 * 1000; // 60 phút; muốn đổi thời gian chỉ sửa số này
+        (function () {
+            let lanGhi = 0;
+            const danhDau = () => { const n = Date.now(); if (n - lanGhi > 5000) { lanGhi = n; try { localStorage.setItem('lanHoatDongCuoiGIS_V5', String(n)); } catch (e) { } } };
+            ['click', 'keydown', 'touchstart', 'mousemove', 'scroll'].forEach(ev => document.addEventListener(ev, () => { if (typeof currentUser !== 'undefined' && currentUser && currentUser.email) danhDau(); }, { passive: true, capture: true }));
+            setInterval(() => {
+                try {
+                    if (typeof currentUser === 'undefined' || !currentUser || !currentUser.email || !CHE_DO_FIREBASE) return;
+                    const luc = parseInt(localStorage.getItem('lanHoatDongCuoiGIS_V5') || '0', 10);
+                    if (luc && Date.now() - luc > PHIEN_KHONG_THAO_TAC_TOI_DA_MS) { alert('⏱️ Đã quá 60 phút không thao tác — hệ thống tự đăng xuất để bảo vệ dữ liệu. Vui lòng đăng nhập lại.'); dangXuat(); }
+                } catch (e) { }
+            }, 30000);
+        })();
         function dangXuat() {
             localStorage.removeItem("currentUserAuthGIS_V5"); localStorage.removeItem("lanHoatDongCuoiGIS_V5");
             if (CHE_DO_FIREBASE && authFirebase && authFirebase.currentUser) {
                 sessionStorage.removeItem('da2FA_xacThuc_' + authFirebase.currentUser.uid); // Bắt xác thực 2FA lại từ đầu ở lần đăng nhập kế tiếp
             }
-            if (CHE_DO_FIREBASE && authFirebase) { authFirebase.signOut().finally(() => location.reload()); }
+            if (CHE_DO_FIREBASE && authFirebase) { authFirebase.signOut().finally(async () => { await xoaBoNhoDemTrenMay(); location.reload(); }); }
             else { location.reload(); }
         }
 
@@ -5159,9 +5187,9 @@ button.dt-chip{cursor:pointer}
 
                 let marker = L.marker(coords, { icon: customIcon }).bindPopup(`
                     <div style="color: black; font-size: 12px;">
-                        <b style="color: #1e3a8a;">${ho.chuHo}</b> (HS: ${cheSo(ho.hsct)})<br>
+                        <b style="color: #1e3a8a;">${escHtml(ho.chuHo)}</b> (HS: ${cheSo(ho.hsct)})<br>
                         <b>Diện:</b> <span style="color: ${colorPin}; font-weight: bold;">${dien}</span><br>
-                        <b>Địa chỉ:</b> ${ho.diaChi}<br>
+                        <b>Địa chỉ:</b> ${escHtml(ho.diaChi)}<br>
                         <b>Thành viên:</b> ${ho.thanhVien ? ho.thanhVien.length : 0} người
                     </div>
                 `);
@@ -5508,7 +5536,7 @@ button.dt-chip{cursor:pointer}
             reader.onload = async function(e) {
                 try {
                     const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 }).map(r => Array.isArray(r) ? r.map(c => typeof c === 'string' ? c.replace(/[<>]/g, '') : c) : r); // loại ký tự < > khỏi mọi ô: chặn chèn mã HTML/script từ file Excel độc hại
                     
                     let mapCol = { hsct: -1, hoTen: -1, ngaySinh: -1, quanHe: -1, diaChi: -1, phuongXa: -1, chuHo: -1, cccd: -1, gioiTinh: -1, dienNV: -1, danToc: -1, tonGiao: -1, queQuan: -1, ngheNghiep: -1, sdt: -1, quocTich: -1, ngayHetHan: -1, noiThuongTruGoc: -1, noiOHienTai: -1, cmnd: -1, cccdChuHo: -1, sdt2: -1, queTinh: -1, noXa: -1, noTinh: -1, tamTru: -1, thuongTru: -1 };
                     const tenCot = {}; // tên tiêu đề gốc của từng cột — để báo cáo rõ cột nào được dùng/bỏ qua
@@ -5757,6 +5785,10 @@ button.dt-chip{cursor:pointer}
 
                     let danhSachMoi = Object.values(mapHoMoi);
                     const loiChuHoFile = dcChuanHoaChuHo(danhSachMoi);
+                    // GHI CHÚ TỰ ĐỘNG vào hộ để sau này tìm lại & sửa: hộ nào chủ hộ chưa chắc chắn đều gắn nhãn "CẦN KIỂM TRA CHỦ HỘ"
+                    // (gõ "kiểm tra chủ hộ" vào ô tìm kiếm để lọc ra tất cả). Xóa dòng ghi chú này sau khi đã sửa xong.
+                    { const hn = new Date(), ngayNhap = String(hn.getDate()).padStart(2, '0') + '/' + String(hn.getMonth() + 1).padStart(2, '0') + '/' + hn.getFullYear();
+                      loiChuHoFile.forEach(l => { if (l.H) l.H.ghiChu = '⚠️ CẦN KIỂM TRA CHỦ HỘ (nhập file ' + ngayNhap + '): ' + l.loai + (l.H.ghiChu ? ' | ' + l.H.ghiChu : ''); }); }
                     // Sắp xếp thành viên trong từng hộ: Chủ hộ → Vợ/Chồng → Cha/Mẹ → Con → khác; cùng nhóm thì người lớn tuổi trước
                     danhSachMoi.forEach(H => {
                         const hang = t => { const q = boDauTiengViet(t.quanHe || '').toLowerCase(); return /chu ho/.test(q) ? 0 : /\b(vo|chong)\b/.test(q) ? 1 : /\b(cha|me|bo)\b/.test(q) ? 2 : /\bcon\b/.test(q) ? 3 : 4; };
@@ -5911,7 +5943,7 @@ button.dt-chip{cursor:pointer}
             reader.onload = async function (e) {
                 try {
                     const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 }).map(r => Array.isArray(r) ? r.map(c => typeof c === 'string' ? c.replace(/[<>]/g, '') : c) : r); // loại ký tự < > khỏi mọi ô: chặn chèn mã HTML/script từ file Excel độc hại
 
                     let mapCol = { cccd: -1, hsct: -1, hoTen: -1, danToc: -1, tonGiao: -1 };
                     let dongTieuDeCccd = -1, dongTieuDeHsct = -1, dongTieuDeHoTen = -1;
@@ -5970,8 +6002,8 @@ button.dt-chip{cursor:pointer}
                     for (let i = dungViTriCoDinh ? 0 : 1; i < rows.length; i++) {
                         const r = rows[i] || [];
                         // CHUẨN HÓA CCCD: sửa lỗi mất số 0 ở đầu khi Excel lưu CCCD dưới dạng SỐ có định dạng
-                        // hiển thị "000000000000" (12 số) — đọc thô sẽ mất số 0 đầu (VD 92226005303 thay vì
-                        // đúng phải là 092226005303), khiến KHÔNG BAO GIỜ khớp được với CCCD 12 số đã lưu đúng
+                        // hiển thị "000000000000" (12 số) — đọc thô sẽ mất số 0 đầu (VD 92XXXXXXXXX thay vì
+                        // đúng phải là 092XXXXXXXXX), khiến KHÔNG BAO GIỜ khớp được với CCCD 12 số đã lưu đúng
                         // trong hệ thống. Tự vá lại bằng cách đệm số 0 ở đầu cho đủ 12 chữ số nếu là số thuần.
                         let cccd = mapCol.cccd !== -1 ? String(r[mapCol.cccd] || '').trim() : '';
                         if (cccd && /^\d{6,11}$/.test(cccd)) cccd = cccd.padStart(12, '0');
@@ -6170,7 +6202,7 @@ button.dt-chip{cursor:pointer}
                 let matchKv = !kv || nhanKV === kv;
                 let dien = ho.dienNghiepVu || "Thường trú";
                 let matchNv = !nv || dien.includes(nv);
-                let matchKw = !kw || (ho.chuHo && ho.chuHo.toLowerCase().includes(kw)) || (ho.hsct && ho.hsct.toLowerCase().includes(kw)) || (ho.diaChi && ho.diaChi.toLowerCase().includes(kw)) || (ho.thanhVien && ho.thanhVien.some(tv => (tv.cccd && tv.cccd.toLowerCase().includes(kw)) || (tv.hoTen && tv.hoTen.toLowerCase().includes(kw))));
+                let matchKw = !kw || (ho.ghiChu && boDauTiengViet(ho.ghiChu).toLowerCase().includes(boDauTiengViet(kw).toLowerCase()) && boDauTiengViet(kw).length >= 6) || (ho.chuHo && ho.chuHo.toLowerCase().includes(kw)) || (ho.hsct && ho.hsct.toLowerCase().includes(kw)) || (ho.diaChi && ho.diaChi.toLowerCase().includes(kw)) || (ho.thanhVien && ho.thanhVien.some(tv => (tv.cccd && tv.cccd.toLowerCase().includes(kw)) || (tv.hoTen && tv.hoTen.toLowerCase().includes(kw))));
                 let matchThieuCCCD = !chiThieuCCCD || (ho.thanhVien && ho.thanhVien.some(tv => !tv.cccd || !tv.cccd.trim()));
                 let matchBienDong = !chiCoBienDong || (ho.thanhVien && ho.thanhVien.some(tv => tv.trangThaiBienDong && tv.trangThaiBienDong !== 'Đang cư trú'));
                 let matchNuocNgoai = !chiNguoiNuocNgoai || (ho.thanhVien && ho.thanhVien.some(tv => tv.quocTich && !boDauTiengViet(tv.quocTich).includes('viet nam')));
@@ -6647,6 +6679,14 @@ button.dt-chip{cursor:pointer}
         // Chống XSS lưu trữ: dữ liệu từ file Excel là NGUỒN KHÔNG ĐÁNG TIN CẬY (ai đó có thể cố tình chèn
         // mã HTML/script vào tên, địa chỉ...). Mọi nơi hiển thị dữ liệu này qua innerHTML PHẢI escape qua
         // hàm này trước, để trình duyệt hiển thị đúng là văn bản thay vì chạy như mã lệnh.
+        // Gắn gợi ý dễ hiểu vào mọi thông báo lỗi quyền của Firestore (trước đây chỉ hiện "Missing or insufficient permissions")
+        (function () {
+            const alertGoc = window.alert.bind(window);
+            window.alert = function (m) {
+                try { if (typeof m === 'string' && /Missing or insufficient permissions/i.test(m) && m.indexOf('Nguyên nhân thường gặp') < 0) m += '\n\nNguyên nhân thường gặp: hồ sơ/hộ này thuộc khu vực hoặc Ô KHÁC với phạm vi bạn được giao (hoặc chưa được gán khu vực/Ô). Kiểm tra khu vực/Ô của hộ trong Chi tiết hộ, hoặc nhờ Admin/Chỉ huy phường điều chỉnh. Nếu vừa được phân quyền, hãy đăng xuất rồi đăng nhập lại.'; } catch (e) { }
+                return alertGoc(m);
+            };
+        })();
         function escHtml(s) {
             if (s === undefined || s === null) return '';
             return String(s)
@@ -6805,25 +6845,25 @@ button.dt-chip{cursor:pointer}
                     tbody.innerHTML += `<tr>
                         <td class="p-1.5 text-center text-gray-400">${i+1}</td>
                         <td class="p-1.5">
-                            <input type="text" value="${tv.hoTen || ''}" onchange="capNhatTV(${i}, 'hoTen', this.value)" class="bg-transparent border-b border-gray-600 w-full text-white px-1">
+                            <input type="text" value="${escHtml(tv.hoTen || '')}" onchange="capNhatTV(${i}, 'hoTen', this.value)" class="bg-transparent border-b border-gray-600 w-full text-white px-1">
                             <input type="text" placeholder="+ Nơi tạm trú" value="${escHtml(tv.noiTamTru || '')}" onchange="capNhatTV(${i}, 'noiTamTru', this.value)" class="no-print bg-transparent text-[9px] text-amber-300 placeholder-gray-600 w-full px-1 mt-0.5 border-none focus:outline-none">
                             <input type="text" placeholder="+ Nơi ở hiện tại (nếu khác nơi đăng ký)" value="${escHtml(tv.noiOHienTai || '')}" onchange="capNhatTV(${i}, 'noiOHienTai', this.value)" class="no-print bg-transparent text-[9px] text-cyan-300 placeholder-gray-600 w-full px-1 mt-0.5 border-none focus:outline-none focus:ring-0">
                             <div id="dtChip_${i}" class="no-print">${dtChipNguoi(ho, tv, i)}</div>
                         </td>
-                        <td class="p-1.5"><input type="text" value="${tv.quanHe || ''}" onchange="capNhatTV(${i}, 'quanHe', this.value)" class="bg-transparent border-b border-gray-600 w-full text-gray-300 px-1"></td>
-                        <td class="p-1.5"><input type="text" value="${tv.ngaySinh || ''}" onchange="capNhatTV(${i}, 'ngaySinh', this.value)" class="bg-transparent border-b border-gray-600 w-full text-gray-400 px-1"></td>
+                        <td class="p-1.5"><input type="text" value="${escHtml(tv.quanHe || '')}" onchange="capNhatTV(${i}, 'quanHe', this.value)" class="bg-transparent border-b border-gray-600 w-full text-gray-300 px-1"></td>
+                        <td class="p-1.5"><input type="text" value="${escHtml(tv.ngaySinh || '')}" onchange="capNhatTV(${i}, 'ngaySinh', this.value)" class="bg-transparent border-b border-gray-600 w-full text-gray-400 px-1"></td>
                         <td class="p-1.5"><input type="text" value="${escHtml(cheSoRaw(tv.cccd || ''))}" readonly onfocus="soCheMoO(this, ${i})" onblur="soCheDongO(this, ${i})" onchange="capNhatTV(${i}, 'cccd', this.value)" class="bg-transparent border-b border-gray-600 w-full text-blue-300 font-mono px-1"></td>
-                        <td class="p-1.5"><input type="text" value="${tv.queQuan || ''}" onchange="capNhatTV(${i}, 'queQuan', this.value)" class="bg-transparent border-b border-gray-600 w-full text-gray-300 px-1"></td>
-                        <td class="p-1.5"><input type="text" value="${tv.ngheNghiep || ''}" onchange="capNhatTV(${i}, 'ngheNghiep', this.value)" class="bg-transparent border-b border-gray-600 w-full text-gray-300 px-1"></td>
-                        <td class="p-1.5"><input type="text" value="${tv.sdt || ''}" onchange="capNhatTV(${i}, 'sdt', this.value)" class="bg-transparent border-b border-gray-600 w-full text-emerald-300 font-mono px-1"></td>
+                        <td class="p-1.5"><input type="text" value="${escHtml(tv.queQuan || '')}" onchange="capNhatTV(${i}, 'queQuan', this.value)" class="bg-transparent border-b border-gray-600 w-full text-gray-300 px-1"></td>
+                        <td class="p-1.5"><input type="text" value="${escHtml(tv.ngheNghiep || '')}" onchange="capNhatTV(${i}, 'ngheNghiep', this.value)" class="bg-transparent border-b border-gray-600 w-full text-gray-300 px-1"></td>
+                        <td class="p-1.5"><input type="text" value="${escHtml(tv.sdt || '')}" onchange="capNhatTV(${i}, 'sdt', this.value)" class="bg-transparent border-b border-gray-600 w-full text-emerald-300 font-mono px-1"></td>
                         <td class="p-1.5">
                             <select onchange="capNhatTV(${i}, 'gioiTinh', this.value)" class="bg-gray-800 border-b border-gray-600 w-full text-white px-1 py-0.5 rounded">
                                 <option value="Nam" ${(!tv.gioiTinh || tv.gioiTinh === 'Nam') ? 'selected' : ''}>Nam</option>
                                 <option value="Nữ" ${tv.gioiTinh === 'Nữ' ? 'selected' : ''}>Nữ</option>
                             </select>
                         </td>
-                        <td class="p-1.5"><input type="text" value="${tv.danToc || 'Kinh'}" onchange="capNhatTV(${i}, 'danToc', this.value)" class="bg-transparent border-b border-gray-600 w-full text-white px-1"></td>
-                        <td class="p-1.5"><input type="text" value="${tv.tonGiao || 'Không'}" onchange="capNhatTV(${i}, 'tonGiao', this.value)" class="bg-transparent border-b border-gray-600 w-full text-white px-1"></td>
+                        <td class="p-1.5"><input type="text" value="${escHtml(tv.danToc || 'Kinh')}" onchange="capNhatTV(${i}, 'danToc', this.value)" class="bg-transparent border-b border-gray-600 w-full text-white px-1"></td>
+                        <td class="p-1.5"><input type="text" value="${escHtml(tv.tonGiao || 'Không')}" onchange="capNhatTV(${i}, 'tonGiao', this.value)" class="bg-transparent border-b border-gray-600 w-full text-white px-1"></td>
                         <td class="p-1.5">
                             <select onchange="doiTrangThaiBienDong(${i}, this.value)" class="bg-gray-800 border-b border-gray-600 w-full px-1 py-0.5 rounded ${tv.trangThaiBienDong && tv.trangThaiBienDong !== 'Đang cư trú' ? 'text-amber-300 font-semibold' : 'text-white'}">
                                 <option value="Đang cư trú" ${(!tv.trangThaiBienDong || tv.trangThaiBienDong === 'Đang cư trú') ? 'selected' : ''}>🟢 Đang cư trú</option>
@@ -7978,6 +8018,16 @@ button.dt-chip{cursor:pointer}
         }
         function cdXoaDiemDanh(ngay) { window._cdDiemDanh = window._cdDiemDanh.filter(x => x.ngay !== ngay); cdVeDiemDanh(); }
         // --- Gắn Khu vực + Ô cho bản ghi của các sổ: nhật ký địa bàn, tạm vắng, sổ giao nhận CT15, sổ hồ sơ xóa ĐKTT ---
+        // Khu vực QUẢN LÝ ghi vào hồ sơ (KV3, cơ sở...) phải nằm trong phạm vi CSKV được giao, nếu không Firestore Rules từ chối cả lệnh ghi.
+        // Địa chỉ "Nơi ở hiện tại"/"Tạm trú" của đối tượng có thể ở khu vực KHÁC -> KHÔNG dùng để suy ra khu vực quản lý của CSKV.
+        function khuVucQuanLyHopLe(duKien, ho) {
+            const ds = (currentUser && currentUser.role === 'can_bo' && Array.isArray(currentUser.khuVucPhuTrach)) ? currentUser.khuVucPhuTrach : null;
+            if (!ds || !ds.length) return duKien;
+            if (duKien && ds.includes(duKien)) return duKien;
+            if (ho && ho.khuVuc && ds.includes(ho.khuVuc)) return ho.khuVuc;
+            const tuHo = ho && ho.diaChi ? layNhanKhuVucTuDiaChi(ho.diaChi, ho.phuong) : '';
+            return (tuHo && ds.includes(tuHo)) ? tuHo : ds[0];
+        }
         function dongDauKhuVucO(obj, ho) {
             if (ho && ho.khuVuc) obj.khuVuc = ho.khuVuc;
             if (!obj.khuVuc && currentUser && currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length) obj.khuVuc = currentUser.khuVucPhuTrach[0];
@@ -8400,7 +8450,7 @@ function xsNgayNghiLe() {
         }
         async function xsLuu(c) {
             if (xsKhongSua()) throw new Error('Tài khoản không có quyền ghi sổ này');
-            c.phuong = khuVucHienTai; dongDauKhuVucO(c, c.hoId ? (danhSachHoGiaDinh || []).find(h => h.id === c.hoId) : null); c.capNhatBoi = currentUser.email.toLowerCase(); c.capNhatLuc = new Date().toISOString();
+            c.phuong = khuVucHienTai; { const hoX = c.hoId ? (danhSachHoGiaDinh || []).find(h => h.id === c.hoId) : null; if (currentUser.role === 'can_bo') { const kvDung = khuVucQuanLyHopLe(c.khuVuc, hoX); if (kvDung !== c.khuVuc) { if (c.khuVuc) c.khuVucGhiTay = c.khuVuc; c.khuVuc = kvDung; } } dongDauKhuVucO(c, hoX); } c.capNhatBoi = currentUser.email.toLowerCase(); c.capNhatLuc = new Date().toISOString();
             if (!c.taoLuc) { c.taoLuc = c.capNhatLuc; c.taoBoi = c.capNhatBoi; }
             const du = JSON.parse(JSON.stringify(c)); delete du.id;
             if (CHE_DO_FIREBASE) {
@@ -10109,11 +10159,11 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                 if ((cu.dienDoiTuong || '') !== dien) duLieu.lichSuDien = (cu.lichSuDien || []).concat([{ tu: cu.dienDoiTuong || '', den: dien, nhom, luc: bay, boi: email }]);
             } else {
                 duLieu = Object.assign({
-                    phuong: khuVucHienTai, hoTen: (tv.hoTen || '').trim(), gioiTinh: tv.gioiTinh || 'Nam', sinhNgay: dtNgaySinhISO(tv.ngaySinh),
+                    phuong: ho.phuong || khuVucHienTai, hoTen: (tv.hoTen || '').trim(), gioiTinh: tv.gioiTinh || 'Nam', sinhNgay: dtNgaySinhISO(tv.ngaySinh),
                     quocTich: 'Việt Nam', danToc: tv.danToc || '', tonGiao: tv.tonGiao || '', soDinhDanh: (tv.cccd || '').trim(), queQuan: tv.queQuan || '',
                     noiThuongTru: ho.diaChi || '', noiOHienTai: noiO, soDienThoai: tv.sdt || '', ngheNghiep: tv.ngheNghiep || '',
                     canBoQuanLy: [], nguoiTao: email, anhBase64: '',
-                    khuVuc: (typeof layNhanKhuVucTuDiaChi === 'function' ? layNhanKhuVucTuDiaChi(noiO, khuVucHienTai) : '') || donViMacDinhTheoLoaiHinh(khuVucHienTai),
+                    khuVuc: khuVucQuanLyHopLe(ho.khuVuc || layNhanKhuVucTuDiaChi(ho.diaChi || noiO, ho.phuong || khuVucHienTai) || donViMacDinhTheoLoaiHinh(khuVucHienTai), ho),
                     lichSuDien: [{ tu: '', den: dien, nhom, luc: bay, boi: email }]
                 }, chung);
             }
@@ -10947,7 +10997,8 @@ table.ky td { padding: 2pt; }
             // để phân biệt). Giờ tự suy ra khu vực từ "Nơi ở hiện tại" (cùng cơ chế dùng cho hộ khẩu), lưu lại
             // thành trường riêng để cả client lẫn Security Rules đều lọc được đúng theo khu vực.
             const dtNoiO = document.getElementById('dt_noiOHienTai') ? document.getElementById('dt_noiOHienTai').value : '';
-            duLieu.khuVuc = layNhanKhuVucTuDiaChi(dtNoiO, khuVucHienTai) || donViMacDinhTheoLoaiHinh(khuVucHienTai);
+            { const idK = document.getElementById('dtId').value, bgK = idK ? danhSachDoiTuong.find(x => x.id === idK) : null;
+              duLieu.khuVuc = khuVucQuanLyHopLe((bgK && bgK.khuVuc) || layNhanKhuVucTuDiaChi(dtNoiO, khuVucHienTai) || donViMacDinhTheoLoaiHinh(khuVucHienTai), null); }
             if (cskvCoO()) { const idO = document.getElementById('dtId').value, bgO = idO ? danhSachDoiTuong.find(x => x.id === idO) : null; dongDauPhamViO(duLieu, bgO); }
             truong.forEach(t => { const elInput = document.getElementById('dt_' + t); if (elInput) duLieu[t] = elInput.value.trim ? elInput.value.trim() : elInput.value; });
             duLieu.anhBase64 = document.getElementById('dt_anhBase64').value || '';
@@ -11296,7 +11347,8 @@ table.ky td { padding: 2pt; }
                 if (p.length !== 2 || p.some(isNaN) || p[0] < -90 || p[0] > 90 || p[1] < -180 || p[1] > 180) return alert('Tọa độ chưa đúng dạng "vĩ độ, kinh độ" (VD: 10.026512, 105.760842).');
                 lat = p[0]; lng = p[1];
             }
-            const khuVuc = document.getElementById('cs_khuVuc').value || layNhanKhuVucTuDiaChi(diaChi, khuVucHienTai) || donViMacDinhTheoLoaiHinh(khuVucHienTai);
+            let khuVuc = document.getElementById('cs_khuVuc').value || layNhanKhuVucTuDiaChi(diaChi, khuVucHienTai) || donViMacDinhTheoLoaiHinh(khuVucHienTai);
+            { const kq = khuVucQuanLyHopLe(khuVuc, null); if (kq !== khuVuc) { if (!confirm('Địa chỉ cơ sở thuộc "' + khuVuc + '" — ngoài khu vực bạn được giao (' + kq + ').\n\nBấm OK để ghi cơ sở này vào "' + kq + '" (nếu không, hệ thống sẽ từ chối lưu).')) return; khuVuc = kq; } }
             if (currentUser.role === 'can_bo' && currentUser.khuVucPhuTrach && currentUser.khuVucPhuTrach.length && !currentUser.khuVucPhuTrach.includes(khuVuc)) {
                 return alert("Bạn chỉ được lưu cơ sở thuộc khu vực được giao phụ trách.");
             }
@@ -13267,7 +13319,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
         //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
         // ======================================================================================================
-        const PHIEN_BAN_APP = '2026.11.11';
+        const PHIEN_BAN_APP = '2026.11.14';
         const SB_NHOM = [
             { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
             { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
