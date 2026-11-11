@@ -10330,43 +10330,49 @@ table, td, th { font-family: "Times New Roman", serif; font-size: 13pt; }
         // ---- thành phần dùng chung của văn bản ----
         // Đường kẻ ngang đặt DƯỚI dòng chữ (có khe hở), rộng pc% của khung chứa — đúng thể thức NĐ 30/2020: kẻ dưới tên cơ quan và dưới trích yếu
         const cdDuongKe = pc => { const m = pc >= 40 ? 2.5 : 5.75; return `<p style="margin:3pt ${m}cm 0 ${m}cm;font-size:2pt;line-height:2pt;text-indent:0;border:none;border-bottom:solid windowtext .75pt;padding:0cm 0cm 1pt 0cm;mso-border-bottom-alt:solid windowtext .75pt;mso-padding-alt:0cm 0cm 1pt 0cm">&nbsp;</p>`; };
-        const cdTieuNgu = `<p align="center" style="text-align:center;margin:0;text-indent:0"><b style="font-size:13pt"><u>Độc lập - Tự do - Hạnh phúc</u></b></p>`;
+        const cdTieuNgu = `<p align="center" style="text-align:center;margin:0;text-indent:0"><b style="font-size:14pt"><u>Độc lập - Tự do - Hạnh phúc</u></b></p>`;
         const cdRutTieu = t => String(t || '').replace(/(CÔNG AN (?:PHƯỜNG|XÃ))\s+[^<]*/g, '$1');
         const cdDonViCB = c => { const d = String(c.ch.donViCB || c.ca || '').trim(); return CD_O(d) + (/thành phố|tỉnh/i.test(d) ? '' : ', thành phố ' + cdTr(c.ch.tp)); };
-        function cdMaMau(c, ma) { const t = x => ndHang([{ w: 10.5 }, { w: 5.5, a: 'c', h: `<span style="font-size:10pt">${x}</span>` }], { kn: 1 }); return t('Mẫu ' + CD_O(ma)) + t('BH theo TT số ' + CD_O(c.ch.ttSo)) + ndHang([{ w: 10.5 }, { w: 5.5, a: 'c', h: `<span style="font-size:10pt">ngày ${CD_O(c.ch.ttNgay)}</span>` }], { m: '0 0 4pt 0' }); }
-        function cdQuocHieu() { return `<p align="center" style="text-align:center;margin:0"><b style="font-size:12pt">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b></p>${cdTieuNgu}`; }
+        function cdMaMau(c, ma) {
+            // Khối "Mẫu CĐx / BH theo TT số … / ngày …" nằm ở lề trên trang đầu (Word: tiêu đề trang đầu); chữ 9pt, căn giữa tại 15,06 cm tính từ lề trái
+            const t = x => ndHang([{ w: 15.06 }, { w: 0, a: 'c', h: `<span style="font-size:9pt">${x}</span>` }], { m: '0 -3cm 0 0', lh: '100%' });
+            return '<div class="mau-wrap">' + t('Mẫu ' + CD_O(ma)) + t('BH theo TT số ' + CD_O(c.ch.ttSo)) + t('ngày ' + CD_O(c.ch.ttNgay)) + '</div>';
+        }
+        function cdQuocHieu() { return `<p align="center" style="text-align:center;margin:0"><b style="font-size:13pt">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b></p>${cdTieuNgu}`; }
         function cdDauHC(c, o) {
             // o: {kyHieu, so, ngay, toCSKV, boSo} — thể thức NĐ 30/2020/NĐ-CP: cơ quan chủ quản (thường), tên cơ quan (đậm, in hoa), đường kẻ dưới tên cơ quan; KHÔNG dùng bảng
             const capTren = o.capTren || c.ch.capTren, donVi = o.donVi || c.ch.donVi;
-            return ndDauVB({ capTren: capTren ? CD_O(capTren) : '', donVi: CD_O(donVi), toCSKV: o.toCSKV ? CD_O(c.ch.toCSKV) : '',
+            return ndDauVB({ kieu: 'cd', capTren: capTren ? CD_O(capTren) : '', donVi: CD_O(donVi), toCSKV: o.toCSKV ? CD_O(c.ch.toCSKV) : '',
                 so: o.boSo ? '' : 'Số: ' + (o.so ? CD_O(o.so) : '.............') + '/' + CD_O(o.kyHieu), ngay: CD_O(c.ch.diaDanh) + ', ' + (o.ngay ? xsNgayChu(o.ngay) : 'ngày …… tháng …… năm ……') });
         }
         function cdTieuDe(ten, trichYeu, kyDuong) {
             // Tên loại (đậm, in hoa 14pt) + trích yếu "Về việc …" (đậm, in thường 14pt) + đường kẻ dưới trích yếu
             let ty = String(trichYeu || '').trim();
             if (ty && !/^(Về việc|V\/v)/i.test(ty)) { ty = ty.replace(/^Việc\s+/i, ''); ty = 'Về việc ' + ty.charAt(0).toLowerCase() + ty.slice(1); }
-            return `<p align="center" style="text-align:center;margin:14pt 0 0 0"><b style="font-size:14pt">${ten}</b></p>` + (ty ? `<p align="center" style="text-align:center;margin:0"><b style="font-size:13pt">${ty}</b></p>` + cdDuongKe(33) : '') + '<p style="margin:0;font-size:6pt">&nbsp;</p>';
+            return `<p align="center" style="text-align:center;margin:10pt 0 0 0;line-height:100%"><b style="font-size:14pt">${ten}</b></p>` + (ty ? `<p align="center" style="text-align:center;margin:0;line-height:100%"><b style="font-size:14pt">${ty}</b></p>` + cdDuongKe(33) : '') + '<p style="margin:0;font-size:14pt;line-height:100%">&nbsp;</p>';
         }
         const cdP = s => `<p class="tl">${s}</p>`, cdPL = s => `<p style="text-align:left;margin:0 0 3pt 0">${s}</p>`;
         const cdDong = a => `<p style="text-align:left;text-indent:0;margin:0 0 3pt 0">${a}</p>`;
         const cdDong2 = (a, b) => ndHang([{ w: 8, h: a }, { w: 8, h: b }], { m: '0 0 3pt 0' });
-        const cdDong3 = (a, b, d) => ndHang([{ w: 5.6, h: a }, { w: 5, h: b }, { w: 5.4, h: d }], { m: '0 0 3pt 0' });
+        const cdDong3 = (a, b, d) => ndHang([{ w: 6, h: a }, { w: 4.3, h: b }, { w: 5.7, h: d }], { m: '0 0 3pt 0' });
+        const cdGiaN = n => '&nbsp;'.repeat(n);
+        // Khối thông tin người bị cấm đi khỏi nơi cư trú — trình bày liền dòng như mẫu của CSKV (không bảng, không tab dài dễ vỡ)
         function cdKhoi(c, o) {
             o = o || {};
-            let h = cdDong((o.tenToi ? 'Tên tôi là: ' : 'Họ và tên: ') + (o.dam === false ? cdTr(c.hoTen) : '<b>' + cdTr(c.hoTen) + '</b>'));
-            h += cdDong2('Ngày sinh: ' + cdTr(c.ngaySinh, '……/……/……'), 'Giới tính: ' + cdTr(c.gt, '……'));
+            const ten = o.dam === true ? '<b>' + cdTr(c.hoTen) + '</b>' : cdTr(c.hoTen);
+            let h = cdDong((o.tenToi ? 'Tên tôi là: ' : 'Họ và tên: ') + ten + cdGiaN(9) + 'Ngày sinh: ' + cdTr(c.ngaySinh, '……/……/……') + cdGiaN(2) + 'Giới tính: ' + cdTr(c.gt, '……'));
             h += cdDong('Tên gọi khác: ' + CD_O(c.tenKhac)) + cdDong('Nơi thường trú: ' + cdTr(c.thuongTru)) + cdDong('Nơi ở hiện tại: ' + cdTr(c.noiO));
             if (o.quocTich !== false) h += cdDong3('Quốc tịch: ' + cdTr(c.quocTich, '……'), 'Dân tộc: ' + cdTr(c.danToc, '……'), 'Tôn giáo: ' + cdTr(c.tonGiao, '……'));
-            if (o.ngheNghiep !== false) h += cdDong('Nghề nghiệp: ' + cdTr(c.ngheNghiep)) + cdDong('Nơi làm việc: ' + CD_O(c.noiLamViec));
-            h += cdDong('Số CCCD/CC/Hộ chiếu: ' + cdTr(c.cccd, '…………………')) + ndHang([{ w: 5.6, h: 'Ngày cấp: ' + cdTr(c.ngayCap, '……/……/……') }, { w: 10.4, h: 'Nơi cấp: ' + cdTr(c.noiCap, '………') }], { m: '0 0 3pt 0' });
+            if (o.ngheNghiep !== false) h += cdDong('Nghề nghiệp: ' + cdTr(c.ngheNghiep) + cdGiaN(10) + 'Nơi làm việc: ' + CD_O(c.noiLamViec));
+            h += cdDong('Số CCCD/CC/Hộ chiếu: ' + cdTr(c.cccd, '…………………') + cdGiaN(2) + 'Ngày cấp: ' + cdTr(c.ngayCap, '……/……/……') + cdGiaN(2) + 'Nơi cấp: ' + cdTr(c.noiCap, '………'));
             if (o.hanhVi !== false) h += cdDong('Hành vi phạm tội: ' + cdTr(c.hanhVi));
             if (o.thoiHan !== false) { h += cdDong(c.thoiHan); h += cdDong(c.theoLenh); }
             return h;
         }
         function cdKhoiNgan(c) {
-            return cdDong('Họ và tên: <b>' + cdTr(c.hoTen) + '</b>') + cdDong2('Ngày sinh: ' + cdTr(c.ngaySinh, '……/……/……'), 'Giới tính: ' + cdTr(c.gt, '……')) +
+            return cdDong('Họ và tên: ' + cdTr(c.hoTen) + cdGiaN(9) + 'Ngày sinh: ' + cdTr(c.ngaySinh, '……/……/……') + cdGiaN(2) + 'Giới tính: ' + cdTr(c.gt, '……')) +
                 cdDong('Tên gọi khác: ' + CD_O(c.tenKhac)) + cdDong('Nơi thường trú: ' + cdTr(c.thuongTru)) + cdDong('Nơi ở hiện tại: ' + cdTr(c.noiO)) +
-                cdDong('Số CCCD/CC/Hộ chiếu: ' + cdTr(c.cccd, '…………………')) + ndHang([{ w: 5.6, h: 'Ngày cấp: ' + cdTr(c.ngayCap, '……/……/……') }, { w: 10.4, h: 'Nơi cấp: ' + cdTr(c.noiCap, '………') }], { m: '0 0 3pt 0' });
+                cdDong('Số CCCD/CC/Hộ chiếu: ' + cdTr(c.cccd, '…………………') + cdGiaN(2) + 'Ngày cấp: ' + cdTr(c.ngayCap, '……/……/……') + cdGiaN(2) + 'Nơi cấp: ' + cdTr(c.noiCap, '………'));
         }
         function cdKyPhai(c, chucDanh, noiNhan, tenKy) { return ndKyPhai(noiNhan, [chucDanh], tenKy ? CD_O(tenKy) : ''); }
         function cdKyCot(cot, cao) { return ndKyCot(cot.map(x => ({ tieu: cdRutTieu(x.tieu), ghi: x.ghi || '(Ký, ghi rõ họ tên)', ten: x.ten ? CD_O(x.ten) : '' })), cao); }
@@ -10586,14 +10592,24 @@ p.tab > span.t:last-child { flex: 1 1 0; min-width: 0; white-space: normal; }`;
         const ND_JC = { l: 'flex-start', c: 'center', r: 'flex-end' }, ND_TA = { l: 'left', c: 'center', r: 'right' };
         function ndHang(cols, o) {
             o = o || {};
-            const dm = cols.map(c => c.w + ':' + (c.a || 'l')).join('|');
-            return `<p class="tab${o.kn ? ' kn' : ''}" data-cols="${dm}" style="margin:${o.m || '0'};text-indent:0;text-align:left">` +
-                cols.map(c => `<span class="t" style="width:${c.w}cm;justify-content:${ND_JC[c.a || 'l']};text-align:${ND_TA[c.a || 'l']}"><span>${c.h || '&nbsp;'}</span></span>`).join('') + '</p>';
+            const dm = cols.map(c => c.w + ':' + (c.a || 'l')).join('|'), off = o.off || 0;
+            return `<p class="tab${o.kn ? ' kn' : ''}" data-cols="${dm}" style="margin:${o.m || '0'};text-indent:0;text-align:left${o.lh ? ';line-height:' + o.lh : ''}">` +
+                cols.map((c, i) => `<span class="t" style="width:${+(c.w + (i === 0 ? off : 0)).toFixed(2)}cm;justify-content:${ND_JC[c.a || 'l']};text-align:${ND_TA[c.a || 'l']}"><span>${c.h || '&nbsp;'}</span></span>`).join('') + '</p>';
         }
         // đường kẻ ngang dưới tên cơ quan: bắt đầu cách lề trái `trai` cm, dài `rong` cm
         const ndDongKe = (trai, rong) => `<p class="kn" style="margin:2pt ${(16 - trai - rong).toFixed(2)}cm 0 ${trai}cm;font-size:2pt;line-height:2pt;text-indent:0;border:none;border-bottom:solid windowtext .75pt;padding:0cm 0cm 1pt 0cm;mso-border-bottom-alt:solid windowtext .75pt">&nbsp;</p>`;
         // Đầu văn bản: o = {capTren, donVi, toCSKV, so, ngay} (các giá trị đã escape HTML)
         function ndDauVB(o) {
+            if (o.kieu === 'cd') {
+                // Bố cục theo mẫu textbox của CSKV: chữ 13pt; tâm cột trái cách lề 2,82 cm, tâm cột phải cách lề 11,5 cm (tab giữa, lề thụt âm để chữ vượt lề như textbox)
+                const K = { m: '0 -1cm 0 -0.5cm', off: 0.5, lh: '15pt' }, C = [{ w: 5.64, a: 'c' }, { w: 11.72, a: 'c' }];
+                const cot = (a, b) => ndHang([{ w: C[0].w, a: 'c', h: a }, { w: C[1].w, a: 'c', h: b }], Object.assign({ kn: 1 }, K));
+                let h = cot(o.capTren ? `<span style="font-size:13pt">${o.capTren}</span>` : '', '<b style="font-size:13pt">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b>');
+                h += cot(`<b style="font-size:13pt">${o.donVi}</b>`, '<b style="font-size:14pt"><u>Độc lập - Tự do - Hạnh phúc</u></b>');
+                if (o.toCSKV) h += cot(`<b style="font-size:13pt">${o.toCSKV}</b>`, '');
+                h += ndDongKe(1.62, 2.4);
+                return h + ndHang([{ w: C[0].w, a: 'c', h: o.so ? `<span style="font-size:14pt">${o.so}</span>` : '' }, { w: C[1].w, a: 'c', h: o.ngay ? '<i style="font-size:14pt">' + o.ngay + '</i>' : '' }], Object.assign({}, K, { m: '5pt -1cm 0 -0.5cm', lh: '111%' }));
+            }
             let h = ndHang([{ w: 7, a: 'c', h: o.capTren ? `<span style="font-size:12pt">${o.capTren}</span>` : '' }, { w: 9, a: 'c', h: '<b style="font-size:12pt">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b>' }], { kn: 1 });
             h += ndHang([{ w: 7, a: 'c', h: `<b style="font-size:12pt">${o.donVi}</b>` }, { w: 9, a: 'c', h: '<b style="font-size:13pt"><u>Độc lập - Tự do - Hạnh phúc</u></b>' }], { kn: 1 });
             if (o.toCSKV) h += ndHang([{ w: 7, a: 'c', h: `<b style="font-size:12pt">${o.toCSKV}</b>` }, { w: 9, a: 'c', h: '' }], { kn: 1 });
@@ -10654,10 +10670,10 @@ div.WordSection1 { page: WordSection1; }`
 /* Thể thức theo Nghị định 30/2020/NĐ-CP: A4 dọc; lề trên 20mm, dưới 20mm, trái 30mm, phải 20mm; Times New Roman 13; số trang ở giữa lề trên từ trang 2 */
 ${cssTrang}
 ${ND_CSS_TAB}
-body { font-family: "Times New Roman", serif; font-size: 13pt; }
-p { margin: 0 0 6pt 0; line-height: 112%; }
+body { font-family: "Times New Roman", serif; font-size: 14pt; }
+p { margin: 0 0 3pt 0; line-height: 111%; }
 p.tl { text-align: justify; text-indent: 1.27cm; }
-table, td, th { font-family: "Times New Roman", serif; font-size: 13pt; }
+table, td, th { font-family: "Times New Roman", serif; font-size: 14pt; }
 </style></head>
 <body>${meo}<div class="WordSection1">${body}<!--CSKV_DAU--></div>${choWord ? `
 <div style="mso-element:header" id="h1"><p align="center" style="text-align:center;margin:0"><span style="mso-field-code:' PAGE '"><span style="mso-no-proof:yes">2</span></span></p></div>
@@ -13390,7 +13406,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
         //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
         // ======================================================================================================
-        const PHIEN_BAN_APP = '2026.11.17';
+        const PHIEN_BAN_APP = '2026.11.18';
         const SB_NHOM = [
             { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
             { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
@@ -14191,17 +14207,18 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
   function paraTab(el, ctx, st) {
     var cols = String(el.getAttribute('data-cols') || '').split('|').map(function (s) { var p = s.split(':'); return { w: parseFloat(p[0]) || 0, a: (p[1] || 'l').charAt(0) }; });
     var spans = Array.prototype.filter.call(el.childNodes, function (n) { return n.nodeType === 1 && n.tagName.toLowerCase() === 'span'; });
-    var tabs = '', pos = 0, body = '';
+    var tabs = '', pos = 0, body = '', mark = st;
     cols.forEach(function (c, i) {
       var p = pos + (c.a === 'c' ? c.w / 2 : c.a === 'r' ? c.w : 0);
       var can = !(i === 0 && c.a === 'l');
-      if (can) { tabs += '<w:tab w:val="' + (c.a === 'c' ? 'center' : c.a === 'r' ? 'right' : 'left') + '" w:pos="' + Math.round(p * TW_CM) + '"/>'; body += '<w:r><w:tab/></w:r>'; }
-      var sp = spans[i];
-      if (sp) { var n = chuTuStyle(st, docKhai(sp.getAttribute('style'))); body += gotRuns(noiDung(sp, n, ctx)); }
+      var sp = spans[i], n = sp ? chuTuStyle(st, docKhai(sp.getAttribute('style'))) : st;
+      if (sp && (sp.textContent || '').replace(/[\s\u00a0]/g, '')) { var sz0 = (sp.querySelector('[style*="font-size"]') || sp).getAttribute('style'); var m2 = chuTuStyle(st, docKhai(sz0)); if (m2.sz) mark = m2; }
+      if (can) { tabs += '<w:tab w:val="' + (c.a === 'c' ? 'center' : c.a === 'r' ? 'right' : 'left') + '" w:pos="' + Math.round(p * TW_CM) + '"/>'; body += '<w:r>' + rPr({ sz: (mark.sz || n.sz) }) + '<w:tab/></w:r>'; }
+      if (sp && (sp.textContent || '').replace(/[\s\u00a0]/g, '')) body += gotRuns(noiDung(sp, n, ctx));
       pos += c.w;
     });
     var pp = paraProps(el, ctx, { tabs: tabs ? '<w:tabs>' + tabs + '</w:tabs>' : '' });
-    return '<w:p>' + pp.x + body + '</w:p>';
+    return '<w:p>' + pp.x.replace('</w:pPr>', rPr({ sz: mark.sz }) + '</w:pPr>') + body + '</w:p>';
   }
 
   // ---------- bảng dữ liệu ----------
@@ -14250,7 +14267,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
       var tag = c.tagName.toLowerCase();
       if (tag === 'p' || /^h[1-6]$/.test(tag)) x += para(c, ctx);
       else if (tag === 'table') x += bang(c, ctx);
-      else if (tag === 'div') { if (!/khong-in/.test(c.getAttribute('class') || '')) x += khoi(c, ctx); }
+      else if (tag === 'div') { var dc = c.getAttribute('class') || ''; if (/mau-wrap/.test(dc)) { Array.prototype.forEach.call(c.children, function (q) { ctx.hdr = (ctx.hdr || '') + para(q, ctx); }); } else if (!/khong-in/.test(dc)) x += khoi(c, ctx); }
       else if (tag === 'ul' || tag === 'ol') Array.prototype.forEach.call(c.children, function (li) { x += '<w:p><w:pPr><w:spacing w:before="0" w:after="60"/></w:pPr>' + run('- ', ctx.base) + noiDung(li, ctx.base, ctx) + '</w:p>'; });
     });
     return x;
@@ -14261,8 +14278,9 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
   function stylesXml(szHalf) {
     return XMLH + '<w:styles ' + NS + '><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="' + szHalf + '"/><w:szCs w:val="' + szHalf + '"/><w:lang w:val="vi-VN" w:eastAsia="vi-VN" w:bidi="ar-SA"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style><w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/><w:uiPriority w:val="99"/><w:semiHidden/><w:tblPr><w:tblInd w:w="0" w:type="dxa"/><w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="108" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="108" w:type="dxa"/></w:tblCellMar></w:tblPr></w:style></w:styles>';
   }
-  function headerXml(coSo) {
-    return XMLH + '<w:hdr ' + NS + '><w:p><w:pPr><w:jc w:val="center"/></w:pPr>' + (coSo ? '<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>2</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r>' : '') + '</w:p></w:hdr>';
+  function headerXml(coSo, them) {
+    if (!coSo && them) return XMLH + '<w:hdr ' + NS + '>' + them + '</w:hdr>';
+    return XMLH + '<w:hdr ' + NS + '><w:p><w:pPr>' + (coSo ? '<w:spacing w:before="340" w:after="0"/>' : '') + '<w:jc w:val="center"/></w:pPr>' + (coSo ? '<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>2</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r>' : '') + '</w:p></w:hdr>';
   }
 
   // ---------- ZIP (store) ----------
@@ -14289,10 +14307,10 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
     var doc = new (DOMParserCtor || G.DOMParser)().parseFromString(html, 'text/html');
     var css = laySheet(doc), bs = css['body'] || {};
     var szPt = /([\d.]+)pt/.exec(bs['font-size'] || ''), sz = szPt ? Math.round(parseFloat(szPt[1]) * 2) : 26;
-    var ctx = { css: css, base: {}, sz: sz };
+    var ctx = { css: css, base: {}, sz: sz, hdr: '' };
     var goc = doc.querySelector('div.WordSection1') || doc.body;
     var thanh = khoi(goc, ctx);
-    var sect = '<w:sectPr><w:headerReference w:type="default" r:id="rIdH1"/><w:headerReference w:type="first" r:id="rIdH2"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1701" w:header="567" w:footer="567" w:gutter="0"/><w:titlePg/></w:sectPr>';
+    var sect = '<w:sectPr><w:headerReference w:type="default" r:id="rIdH1"/><w:headerReference w:type="first" r:id="rIdH2"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1701" w:header="255" w:footer="567" w:gutter="0"/><w:titlePg/></w:sectPr>';
     var documentXml = XMLH + '<w:document ' + NS + '><w:body>' + thanh + sect + '</w:body></w:document>';
     var title = (doc.querySelector('title') || {}).textContent || 'Văn bản';
     return [
@@ -14303,7 +14321,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
       { name: 'word/document.xml', data: documentXml },
       { name: 'word/styles.xml', data: stylesXml(sz) },
       { name: 'word/header1.xml', data: headerXml(true) },
-      { name: 'word/header2.xml', data: headerXml(false) }
+      { name: 'word/header2.xml', data: headerXml(false, ctx.hdr) }
     ];
   }
   function htmlSangDocx(html) {
@@ -14311,7 +14329,6 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
   }
   G.htmlSangDocx = htmlSangDocx; G.__nd30Docx = { parts: htmlSangDocxParts, zip: zip };
 })(typeof window !== 'undefined' ? window : globalThis);
-
 </script>
 <script id="cskvBoSung">
 /* ==========================================================================
