@@ -3071,6 +3071,9 @@ button.dt-chip{cursor:pointer}
             authFirebase.onAuthStateChanged(async (user) => {
                 if (user) {
                     const quyen = await xacDinhQuyenTuFirestore(user.email);
+                    // TÀI KHOẢN BỊ THU HỒI: Admin đã gỡ phân quyền -> tài khoản tự xóa khỏi Firebase Authentication (không cần Cloud Function/Blaze).
+                    if (quyen.role !== 'admin' && await xuLyTaiKhoanBiThuHoi(user)) return;
+                    batGiamSatQuyenCuaToi(user.email, quyen.role);
                     // CHẶN GMAIL ẢO: tài khoản email+mật khẩu CHƯA cấp quyền mà chưa xác minh được hộp thư thật
                     // thì không được đi tiếp (không tạo hồ sơ chờ, không khai báo). Tài khoản đã được cấp quyền
                     // và tài khoản Google (Google đã xác minh sẵn) không bị ảnh hưởng.
@@ -3879,6 +3882,36 @@ button.dt-chip{cursor:pointer}
                 } catch (e) { }
             }, 30000);
         })();
+        // ===== THU HỒI TÀI KHOẢN =====
+        async function xuLyTaiKhoanBiThuHoi(user) {
+            if (!CHE_DO_FIREBASE || !dbFirestore) return false;
+            const email = String(user.email || '').toLowerCase();
+            let biThuHoi = false;
+            try { biThuHoi = (await dbFirestore.collection('thu_hoi_tai_khoan').doc(email).get()).exists; } catch (e) { return false; }
+            if (!biThuHoi) return false;
+            let daXoa = false;
+            try { await user.delete(); daXoa = true; }
+            catch (e) { /* auth/requires-recent-login: phải đăng nhập lại mới xóa được */ }
+            if (daXoa) { try { await dbFirestore.collection('thu_hoi_tai_khoan').doc(email).delete(); } catch (e) { } }
+            try { if (!daXoa) await authFirebase.signOut(); } catch (e) { }
+            try { await xoaBoNhoDemTrenMay(); } catch (e) { }
+            alert(daXoa ? '🔒 Tài khoản này đã bị thu hồi quyền và đã được xóa khỏi hệ thống. Liên hệ Admin nếu cần cấp lại.' : '🔒 Tài khoản này đã bị thu hồi quyền. Vui lòng liên hệ Admin.');
+            location.reload();
+            return true;
+        }
+        // Đang dùng mà bị gỡ quyền -> bị đăng xuất ngay (không chờ hết phiên).
+        let huyGiamSatQuyen = null;
+        function batGiamSatQuyenCuaToi(email, role) {
+            try { if (huyGiamSatQuyen) { huyGiamSatQuyen(); huyGiamSatQuyen = null; } } catch (e) { }
+            if (!CHE_DO_FIREBASE || !dbFirestore || !['chi_huy_tp', 'chi_huy', 'can_bo', 'can_bo_du_lieu'].includes(role)) return;
+            let daThay = false;
+            huyGiamSatQuyen = dbFirestore.collection('permissions').doc(String(email).toLowerCase()).onSnapshot(snap => {
+                if (snap.metadata.fromCache && !snap.exists) return;   // mất mạng: không kết luận
+                const cap = snap.exists && snap.data() && snap.data().vaiTro;
+                if (cap) { daThay = true; return; }
+                if (daThay || !snap.exists) { daThay = false; alert('🔒 Quyền truy cập của tài khoản này đã bị thu hồi. Hệ thống sẽ đăng xuất.'); dangXuat(); }
+            }, () => { });
+        }
         function dangXuat() {
             localStorage.removeItem("currentUserAuthGIS_V5"); localStorage.removeItem("lanHoatDongCuoiGIS_V5");
             if (CHE_DO_FIREBASE && authFirebase && authFirebase.currentUser) {
@@ -4233,6 +4266,7 @@ button.dt-chip{cursor:pointer}
 
             if (CHE_DO_FIREBASE) {
                 try {
+                    try { await dbFirestore.collection('thu_hoi_tai_khoan').doc(email).delete(); } catch (e) { }   // cấp lại quyền -> hủy dấu thu hồi cũ (nếu có)
                     await dbFirestore.collection('permissions').doc(email).set(banGhi); // onSnapshot sẽ tự cập nhật danh sách
                     ghiNhatKy('Cấp phân quyền', email + ' -> ' + vaiTro + (phuong ? ' (' + phuong + ')' : ''));
                 } catch (err) { return alert("❌ Lỗi lưu phân quyền lên máy chủ: " + err.message); }
@@ -4283,9 +4317,15 @@ button.dt-chip{cursor:pointer}
         }
 
         async function xoaPhanQuyenCSKV(email) {
-            if (!confirm("Gỡ phân quyền của " + email + "?")) return;
+            if (!confirm("Gỡ phân quyền và XÓA TÀI KHOẢN của " + email + "?\n\nNgười này sẽ mất toàn bộ quyền và tài khoản đăng nhập sẽ bị xóa. Muốn cấp lại phải cấp quyền mới (họ đăng ký lại).")) return;
             if (CHE_DO_FIREBASE) {
-                try { await dbFirestore.collection('permissions').doc(email).delete(); ghiNhatKy('Gỡ phân quyền', email); }
+                try {
+                    // Dấu thu hồi: lần đăng nhập kế tiếp (hoặc ngay nếu đang online) tài khoản này TỰ XÓA khỏi Firebase Authentication và không tự tạo lại hồ sơ chờ được.
+                    await dbFirestore.collection('thu_hoi_tai_khoan').doc(email).set({ email, boi: currentUser.email, luc: firebase.firestore.FieldValue.serverTimestamp() });
+                    await dbFirestore.collection('permissions').doc(email).delete();
+                    ghiNhatKy('Gỡ phân quyền & xóa tài khoản', email);
+                    alert('✅ Đã gỡ phân quyền và đánh dấu XÓA tài khoản ' + email + '.\n\n• Hồ sơ phân quyền đã xóa khỏi Firestore: người này mất quyền truy cập NGAY.\n• Tài khoản đăng nhập (Firebase Authentication) sẽ tự bị xóa ở lần họ mở phần mềm tiếp theo.\n• Muốn xóa ngay: Firebase Console → Authentication → Users → xóa email này.');
+                }
                 catch (err) { return alert("❌ Lỗi gỡ phân quyền trên máy chủ: " + err.message); }
             } else {
                 danhSachPhanQuyen = danhSachPhanQuyen.filter(r => r.email !== email);
@@ -8641,7 +8681,7 @@ function xsNgayNghiLe() {
             const dk = xsDk(c), tam = dk === 'tạm trú', soThang = tam ? '06' : '12';
             const hoTxt = 'hộ ông/bà: ' + (c.chuHo || '……') + ', sinh năm ' + ns + (nn === '00' ? '' : ' cùng ' + nn + ' nhân khẩu');
             const dtNK = c.loai === 'nhan_khau';
-            const nkTxt = c.chuHo ? (c.chuHo + ', sinh năm ' + ns + (nn === '00' ? '' : ' cùng ' + nn + ' nhân khẩu')) : hoTxt;
+            const nkTxt = hoTxt;
             if (c.lyDoMa === 'g') {
                 if (tam) return 'Ông/bà ' + tk + ' cho biết: ' + hoTxt + ', trước đây đăng ký tạm trú tại: ' + dc + '. Đến năm …… chuyển nhượng nhà, không còn cư trú tại địa chỉ trên từ năm …… đến nay.\nHiện tại, chủ sở hữu căn nhà tại địa chỉ số: ' + dc + ' là ông/bà ………………………… sinh năm: 19…… không đồng ý cho hộ ông/bà ' + (c.chuHo || '……') + ', cùng ' + nn + ' nhân khẩu, tiếp tục sinh sống tại địa chỉ ' + dc + '.';
                 return 'Ông/bà ' + tk + ' cho biết: ' + hoTxt + ', trước đây đăng ký thường trú tại: ' + dc + '. Đến năm …… bán nhà, không còn cư trú tại địa chỉ trên từ năm …… đến nay.\nHiện tại, chủ sở hữu căn nhà tại địa chỉ số: ' + dc + ' là ông/bà ………………………… sinh năm: 19…… không đồng ý cho hộ ông/bà ' + (c.chuHo || '……') + ', cùng ' + nn + ' nhân khẩu, đăng ký thường trú tại địa chỉ ' + dc + '.';
@@ -8742,6 +8782,9 @@ function xsNgayNghiLe() {
             const diaDiem = c.diaDiem || (c.khuVuc ? 'Nhà thông tin ' + kvThuong : 'Nhà thông tin khu vực ……');
             const chucTKV = 'Trưởng ' + (kvThuong || 'khu vực ……');
             const tkv = c.truongKV || '……………………';
+            const laChuHo = !!String(c.truongKV || '').trim() && String(c.truongKV).trim().toLowerCase() === String(g.ch).trim().toLowerCase(); // làm việc trực tiếp với chủ hộ
+            const kemPhuong = s => { const x = String(s || ''); return x.toLowerCase().indexOf(ph.toLowerCase()) >= 0 ? o(x) : o(x) + ', ' + o(ph) + ', TP. ' + o(tp); }; // thêm phường/thành phố nếu địa chỉ chưa có
+            const noiLap = (diaDiem.toLowerCase().indexOf(ph.toLowerCase()) >= 0) ? o(diaDiem) + ', thành phố ' + o(tp) : o(diaDiem) + ', ' + o(ph) + ', thành phố ' + o(tp);
             const cb = x => (x && x.ten) ? o(x.ten) : '……………………';
             const ngayXM = c.ngayXacMinh || c.ngayThongBao || xsIso(csHomNay()), ngayTB = c.ngayThongBao || c.ngayXacMinh || xsIso(csHomNay()), ngayBB = c.ngayLapBienBan || xsIso(csHomNay());
             const ngayCua = loai === 'xm' ? ngayXM : loai === 'tb' ? ngayTB : ngayBB;
@@ -8752,19 +8795,19 @@ function xsNgayNghiLe() {
             const nghiDinh = (kt) => '<p class="tl">Căn cứ Nghị định số 154/2024/NĐ-CP ngày 26/11/2024 của chính phủ Quy định chi tiết một số điều và biện pháp thi hành Luật Cư trú năm 2020' + kt + '</p>';
             const doan = s => String(s || '').split(/\n+/).filter(x => x.trim()).map(x => '<p class="tl">' + o(x) + '</p>').join('');
             const duongKe = pc => `<p style="margin:3pt ${pc >= 40 ? 2.5 : 6.5}cm 0 ${pc >= 40 ? 2.5 : 6.5}cm;font-size:2pt;line-height:2pt;text-indent:0;border:none;border-bottom:solid windowtext .75pt;padding:0cm 0cm 1pt 0cm;mso-border-bottom-alt:solid windowtext .75pt;mso-padding-alt:0cm 0cm 1pt 0cm">&nbsp;</p>`;
-            const dauTrang = (tieuDe) => `<table class="dau"><tr><td width="42%" align="center" valign="top" style="font-size:12pt;white-space:nowrap">${o(c.capTren || 'CÔNG AN THÀNH PHỐ CẦN THƠ')}<br><b>${o(donVi)}</b>${duongKe(45)}</td><td width="58%" align="center" valign="top"><b style="font-size:12pt;white-space:nowrap">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><p align="center" style="text-align:center;margin:0;text-indent:0"><b style="font-size:13pt"><u>Độc lập - Tự do - Hạnh phúc</u></b></p></td></tr><tr><td align="center" valign="top" style="font-size:13pt;padding-top:4pt">Số: ${o(soHienTai)}/${kyHieu}-${o(hau)}</td><td align="center" valign="top" style="font-size:14pt;padding-top:4pt"><i>${o(ten)}, ${xsNgayChu(ngayCua)}</i></td></tr></table><p align="center" style="text-align:center;margin:12pt 0 0 0"><b style="font-size:14pt">${tieuDe}</b></p><p align="center" style="text-align:center;margin:0"><b style="font-size:14pt">Về việc xóa đăng ký ${dk}</b></p>${duongKe(17)}<p style="margin:0;font-size:6pt">&nbsp;</p>`;
+            const dauTrang = (tieuDe) => ndDauVB({ capTren: o(c.capTren || 'CÔNG AN THÀNH PHỐ CẦN THƠ'), donVi: o(donVi), so: 'Số: ' + o(soHienTai) + '/' + kyHieu + '-' + o(hau), ngay: o(ten) + ', ' + xsNgayChu(ngayCua), ngayCo: 14 }) + `<p align="center" style="text-align:center;margin:12pt 0 0 0"><b style="font-size:14pt">${tieuDe}</b></p><p align="center" style="text-align:center;margin:0"><b style="font-size:14pt">Về việc xóa đăng ký ${dk}</b></p>${duongKe(17)}<p style="margin:0;font-size:6pt">&nbsp;</p>`;
             const canBo = `<p class="tl"><b><u>Chúng tôi gồm</u></b>:</p><p class="tl">1) Đ/c ${cb(c.canBo1)}, Chức vụ: ${o((c.canBo1 || {}).chucVu || '……')}, Đơn vị: ${o(caPh)}, TP. ${o(tp)}.</p><p class="tl">2) Đ/c ${cb(c.canBo2)}, Chức vụ: ${o((c.canBo2 || {}).chucVu || '……')}, Đơn vị: ${o(caPh)}, TP. ${o(tp)}.</p>`;
             const lap = '<p class="tl" style="page-break-after:avoid">Biên bản lập xong hồi ………… giờ ………… cùng ngày, lập thành 02 bản, đã đọc lại cho những người có tên người cùng nghe, đồng ý và thống nhất cùng ký tên./.</p>';
             const hoXoa = nk ? `nhân khẩu thuộc hộ ông/bà ${o(g.ch)}` : `hộ ông/bà ${o(g.ch)}`;
             const hoDaiDien = `hộ ông/bà: ${o(g.ch)}, sinh năm ${o(g.ns)}${g.nn === '00' ? '' : ' cùng ' + g.nn + ' nhân khẩu'}`;
-            const kyBang = (cot, cao) => `<table class="ky" style="page-break-inside:avoid"><tr style="page-break-inside:avoid">${cot.map(x => `<td width="${x.w}%" align="center" valign="top">${x.tieu}</td>`).join('')}</tr><tr><td colspan="${cot.length}" height="${cao || 64}" style="height:${cao || 64}pt">&nbsp;</td></tr><tr>${cot.map(x => `<td align="center" valign="top"><b>${o(x.ten || '')}</b></td>`).join('')}</tr></table>`;
-            const kyKT = `<b>KT. TRƯỞNG CÔNG AN<br>PHÓ TRƯỞNG CÔNG AN</b>`;
+            const kyBang = (cot, cao, noi) => ndKyCot(cot.map(x => ({ tieu: x.tieu, ghi: '', ten: o(x.ten || '') })), cao, undefined, noi);
+            const kyKT = 'KT. TRƯỞNG CÔNG AN<br>PHÓ TRƯỞNG CÔNG AN';
             let thanBai = '';
             if (loai === 'xm') {
-                thanBai = luat + nghiDinh('.') + `<p class="tl">Hôm nay, vào lúc ………… giờ ………… phút, ${xsNgayChu(ngayXM)}, Tại: ${o(diaDiem)}, ${o(ph)}, thành phố ${o(tp)}.</p>` + canBo +
-                    `<p class="tl">Tiến hành làm việc cùng với ông/bà: ${o(tkv)}, hiện là ${o(chucTKV)}, ${o(ph)}, TP. ${o(tp)} để xác minh quá trình cư trú của ${hoDaiDien}, có địa chỉ ${dk} tại: ${o(g.dc)}.</p>` +
+                thanBai = luat + nghiDinh('.') + `<p class="tl">Hôm nay, vào lúc ………… giờ ………… phút, ${xsNgayChu(ngayXM)}, Tại: ${noiLap}.</p>` + canBo +
+                    `<p class="tl">${laChuHo ? `Tiến hành làm việc cùng với ông/bà: ${o(tkv)}, sinh năm ${o(g.ns)}, hiện là Chủ hộ${g.nn === '00' ? '' : ' cùng ' + g.nn + ' nhân khẩu'}, có địa chỉ ${dk} tại: ${o(g.dc)}.` : `Tiến hành làm việc cùng với ông/bà: ${o(tkv)}, hiện là ${o(chucTKV)}, ${o(ph)}, TP. ${o(tp)} để xác minh quá trình cư trú của ${hoDaiDien}, có địa chỉ ${dk} tại: ${o(g.dc)}.`}</p>` +
                     '<p class="gi"><b>KẾT QUẢ XÁC MINH</b></p>' + doan(c.ketQuaXacMinh) + lap +
-                    kyBang([{ w: 34, tieu: '<b>Người cung cấp thông tin</b>', ten: c.truongKV }, { w: 33, tieu: '<b>BCH Công an ' + o(ph.split(' ')[0]) + '</b>', ten: (c.canBo1 || {}).ten }, { w: 33, tieu: '<b>Cán bộ lập biên bản</b>', ten: (c.canBo2 || {}).ten }]);
+                    kyBang([{ w: 34, tieu: 'Người cung cấp<br>thông tin', ten: c.truongKV }, { w: 33, tieu: 'BCH Công an<br>' + o(ph.split(' ')[0]), ten: (c.canBo1 || {}).ten }, { w: 33, tieu: 'Cán bộ<br>lập biên bản', ten: (c.canBo2 || {}).ten }]);
             } else if (loai === 'tb') {
                 const doiTuong = nk ? `các nhân khẩu thuộc hộ ông/bà: ${o(g.ch)}, sinh năm: ${o(g.ns)} ${khau1} tại: ${o(g.dc)}, gồm ${g.soTV} nhân khẩu: ${o(xsDsNK(g.tv))}` : `hộ ông/bà: ${o(g.ch)}${g.nn === '00' ? '' : ' cùng ' + g.nn + ' nhân khẩu trong hộ'}, có ${khau2} tại: ${o(g.dc)}`;
                 const phatHien = nk ? `các nhân khẩu thuộc hộ ông/bà ${o(g.ch)}` : `hộ ông/bà ${o(g.ch)}`;
@@ -8775,16 +8818,16 @@ function xsNgayNghiLe() {
                     `<p class="tl">Qua công tác xác minh và quản lý cư trú, ${o(caPh)} phát hiện ${phatHien} thuộc trường hợp phải xóa đăng ký ${dk} theo quy định tại ${o(diemTxt.replace(/^điểm/, 'Điểm'))}. Do đó, Công an ${o(ph.split(' ')[0])} đề nghị ông/bà ${o(g.ch)} liên hệ ${o(caPh)} để nộp hồ sơ làm thủ tục xóa đăng ký ${dk}${choNK} theo quy định pháp luật.</p>` +
                     `<p class="tl">Trường hợp quá ${xsP2(XS_SO_NGAY_THONG_BAO)} ngày kể từ ngày ${o(caPh)} thông báo mà ${nk ? 'hộ gia đình ' : 'hộ gia đình '}ông/bà ${o(g.ch)} không nộp hồ sơ làm thủ tục xóa đăng ký ${dk}${choNK} thì ${o(caPh)} sẽ tiến hành xóa đăng ký ${dk} đối với ${nk ? 'các nhân khẩu trên' : 'hộ ông/bà ' + o(g.ch)} theo quy định.</p>` +
                     `<p class="tl">Với nội dung như trên, ${o(caPh)}, thành phố ${o(tp)} thông báo đến hộ ông/bà ${o(g.ch)} biết.</p>` +
-                    `<table class="ky" style="page-break-inside:avoid"><tr><td width="50%" rowspan="3" valign="top" style="text-align:left"><b><i style="font-size:12pt">Nơi nhận:</i></b><br><span style="font-size:11pt">- Ông/bà: ${o(g.ch)} (để biết);<br>- Lưu: HS (CSKV).</span></td><td width="50%" align="center" valign="top">${kyKT}</td></tr><tr><td height="64" style="height:64pt">&nbsp;</td></tr><tr><td align="center" valign="top"><b>${o((c.canBo1 || {}).ten || '')}</b></td></tr></table>`;
+                    ndKyPhai([`Ông/bà: ${o(g.ch)} (để biết);`, 'Lưu: HS (CSKV).'], ['KT. TRƯỞNG CÔNG AN', 'PHÓ TRƯỞNG CÔNG AN'], o((c.canBo1 || {}).ten || ''), { ghi: '' });
             } else {
                 const nd = (c.lyDoNoiDung || '……') + (c.diem ? ' (thuộc trường hợp quy định tại ' + diemTxt + ')' : '');
                 const doiTuongBB = nk ? `nhân khẩu thuộc hộ ông/bà ${o(g.ch)}, sinh năm ${o(g.ns)} có địa chỉ ${dk} tại: ${o(g.dc)} gồm ${g.soTV} nhân khẩu: ${o(xsDsNK(g.tv))}.` : `hộ ông/bà ${o(g.ch)}, sinh năm ${o(g.ns)}${g.nn === '00' ? '' : ' cùng ' + g.nn + ' nhân khẩu'}, có địa chỉ ${dk} tại: ${o(g.dc)}.`;
                 thanBai = luat + nghiDinh(';') +
                     `<p class="tl">Căn cứ Biên bản xác minh số: ${o(so('XM'))} ${xsNgayChu(ngayXM)} và Thông báo số ${o(so('TB'))} ${xsNgayChu(ngayTB)} của ${o(caPh)} về việc xóa đăng ký ${dk} đối với ${hoXoa}.</p>` +
-                    `<p class="tl">Hôm nay, vào lúc ………… giờ ………… phút, ${xsNgayChu(ngayBB)}</p><p class="tl">Tại: ${o(diaDiem)}, ${o(ph)}, thành phố ${o(tp)}.</p>` + canBo +
-                    `<p class="tl">Đã tiếp xúc làm việc với ông/bà ${o(tkv)}, hiện là ${o(chucTKV)}, ${o(ph)}, TP. ${o(tp)}, để tiến hành lập biên bản về việc xóa đăng ký ${dk} đối với ${doiTuongBB}</p>` +
+                    `<p class="tl">Hôm nay, vào lúc ………… giờ ………… phút, ${xsNgayChu(ngayBB)}</p><p class="tl">Tại: ${noiLap}.</p>` + canBo +
+                    `<p class="tl">${laChuHo ? `Đã tiếp xúc làm việc với ông/bà ${o(tkv)}, sinh năm ${o(g.ns)}, hiện là Chủ hộ số nhà ${kemPhuong(g.dc)}, để tiến hành lập biên bản về việc xóa đăng ký ${dk} đối với ${nk ? `nhân khẩu thuộc hộ ông/bà ${o(g.ch)} gồm ${g.soTV} nhân khẩu: ${o(xsDsNK(g.tv))}.` : `hộ ông/bà ${o(g.ch)}${g.nn === '00' ? '' : ' cùng ' + g.nn + ' nhân khẩu'}.`}` : `Đã tiếp xúc làm việc với ông/bà ${o(tkv)}, hiện là ${o(chucTKV)}, ${o(ph)}, TP. ${o(tp)}, để tiến hành lập biên bản về việc xóa đăng ký ${dk} đối với ${doiTuongBB}`}</p>` +
                     `<p class="tl">Lý do xóa đăng ký ${dk}: <i>${o(nd)}.</i></p>` + lap +
-                    kyBang([{ w: 50, tieu: '<b>Cán bộ lập biên bản</b>', ten: (c.canBo2 || {}).ten }, { w: 50, tieu: kyKT, ten: (c.canBo1 || {}).ten }], 56) + kyBang([{ w: 50, tieu: '<b>NGƯỜI CHỨNG KIẾN</b>' }, { w: 50, tieu: '<b>NGƯỜI THAM GIA</b>' }], 56);
+                    kyBang([{ tieu: 'Cán bộ lập biên bản' }, { tieu: kyKT }], 56, true) + kyBang([{ tieu: 'NGƯỜI CHỨNG KIẾN' }, { tieu: 'NGƯỜI THAM GIA' }], 56);
             }
             const tieuDe = loai === 'xm' ? 'BIÊN BẢN XÁC MINH' : loai === 'tb' ? 'THÔNG BÁO' : 'BIÊN BẢN';
             return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
@@ -8793,15 +8836,12 @@ function xsNgayNghiLe() {
 <style>
 /* Thể thức theo Nghị định 30/2020/NĐ-CP: A4; lề trên 20mm, dưới 20mm, trái 30mm, phải 20mm; Times New Roman 13; số trang ở giữa lề trên từ trang 2 */
 ${nd30Trang(choWord)}
+${ND_CSS_TAB}
 body { font-family: "Times New Roman", serif; font-size: 13pt; }
 p { margin: 0 0 6pt 0; line-height: 112%; }
 p.tl { text-align: justify; text-indent: 1.27cm; }
 p.gi { text-align: center; margin-top: 6pt; }
 table, td, th { font-family: "Times New Roman", serif; font-size: 13pt; }
-table.dau, table.ky { width: 100%; border-collapse: collapse; }
-table.dau td { font-family: "Times New Roman", serif; padding: 0 2pt; }
-table.ky { margin-top: 6pt; }
-table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2pt; }
 </style></head>
 <body>${nd30Meo(!choWord)}<div class="WordSection1">${dauTrang(tieuDe)}${thanBai}<!--CSKV_DAU--></div>${choWord ? `
 <div style="mso-element:header" id="h1"><p align="center" style="text-align:center;margin:0"><span style="mso-field-code:' PAGE '"><span style="mso-no-proof:yes">2</span></span></p></div>
@@ -8815,8 +8855,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                 const w = window.open('', '_blank'); if (!w) return alert('Trình duyệt đang chặn cửa sổ bật lên (pop-up). Hãy cho phép rồi bấm lại.');
                 w.document.write(html); w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 500);
             } else {
-                const blob = new Blob(['﻿', html], { type: 'application/msword' }), url = URL.createObjectURL(blob), a = document.createElement('a');
-                a.href = url; a.download = tenFile + '.doc'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 2500);
+                taiVanBanWord(html, tenFile);
             }
             ghiNhatKy('Soạn ' + XS_VB[loai].toLowerCase() + ' (xóa ĐKTT)', 'Số ' + (c.so || '?') + ' — ' + (c.chuHo || ''), c.hoId);
         }
@@ -9503,6 +9542,8 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             try {
                 // 1) Gỡ quyền tài khoản CŨ — GIỮ LẠI thông tin cá nhân (họ tên/đơn vị/chức vụ/SĐT) để còn tra
                 //    cứu lịch sử, chỉ xoá phần vaiTro/phuong/khuVuc (đưa về "chưa cấp quyền").
+                try { await dbFirestore.collection('thu_hoi_tai_khoan').doc(emailMoi).delete(); } catch (e) { }
+                try { await dbFirestore.collection('thu_hoi_tai_khoan').doc(emailCu).set({ email: emailCu, boi: currentUser.email, luc: firebase.firestore.FieldValue.serverTimestamp(), lyDo: 'chuyen_sang_' + emailMoi }); } catch (e) { }
                 await dbFirestore.collection('permissions').doc(emailCu).update({
                     vaiTro: firebase.firestore.FieldValue.delete(),
                     phuong: firebase.firestore.FieldValue.delete(),
@@ -10292,14 +10333,13 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
         const cdTieuNgu = `<p align="center" style="text-align:center;margin:0;text-indent:0"><b style="font-size:13pt"><u>Độc lập - Tự do - Hạnh phúc</u></b></p>`;
         const cdRutTieu = t => String(t || '').replace(/(CÔNG AN (?:PHƯỜNG|XÃ))\s+[^<]*/g, '$1');
         const cdDonViCB = c => { const d = String(c.ch.donViCB || c.ca || '').trim(); return CD_O(d) + (/thành phố|tỉnh/i.test(d) ? '' : ', thành phố ' + cdTr(c.ch.tp)); };
-        function cdMaMau(c, ma) { return `<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin:0 0 4pt 0"><tr><td width="62%">&nbsp;</td><td width="38%" align="center" valign="top" style="padding:0 2pt;text-align:center;font-size:10pt;line-height:110%">Mẫu ${CD_O(ma)}<br>BH theo TT số ${CD_O(c.ch.ttSo)}<br>ngày ${CD_O(c.ch.ttNgay)}</td></tr></table>`; }
+        function cdMaMau(c, ma) { const t = x => ndHang([{ w: 10.5 }, { w: 5.5, a: 'c', h: `<span style="font-size:10pt">${x}</span>` }], { kn: 1 }); return t('Mẫu ' + CD_O(ma)) + t('BH theo TT số ' + CD_O(c.ch.ttSo)) + ndHang([{ w: 10.5 }, { w: 5.5, a: 'c', h: `<span style="font-size:10pt">ngày ${CD_O(c.ch.ttNgay)}</span>` }], { m: '0 0 4pt 0' }); }
         function cdQuocHieu() { return `<p align="center" style="text-align:center;margin:0"><b style="font-size:12pt">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b></p>${cdTieuNgu}`; }
         function cdDauHC(c, o) {
-            // o: {kyHieu, so, ngay, toCSKV, boSo} — thể thức NĐ 30/2020/NĐ-CP: cơ quan chủ quản (thường), tên cơ quan (đậm, in hoa), đường kẻ 1/3–1/2 độ dài chữ
+            // o: {kyHieu, so, ngay, toCSKV, boSo} — thể thức NĐ 30/2020/NĐ-CP: cơ quan chủ quản (thường), tên cơ quan (đậm, in hoa), đường kẻ dưới tên cơ quan; KHÔNG dùng bảng
             const capTren = o.capTren || c.ch.capTren, donVi = o.donVi || c.ch.donVi;
-            const left = `${capTren ? '<span style="font-size:12pt">' + CD_O(capTren) + '</span><br>' : ''}<b style="font-size:12pt">${CD_O(donVi)}</b>${o.toCSKV ? '<br><b style="font-size:12pt">' + CD_O(c.ch.toCSKV) + '</b>' : ''}${cdDuongKe(40)}`;
-            const ngay = o.ngay ? xsNgayChu(o.ngay) : 'ngày …… tháng …… năm ……';
-            return `<table class="dau" cellspacing="0" cellpadding="0"><tr><td width="44%" align="center" valign="top" style="font-size:12pt">${left}</td><td width="56%" align="center" valign="top"><b style="font-size:12pt;white-space:nowrap">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b>${cdTieuNgu}</td></tr><tr><td align="center" valign="top" style="font-size:13pt;padding-top:4pt">${o.boSo ? '&nbsp;' : 'Số: ' + (o.so ? CD_O(o.so) : '.............') + '/' + CD_O(o.kyHieu)}</td><td align="center" valign="top" style="font-size:13pt;padding-top:4pt"><i>${CD_O(c.ch.diaDanh)}, ${ngay}</i></td></tr></table>`;
+            return ndDauVB({ capTren: capTren ? CD_O(capTren) : '', donVi: CD_O(donVi), toCSKV: o.toCSKV ? CD_O(c.ch.toCSKV) : '',
+                so: o.boSo ? '' : 'Số: ' + (o.so ? CD_O(o.so) : '.............') + '/' + CD_O(o.kyHieu), ngay: CD_O(c.ch.diaDanh) + ', ' + (o.ngay ? xsNgayChu(o.ngay) : 'ngày …… tháng …… năm ……') });
         }
         function cdTieuDe(ten, trichYeu, kyDuong) {
             // Tên loại (đậm, in hoa 14pt) + trích yếu "Về việc …" (đậm, in thường 14pt) + đường kẻ dưới trích yếu
@@ -10308,37 +10348,28 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
             return `<p align="center" style="text-align:center;margin:14pt 0 0 0"><b style="font-size:14pt">${ten}</b></p>` + (ty ? `<p align="center" style="text-align:center;margin:0"><b style="font-size:13pt">${ty}</b></p>` + cdDuongKe(33) : '') + '<p style="margin:0;font-size:6pt">&nbsp;</p>';
         }
         const cdP = s => `<p class="tl">${s}</p>`, cdPL = s => `<p style="text-align:left;margin:0 0 3pt 0">${s}</p>`;
+        const cdDong = a => `<p style="text-align:left;text-indent:0;margin:0 0 3pt 0">${a}</p>`;
+        const cdDong2 = (a, b) => ndHang([{ w: 8, h: a }, { w: 8, h: b }], { m: '0 0 3pt 0' });
+        const cdDong3 = (a, b, d) => ndHang([{ w: 5.6, h: a }, { w: 5, h: b }, { w: 5.4, h: d }], { m: '0 0 3pt 0' });
         function cdKhoi(c, o) {
             o = o || {};
-            const r3 = (a, b, d) => `<tr><td width="46%">${a}</td><td width="30%">${b}</td><td width="24%">${d}</td></tr>`;
-            const r1 = a => `<tr><td colspan="3">${a}</td></tr>`;
-            const r2 = (a, b) => `<tr><td colspan="2">${a}</td><td>${b}</td></tr>`;
-            let h = `<table class="kh" style="width:100%;border-collapse:collapse;text-align:left">`;
-            h += r1('Họ và tên: ' + (o.dam === false ? cdTr(c.hoTen) : '<b>' + cdTr(c.hoTen) + '</b>'));
-            h += r3('Ngày sinh: ' + cdTr(c.ngaySinh, '……/……/……'), 'Giới tính: ' + cdTr(c.gt, '……'), '');
-            h += r1('Tên gọi khác: ' + CD_O(c.tenKhac));
-            h += r1('Nơi thường trú: ' + cdTr(c.thuongTru));
-            h += r1('Nơi ở hiện tại: ' + cdTr(c.noiO));
-            if (o.quocTich !== false) h += r3('Quốc tịch: ' + cdTr(c.quocTich, '……'), 'Dân tộc: ' + cdTr(c.danToc, '……'), 'Tôn giáo: ' + cdTr(c.tonGiao, '……'));
-            if (o.ngheNghiep !== false) h += `<tr><td colspan="2">Nghề nghiệp: ${cdTr(c.ngheNghiep)}</td><td>Nơi làm việc: ${CD_O(c.noiLamViec)}</td></tr>`;
-            h += r3('Số CCCD/CC/Hộ chiếu: ' + cdTr(c.cccd, '…………………'), 'Ngày cấp: ' + cdTr(c.ngayCap, '……/……/……'), 'Nơi cấp: ' + cdTr(c.noiCap, '………'));
-            if (o.hanhVi !== false) h += r1('Hành vi phạm tội: ' + cdTr(c.hanhVi));
-            if (o.thoiHan !== false) { h += r1(c.thoiHan); h += r1(c.theoLenh); }
-            return h + '</table>';
+            let h = cdDong((o.tenToi ? 'Tên tôi là: ' : 'Họ và tên: ') + (o.dam === false ? cdTr(c.hoTen) : '<b>' + cdTr(c.hoTen) + '</b>'));
+            h += cdDong2('Ngày sinh: ' + cdTr(c.ngaySinh, '……/……/……'), 'Giới tính: ' + cdTr(c.gt, '……'));
+            h += cdDong('Tên gọi khác: ' + CD_O(c.tenKhac)) + cdDong('Nơi thường trú: ' + cdTr(c.thuongTru)) + cdDong('Nơi ở hiện tại: ' + cdTr(c.noiO));
+            if (o.quocTich !== false) h += cdDong3('Quốc tịch: ' + cdTr(c.quocTich, '……'), 'Dân tộc: ' + cdTr(c.danToc, '……'), 'Tôn giáo: ' + cdTr(c.tonGiao, '……'));
+            if (o.ngheNghiep !== false) h += cdDong('Nghề nghiệp: ' + cdTr(c.ngheNghiep)) + cdDong('Nơi làm việc: ' + CD_O(c.noiLamViec));
+            h += cdDong('Số CCCD/CC/Hộ chiếu: ' + cdTr(c.cccd, '…………………')) + ndHang([{ w: 5.6, h: 'Ngày cấp: ' + cdTr(c.ngayCap, '……/……/……') }, { w: 10.4, h: 'Nơi cấp: ' + cdTr(c.noiCap, '………') }], { m: '0 0 3pt 0' });
+            if (o.hanhVi !== false) h += cdDong('Hành vi phạm tội: ' + cdTr(c.hanhVi));
+            if (o.thoiHan !== false) { h += cdDong(c.thoiHan); h += cdDong(c.theoLenh); }
+            return h;
         }
         function cdKhoiNgan(c) {
-            const r3 = (a, b, d) => `<tr><td width="46%">${a}</td><td width="30%">${b}</td><td width="24%">${d}</td></tr>`;
-            return `<table class="kh" style="width:100%;border-collapse:collapse;text-align:left">` + `<tr><td colspan="3">Họ và tên: <b>${cdTr(c.hoTen)}</b></td></tr>` + r3('Ngày sinh: ' + cdTr(c.ngaySinh, '……/……/……'), 'Giới tính: ' + cdTr(c.gt, '……'), '') +
-                `<tr><td colspan="3">Tên gọi khác: ${CD_O(c.tenKhac)}</td></tr><tr><td colspan="3">Nơi thường trú: ${cdTr(c.thuongTru)}</td></tr><tr><td colspan="3">Nơi ở hiện tại: ${cdTr(c.noiO)}</td></tr>` +
-                r3('Số CCCD/CC/Hộ chiếu: ' + cdTr(c.cccd, '…………………'), 'Ngày cấp: ' + cdTr(c.ngayCap, '……/……/……'), 'Nơi cấp: ' + cdTr(c.noiCap, '………')) + '</table>';
+            return cdDong('Họ và tên: <b>' + cdTr(c.hoTen) + '</b>') + cdDong2('Ngày sinh: ' + cdTr(c.ngaySinh, '……/……/……'), 'Giới tính: ' + cdTr(c.gt, '……')) +
+                cdDong('Tên gọi khác: ' + CD_O(c.tenKhac)) + cdDong('Nơi thường trú: ' + cdTr(c.thuongTru)) + cdDong('Nơi ở hiện tại: ' + cdTr(c.noiO)) +
+                cdDong('Số CCCD/CC/Hộ chiếu: ' + cdTr(c.cccd, '…………………')) + ndHang([{ w: 5.6, h: 'Ngày cấp: ' + cdTr(c.ngayCap, '……/……/……') }, { w: 10.4, h: 'Nơi cấp: ' + cdTr(c.noiCap, '………') }], { m: '0 0 3pt 0' });
         }
-        function cdKyPhai(c, chucDanh, noiNhan, tenKy) {
-            const nn = noiNhan ? `<b><i style="font-size:12pt">Nơi nhận:</i></b><br><span style="font-size:11pt">${noiNhan.map(x => '- ' + x).join('<br>')}</span>` : '';
-            return `<table class="ky" style="page-break-inside:avoid"><tr><td width="50%" valign="top" style="text-align:left">${nn}</td><td width="50%" align="center" valign="top"><b>${chucDanh}</b><br><i style="font-size:12pt">(Ký, ghi rõ họ tên, đóng dấu)</i></td></tr><tr><td></td><td align="center" valign="bottom" height="70" style="height:70pt"><b>${tenKy ? CD_O(tenKy) : ''}</b></td></tr></table>`;
-        }
-        function cdKyCot(cot, cao) {
-            return `<table class="ky" style="page-break-inside:avoid"><tr>${cot.map(x => `<td width="${Math.floor(100 / cot.length)}%" align="center" valign="top"><b>${cdRutTieu(x.tieu)}</b><br><i style="font-size:12pt">${x.ghi || '(Ký, ghi rõ họ tên)'}</i></td>`).join('')}</tr><tr><td colspan="${cot.length}" height="${cao || 64}" style="height:${cao || 64}pt">&nbsp;</td></tr><tr>${cot.map(x => `<td align="center" valign="top"><b>${x.ten ? CD_O(x.ten) : ''}</b></td>`).join('')}</tr></table>`;
-        }
+        function cdKyPhai(c, chucDanh, noiNhan, tenKy) { return ndKyPhai(noiNhan, [chucDanh], tenKy ? CD_O(tenKy) : ''); }
+        function cdKyCot(cot, cao) { return ndKyCot(cot.map(x => ({ tieu: cdRutTieu(x.tieu), ghi: x.ghi || '(Ký, ghi rõ họ tên)', ten: x.ten ? CD_O(x.ten) : '' })), cao); }
         const cdTruongCA = c => 'TRƯỞNG ' + c.ch.donVi.replace(/^CÔNG AN\s*/i, 'CÔNG AN ');
         const cdChucTruong = c => 'TRƯỞNG CÔNG AN ' + String(c.ch.tenPhuong || '').toUpperCase().split(' ')[0];
         const cdBienBanKet = c => `<p class="tl">Biên bản lập xong vào hồi ${cdGio(c.v.gioXong)} cùng ngày, đã đọc cho những người có tên trên nghe, công nhận đúng và cùng ký tên dưới đây. Biên bản được lưu hồ sơ quản lý, theo dõi người bị cấm đi khỏi nơi cư trú./.</p>`;
@@ -10368,7 +10399,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
               build: c => cdMaMau(c, 'CĐ1') + cdDauHC(c, { kyHieu: 'QĐ-' + c.maCa, so: c.v.so, ngay: c.v.ngay }) + cdTieuDe('QUYẾT ĐỊNH', 'Phân công cán bộ quản lý, theo dõi người bị cấm đi khỏi nơi cư trú', 35) +
                   `<p align="center" style="text-align:center"><b>TRƯỞNG CÔNG AN ${CD_O(String(c.ch.tenPhuong).toUpperCase())}</b></p>` + cdP(c.canCuTT) +
                   `<p align="center" style="text-align:center"><b>QUYẾT ĐỊNH:</b></p>` + cdP('<b>Điều 1.</b> Phân công đồng chí:') +
-                  cdPL('Họ và tên: ' + cdTr(c.ch.canBoTen)) + `<table style="width:100%;border-collapse:collapse"><tr><td width="50%">Cấp bậc: ${cdTr(c.ch.capBac, '………')}</td><td>Chức vụ: ${cdTr(c.ch.chucVu, '………')}</td></tr></table>` +
+                  cdPL('Họ và tên: ' + cdTr(c.ch.canBoTen)) + cdDong2('Cấp bậc: ' + cdTr(c.ch.capBac, '………'), 'Chức vụ: ' + cdTr(c.ch.chucVu, '………')) +
                   cdPL('Đơn vị công tác: ' + cdDonViCB(c)) + cdP('Thực hiện việc quản lý, theo dõi và kiểm tra, xác minh đối với người bị cấm đi khỏi nơi cư trú sau:') + cdKhoi(c) +
                   cdP('<b>Điều 2.</b> Quyết định này có hiệu lực kể từ ngày ký. Những người có tên tại Điều 1 chịu trách nhiệm thi hành Quyết định này./.') + cdKyPhai(c, cdChucTruong(c), cdNoiNhanLuu('Như Điều 1'), c.ch.truongCA) },
 
@@ -10427,7 +10458,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                   cdArea('dap3', 'Trả lời 3 (ý kiến, cam đoan)', c => `Tôi ${c.hoTen || '……'} xin khai: về giấy triệu tập hoặc ${c.loaiLenh} áp dụng biện pháp cấm đi khỏi nơi cư trú tôi không có ý kiến gì. Tôi xin cam đoan sẽ chấp hành nghiêm về quyền và nghĩa vụ của người bị cấm đi khỏi nơi cư trú, nếu tôi vi phạm tôi sẽ chịu xử lý nghiêm theo quy định của pháp luật.`)],
               build: c => cdMaMau(c, 'CĐ3') + cdQuocHieu() + cdTieuDe('BIÊN BẢN', 'Về việc người bị cấm đi khỏi nơi cư trú đến trình diện') +
                   cdP(`Hôm nay, vào hồi ${cdGio(c.v.gioLam)} ${xsNgayChu(c.v.ngayLam)} tại ${cdTr(c.v.diaDiem)}.`) + '<p style="text-align:left;margin:0 0 3pt 0"><b>Chúng tôi gồm có:</b></p>' +
-                  `<table style="width:100%;border-collapse:collapse;text-align:left"><tr><td width="55%">- Ông/bà: ${cdTr(c.v.truongCA)}</td><td>- Trưởng ${CD_O(c.ca)}</td></tr><tr><td>- Ông/bà: ${cdTr(c.v.canBoGhi)}</td><td>- ${cdTr(c.v.chucDanhCB)}</td></tr><tr><td>- Ông/bà: ${cdTr(c.v.daiDien)}</td><td>- Người đại diện (nếu có)</td></tr></table>` +
+                  cdDong('- Ông/bà: ' + cdTr(c.v.truongCA) + ' – Trưởng ' + CD_O(c.ca)) + cdDong('- Ông/bà: ' + cdTr(c.v.canBoGhi) + ' – ' + cdTr(c.v.chucDanhCB)) + cdDong('- Ông/bà: ' + cdTr(c.v.daiDien) + ' – Người đại diện (nếu có)') +
                   cdP('Tiến hành làm việc với người bị cấm đi khỏi nơi cư trú sau:') + cdKhoi(c) + '<p align="center" style="text-align:center;margin:8pt 0 3pt 0"><b>NỘI DUNG</b></p>' +
                   cdP('<b>HỎI:</b>') + cdP(`${c.xung} ${CD_O(c.hoTen || '……')} cho biết: tình trạng sức khỏe hiện tại thế nào? Nghề nghiệp? Lý do làm việc với ${CD_O(c.ca)}?`) + cdP('<b>ĐÁP:</b>') + cdP(CD_O(c.v.dap1)) +
                   cdP('<b>HỎI:</b>') + cdP(`${c.xung} ${CD_O(c.hoTen || '……')} cho biết: đã được tống đạt ${CD_O(c.loaiLenh)} cấm đi khỏi nơi cư trú chưa? Khi đến cơ quan ${CD_O(c.ca)} có giải thích về quyền và nghĩa vụ của người bị cấm đi khỏi nơi cư trú không?`) + cdP('<b>ĐÁP:</b>') + cdP(CD_O(c.v.dap2)) +
@@ -10439,7 +10470,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
               truong: [cdDate('ngayLam', 'Ngày cam đoan', () => cdHomNay()), cdTime('gioLam', 'Hồi (giờ)', () => ''), cdText('daiDien', 'Người đại diện (nếu có)', () => '', true)],
               build: c => cdMaMau(c, 'CĐ4') + cdQuocHieu() + cdTieuDe('GIẤY CAM ĐOAN', 'Việc chấp hành nghĩa vụ trong thời hạn cấm đi khỏi nơi cư trú') +
                   `<p align="center" style="text-align:center">Kính gửi: ${CD_O(c.ca)}, thành phố ${cdTr(c.ch.tp)}</p>` +
-                  `<table class="kh" style="width:100%;border-collapse:collapse;text-align:left"><tr><td width="46%">Tên tôi là: <b>${cdTr(c.hoTen)}</b></td><td width="30%">Ngày sinh: ${cdTr(c.ngaySinh, '……/……/……')}</td><td>Giới tính: ${cdTr(c.gt, '……')}</td></tr><tr><td colspan="3">Tên gọi khác: ${CD_O(c.tenKhac)}</td></tr><tr><td colspan="3">Nơi thường trú: ${cdTr(c.thuongTru)}</td></tr><tr><td colspan="3">Nơi ở hiện tại: ${cdTr(c.noiO)}</td></tr><tr><td colspan="2">Nghề nghiệp: ${cdTr(c.ngheNghiep)}</td><td>Nơi làm việc: ${CD_O(c.noiLamViec)}</td></tr><tr><td width="46%">Số CCCD/CC/Hộ chiếu: ${cdTr(c.cccd, '…………………')}</td><td>Ngày cấp: ${cdTr(c.ngayCap, '……/……/……')}</td><td>Nơi cấp: ${cdTr(c.noiCap, '………')}</td></tr><tr><td colspan="3">${c.thoiHan}</td></tr><tr><td colspan="3">${c.theoLenh}</td></tr></table>` +
+                  cdKhoi(c, { tenToi: true, hanhVi: false, quocTich: false }) +
                   cdP(`Hồi ${cdGio(c.v.gioLam)} ${xsNgayChu(c.v.ngayLam)}, tại ${CD_O(c.ca)}, thành phố ${cdTr(c.ch.tp)}, tôi xin cam đoan thực hiện các nghĩa vụ theo quy định như sau:`) +
                   cdP('1. Chấp hành nghiêm chỉnh cam kết tuân thủ pháp luật, thực hiện đầy đủ nghĩa vụ công dân, nội quy, quy chế của nơi cư trú, nơi làm việc;') +
                   cdP('2. Chịu sự quản lý, theo dõi của Trưởng Công an cấp xã nơi người bị cấm đi khỏi nơi cư trú đang cư trú;') +
@@ -10464,7 +10495,7 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
                   cdArea('noiDung', 'I. Nội dung vi phạm', () => ''), cdArea('xuLy', 'II. Hình thức xử lý (nhắc nhở, kiểm điểm, thông báo cho cơ quan ra lệnh hoặc đề nghị thay đổi biện pháp ngăn chặn)', () => 'Không.')],
               build: c => cdMaMau(c, 'CĐ6') + cdQuocHieu() + cdTieuDe('BIÊN BẢN', 'Về việc người bị cấm đi khỏi nơi cư trú vi phạm nghĩa vụ<br>(Lần thứ ' + cdTr(c.v.lan, '……') + ')') +
                   cdP(`Hôm nay, vào hồi ${cdGio(c.v.gioLam)} ${xsNgayChu(c.v.ngayLam)} tại ${cdTr(c.v.diaDiem)}.`) + '<p style="text-align:left;margin:0 0 3pt 0"><b>Chúng tôi gồm có:</b></p>' +
-                  `<table style="width:100%;border-collapse:collapse;text-align:left"><tr><td width="55%">- Ông/bà: ${cdTr(c.v.truongCA)}</td><td>- Trưởng ${CD_O(c.ca)}</td></tr><tr><td>- Ông/bà: ${cdTr(c.v.canBoGhi)}</td><td>- ${cdTr(c.v.chucDanhCB)}</td></tr><tr><td>- Ông/bà: ${cdTr(c.v.nguoi3)}</td><td>- Đại diện gia đình/người đại diện/người chứng kiến</td></tr></table>` +
+                  cdDong('- Ông/bà: ' + cdTr(c.v.truongCA) + ' – Trưởng ' + CD_O(c.ca)) + cdDong('- Ông/bà: ' + cdTr(c.v.canBoGhi) + ' – ' + cdTr(c.v.chucDanhCB)) + cdDong('- Ông/bà: ' + cdTr(c.v.nguoi3) + ' – Đại diện gia đình/người đại diện/người chứng kiến') +
                   cdP('Tiến hành lập biên bản về việc người bị cấm đi khỏi nơi cư trú vi phạm nghĩa vụ:') + cdKhoi(c) +
                   '<p style="text-align:left;margin:6pt 0 3pt 0"><b>I. NỘI DUNG VI PHẠM</b></p>' + String(c.v.noiDung || '').split(/\n+/).filter(x => x.trim()).map(x => cdP(CD_O(x))).join('') || cdP('……………………') +
                   '<p style="text-align:left;margin:6pt 0 3pt 0"><b>II. HÌNH THỨC XỬ LÝ VI PHẠM</b> <i>(Nhắc nhở, kiểm điểm, thông báo cho cơ quan ra lệnh cấm đi khỏi nơi cư trú hoặc đề nghị thay đổi biện pháp ngăn chặn)</i></p>' + String(c.v.xuLy || '').split(/\n+/).filter(x => x.trim()).map(x => cdP(CD_O(x))).join('') +
@@ -10547,6 +10578,58 @@ table.ky td { font-family: "Times New Roman", serif; font-size: 13pt; padding: 2
         const DT_BO_MAU = { [CD_DIEN]: { ten: 'Cấm đi khỏi nơi cư trú', mau: CD_MAU, gd: CD_GD } };
 
         // ---- Thể thức trang chung theo NĐ 30/2020/NĐ-CP cho mọi văn bản Word/in của phần mềm ----
+        // ===== Bố cục thể thức NĐ 30/2020 bằng ĐOẠN VĂN + TAB (không dùng bảng) — dùng chung cho mọi văn bản =====
+        // Mỗi "hàng" là MỘT đoạn văn có các điểm dừng tab (Word: sửa trực tiếp, không phải chỉnh bảng). Rộng toàn dòng = 16 cm (A4, lề trái 3 cm, phải 2 cm).
+        const ND_CSS_TAB = `p.tab { display: flex; margin: 0; text-indent: 0; text-align: left; }
+p.tab > span.t { display: flex; flex: none; box-sizing: border-box; white-space: nowrap; }
+p.tab > span.t:last-child { flex: 1 1 0; min-width: 0; white-space: normal; }`;
+        const ND_JC = { l: 'flex-start', c: 'center', r: 'flex-end' }, ND_TA = { l: 'left', c: 'center', r: 'right' };
+        function ndHang(cols, o) {
+            o = o || {};
+            const dm = cols.map(c => c.w + ':' + (c.a || 'l')).join('|');
+            return `<p class="tab${o.kn ? ' kn' : ''}" data-cols="${dm}" style="margin:${o.m || '0'};text-indent:0;text-align:left">` +
+                cols.map(c => `<span class="t" style="width:${c.w}cm;justify-content:${ND_JC[c.a || 'l']};text-align:${ND_TA[c.a || 'l']}"><span>${c.h || '&nbsp;'}</span></span>`).join('') + '</p>';
+        }
+        // đường kẻ ngang dưới tên cơ quan: bắt đầu cách lề trái `trai` cm, dài `rong` cm
+        const ndDongKe = (trai, rong) => `<p class="kn" style="margin:2pt ${(16 - trai - rong).toFixed(2)}cm 0 ${trai}cm;font-size:2pt;line-height:2pt;text-indent:0;border:none;border-bottom:solid windowtext .75pt;padding:0cm 0cm 1pt 0cm;mso-border-bottom-alt:solid windowtext .75pt">&nbsp;</p>`;
+        // Đầu văn bản: o = {capTren, donVi, toCSKV, so, ngay} (các giá trị đã escape HTML)
+        function ndDauVB(o) {
+            let h = ndHang([{ w: 7, a: 'c', h: o.capTren ? `<span style="font-size:12pt">${o.capTren}</span>` : '' }, { w: 9, a: 'c', h: '<b style="font-size:12pt">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b>' }], { kn: 1 });
+            h += ndHang([{ w: 7, a: 'c', h: `<b style="font-size:12pt">${o.donVi}</b>` }, { w: 9, a: 'c', h: '<b style="font-size:13pt"><u>Độc lập - Tự do - Hạnh phúc</u></b>' }], { kn: 1 });
+            if (o.toCSKV) h += ndHang([{ w: 7, a: 'c', h: `<b style="font-size:12pt">${o.toCSKV}</b>` }, { w: 9, a: 'c', h: '' }], { kn: 1 });
+            h += ndDongKe(2.2, 2.6);
+            return h + ndHang([{ w: 7, a: 'c', h: o.so || '' }, { w: 9, a: 'c', h: o.ngay ? '<i' + (o.ngayCo ? ' style="font-size:' + o.ngayCo + 'pt"' : '') + '>' + o.ngay + '</i>' : '' }], { m: '4pt 0 0 0' });
+        }
+        // Chữ ký bên phải + "Nơi nhận" bên trái. noiNhan: mảng chuỗi (không gồm gạch đầu dòng); chucDanh: mảng dòng (in đậm)
+        const ND_GHI_KY = '<i style="font-size:12pt">(Ký, ghi rõ họ tên, đóng dấu)</i>';
+        function ndKyPhai(noiNhan, chucDanh, tenKy, o) {
+            o = o || {};
+            const L = (noiNhan && noiNhan.length) ? ['<b><i style="font-size:12pt">Nơi nhận:</i></b>'].concat(noiNhan.map(x => `<span style="font-size:11pt">- ${x}</span>`)) : [];
+            const R = [].concat(chucDanh).map(x => '<b>' + x + '</b>');
+            if (o.ghi !== '') R.push(o.ghi || ND_GHI_KY);
+            for (let i = 0; i < (o.trong || 4); i++) R.push('');
+            R.push(tenKy ? '<b>' + tenKy + '</b>' : '');
+            const n = Math.max(L.length, R.length); let h = '';
+            for (let i = 0; i < n; i++) h += ndHang([{ w: 8, h: L[i] || '' }, { w: 8, a: 'c', h: R[i] || '' }], { kn: i < n - 1, m: i === 0 ? '6pt 0 0 0' : '0' });
+            return h;
+        }
+        // Chữ ký nhiều cột: cot = [{tieu (có thể có <br>), ghi, ten}]; cao = chiều cao chỗ ký (pt)
+        function ndKyCot(cot, cao, ghiMD, noi) {
+            const w = +(16 / cot.length).toFixed(3);
+            const cols = cot.map(x => { const t = String(x.tieu).split(/<br\s*\/?>/i).map(s => '<b>' + s + '</b>'); const g = x.ghi === undefined ? ghiMD : x.ghi; if (g) t.push('<i style="font-size:12pt">' + g + '</i>'); return t; });
+            const m = Math.max.apply(null, cols.map(c => c.length)), trong = Math.max(2, Math.round((cao || 64) / 15)), tong = m + trong + 1; let h = '';
+            for (let i = 0; i < tong; i++) h += ndHang(cols.map((c, ci) => ({ w, a: 'c', h: i < c.length ? c[i] : (i === tong - 1 && cot[ci].ten ? '<b>' + cot[ci].ten + '</b>' : '') })), { kn: noi || i < tong - 1, m: i === 0 ? '6pt 0 0 0' : '0' });
+            return h;
+        }
+        // Tải file Word (.docx thật): che số + dấu người xuất (nếu bật) rồi chuyển HTML → .docx
+        function taiVanBanWord(html, tenFile) {
+            try {
+                if (typeof window.cskvChuanBiWord === 'function') html = window.cskvChuanBiWord(html);
+                const blob = window.htmlSangDocx(html), url = URL.createObjectURL(blob), a = document.createElement('a');
+                a.href = url; a.download = String(tenFile).replace(/\.docx?$/i, '') + '.docx'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 2500);
+                return true;
+            } catch (e) { console.error('Xuất .docx lỗi:', e); alert('Không tạo được file Word (.docx): ' + ((e && e.message) || e) + '\nHãy dùng nút In / PDF.'); return false; }
+        }
         function nd30Trang(choWord) {
             return 'u { text-decoration-skip-ink: none; }\n' + (choWord
                 ? `@page WordSection1 { size: 21.0cm 29.7cm; margin: 2.0cm 2.0cm 2.0cm 3.0cm; mso-header-margin: 1.0cm; mso-footer-margin: 1.0cm; mso-header: h1; mso-first-header: fh1; mso-title-page: yes; }
@@ -10570,15 +10653,11 @@ div.WordSection1 { page: WordSection1; }`
 <style>
 /* Thể thức theo Nghị định 30/2020/NĐ-CP: A4 dọc; lề trên 20mm, dưới 20mm, trái 30mm, phải 20mm; Times New Roman 13; số trang ở giữa lề trên từ trang 2 */
 ${cssTrang}
+${ND_CSS_TAB}
 body { font-family: "Times New Roman", serif; font-size: 13pt; }
 p { margin: 0 0 6pt 0; line-height: 112%; }
 p.tl { text-align: justify; text-indent: 1.27cm; }
 table, td, th { font-family: "Times New Roman", serif; font-size: 13pt; }
-table.dau, table.ky, table.kh { width: 100%; border-collapse: collapse; }
-table.dau td, table.kh td { padding: 0 2pt; }
-table.kh td { padding: 1pt 2pt; vertical-align: top; }
-table.ky { margin-top: 6pt; }
-table.ky td { padding: 2pt; }
 </style></head>
 <body>${meo}<div class="WordSection1">${body}<!--CSKV_DAU--></div>${choWord ? `
 <div style="mso-element:header" id="h1"><p align="center" style="text-align:center;margin:0"><span style="mso-field-code:' PAGE '"><span style="mso-no-proof:yes">2</span></span></p></div>
@@ -10693,8 +10772,7 @@ table.ky td { padding: 2pt; }
                 const w = window.open('', '_blank'); if (!w) return alert('Trình duyệt đang chặn cửa sổ bật lên (pop-up). Hãy cho phép rồi bấm lại.');
                 w.document.write(html); w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 500);
             } else {
-                const blob = new Blob(['﻿', html], { type: 'application/msword' }), url = URL.createObjectURL(blob), a = document.createElement('a');
-                a.href = url; a.download = tenFile + '.doc'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 2500);
+                taiVanBanWord(html, tenFile);
             }
             window.__cheVbTam = undefined;
             try {
@@ -11636,6 +11714,7 @@ table.ky td { padding: 2pt; }
 <!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
 <style>
 ${nd30Trang(dinhDang !== 'pdf')}
+${ND_CSS_TAB}
 body { font-family: "Times New Roman", serif; font-size: 14pt; }
 p { margin: 0 0 6pt 0; text-align: justify; text-indent: 1.27cm; line-height: 125%; }
 td, th { font-family: "Times New Roman", serif; font-size: 13pt; padding: 3pt 5pt; }
@@ -11645,7 +11724,7 @@ table.luoi th { background: #E8ECF3; }
 h3 { font-size: 14pt; font-weight: bold; margin: 10pt 0 4pt 0; }
 </style></head>
 <body>${nd30Meo(dinhDang === 'pdf')}<div class="WordSection1">
-${(() => { const dk = pc => `<p style="margin:3pt ${pc >= 40 ? 2.5 : 6.5}cm 0 ${pc >= 40 ? 2.5 : 6.5}cm;font-size:2pt;line-height:2pt;text-indent:0;border:none;border-bottom:solid windowtext .75pt;padding:0cm 0cm 1pt 0cm;mso-border-bottom-alt:solid windowtext .75pt;mso-padding-alt:0cm 0cm 1pt 0cm">&nbsp;</p>`; return `<table width="100%" style="border:none;border-collapse:collapse"><tr><td width="42%" valign="top" align="center" style="border:none;font-size:12pt;text-indent:0">CÔNG AN THÀNH PHỐ CẦN THƠ<br><b>CÔNG AN ${o(donViHoa)}</b>${dk(45)}</td><td width="58%" valign="top" align="center" style="border:none"><b style="font-size:12pt">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><p align="center" style="text-align:center;margin:0;text-indent:0"><b style="font-size:13pt"><u>Độc lập - Tự do - Hạnh phúc</u></b></p></td></tr><tr><td align="center" valign="top" style="border:none;font-size:13pt;padding-top:4pt">Số: ${soKH ? o(soKH) : '……/BC-CA'}</td><td align="center" valign="top" style="border:none;font-size:14pt;padding-top:4pt"><i>${o(xsTenNgan())}, ${xsNgayChu(xsIso(hn))}</i></td></tr></table>`; })()}
+${ndDauVB({ capTren: 'CÔNG AN THÀNH PHỐ CẦN THƠ', donVi: 'CÔNG AN ' + o(donViHoa), so: 'Số: ' + (soKH ? o(soKH) : '……/BC-CA'), ngay: o(xsTenNgan()) + ', ' + xsNgayChu(xsIso(hn)) })}
 <p align="center" style="text-align:center;text-indent:0;margin:12pt 0 0 0"><b style="font-size:14pt">BÁO CÁO</b></p><p align="center" style="text-align:center;text-indent:0;margin:0"><b style="font-size:14pt">Kết quả công tác ${o(chucDanh === 'CẢNH SÁT KHU VỰC' ? 'Cảnh sát khu vực' : 'Công an ' + khuVucHienTai)} ${o(ky.nhan)}</b></p><p style="margin:3pt 5.75cm 0 5.75cm;font-size:2pt;line-height:2pt;text-indent:0;border:none;border-bottom:solid windowtext .75pt;padding:0cm 0cm 1pt 0cm;mso-border-bottom-alt:solid windowtext .75pt;mso-padding-alt:0cm 0cm 1pt 0cm">&nbsp;</p><p align="center" style="text-align:center;text-indent:0;margin:4pt 0 8pt 0"><i style="font-size:12pt">(Từ ${o(ky.khoangNgay.replace(' – ', ' đến '))} — phạm vi: ${o(phamViChu)})</i></p>
 
 <h3>I. TÌNH HÌNH DÂN CƯ, ĐỊA BÀN</h3>
@@ -11676,10 +11755,7 @@ ${noiDung(document.getElementById('bc_deXuat').value, '- ' + chamChuoi)}
 ${phuongHuongTuDong.map(t => '<p>- ' + o(t) + '</p>').join('')}
 ${(document.getElementById('bc_phuongHuong').value || '').trim() ? noiDung(document.getElementById('bc_phuongHuong').value, '') : ''}
 
-<table width="100%" style="border:none;border-collapse:collapse;margin-top:14pt"><tr>
-<td width="50%" valign="top" style="border:none;font-size:12pt"><p style="text-align:left;margin:0"><b><i>Nơi nhận:</i></b></p><p style="text-align:left;margin:0">- Lãnh đạo Công an ${o(khuVucHienTai)};</p><p style="text-align:left;margin:0">- Lưu: hồ sơ.</p></td>
-<td width="50%" valign="top" align="center" style="border:none"><b>${o(chucDanh)}</b>${kySo ? '<br>'.repeat(9) : '<br><br><br><br><br>'}${hoTenKy ? '<b>' + o(hoTenKy) + '</b>' : ''}</td>
-</tr></table>
+${ndKyPhai(['Lãnh đạo Công an ' + o(khuVucHienTai) + ';', 'Lưu: hồ sơ.'], [o(chucDanh)], hoTenKy ? o(hoTenKy) : '', { ghi: '', trong: kySo ? 8 : 4 })}
 ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự thảo do phần mềm Quản Lý Địa Bàn CSKV tự tổng hợp từ số liệu tại thời điểm ${hn.toLocaleString('vi-VN')}; cán bộ cần đối chiếu, bổ sung và xác nhận trước khi ký, gửi.</i></p>`}
 <!--CSKV_DAU--></div>${dinhDang === 'pdf' ? '' : `
 <div style="mso-element:header" id="h1"><p align="center" style="text-align:center;margin:0;text-indent:0"><span style="mso-field-code:' PAGE '"><span style="mso-no-proof:yes">2</span></span></p></div>
@@ -11694,12 +11770,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
                     ghiNhatKy('Soạn báo cáo công tác (bản in/PDF)', ky.nhan + (kySo ? ' — ký số' : ''));
                     tt.innerText = '✅ Đã mở bản in — chọn "Lưu thành PDF"' + (kySo ? ', sau đó ký số bằng USB token/SIM ký số hoặc phần mềm ký số của đơn vị.' : '.');
                 } else {
-                const blob = new Blob(['﻿', html], { type: 'application/msword' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url; a.download = 'BaoCao_' + khuVucHienTai.replace(/\s+/g, '_') + '_' + ky.nhan.replace(/[^\wÀ-ỹ]+/g, '_') + '.doc';
-                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                    setTimeout(() => URL.revokeObjectURL(url), 2000);
+                taiVanBanWord(html, 'BaoCao_' + khuVucHienTai.replace(/\s+/g, '_') + '_' + ky.nhan.replace(/[^\wÀ-ỹ]+/g, '_'));
                     ghiNhatKy('Soạn báo cáo công tác (Word)', ky.nhan);
                     tt.innerText = '✅ Đã tạo báo cáo ' + ky.nhan + ' — mở file vừa tải bằng Word để chỉnh sửa.';
                 }
@@ -13319,7 +13390,7 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
         //  - File sao lưu có mã kiểm tra SHA-256 (phát hiện file hỏng/sửa nhầm) và có thể đặt mật khẩu (AES-GCM) vì chứa CCCD.
         //  - Khôi phục: chỉ Admin; mặc định chỉ THÊM bản ghi chưa có, ghi đè phải gõ xác nhận.
         // ======================================================================================================
-        const PHIEN_BAN_APP = '2026.11.14';
+        const PHIEN_BAN_APP = '2026.11.17';
         const SB_NHOM = [
             { k: 'households', nhan: 'Hộ gia đình & nhân khẩu', lay: () => layDuLieuTrongPhamViDuocGiao() },
             { k: 'doi_tuong_quan_ly', nhan: 'Đối tượng quản lý (KV3)', lay: () => anDoiTuongTrongPham() },
@@ -13984,6 +14055,264 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
   setInterval(window.nmCapNhat,1500); document.addEventListener('DOMContentLoaded',function(){ setTimeout(window.nmCapNhat,300); });
 })();
 </script>
+<script id="nd30Word">
+/* ===== Xuất Word (.docx) thật cho văn bản hành chính — thể thức NĐ 30/2020/NĐ-CP =====
+   Nhận HTML của văn bản (đúng chuỗi html mà phần mềm vẫn dùng để in), trả về Blob .docx.
+   - Đầu văn bản / chữ ký dựng bằng ĐOẠN VĂN + DẤU TAB (p.tab), không dùng bảng bố cục.
+   - Bảng dữ liệu thật (điểm danh, thống kê) vẫn là bảng Word.
+   - Không phụ thuộc thư viện ngoài (tự ghi gói ZIP kiểu "store"). */
+(function (G) {
+  'use strict';
+  var TW_CM = 567, TW_PT = 20;
+  var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+  var NBSP = ' ';
+
+  // ---------- đọc CSS rất nhỏ ----------
+  function docKhai(s) { var o = {}; String(s || '').split(';').forEach(function (x) { var i = x.indexOf(':'); if (i > 0) o[x.slice(0, i).trim().toLowerCase()] = x.slice(i + 1).trim(); }); return o; }
+  function laySheet(doc) {
+    var t = Array.prototype.map.call(doc.querySelectorAll('style'), function (s) { return s.textContent; }).join('\n');
+    t = t.replace(/\/\*[\s\S]*?\*\//g, '');
+    var kq = {}, re = /([^{}@]+)\{([^{}]*)\}/g, m;
+    while ((m = re.exec(t))) m[1].split(',').forEach(function (sel) { sel = sel.trim().toLowerCase(); if (sel) kq[sel] = Object.assign(kq[sel] || {}, docKhai(m[2])); });
+    return kq;
+  }
+  function doDai(v) { // → twips; hỗ trợ cm, pt, mm
+    if (v == null) return null; var m = /^(-?[\d.]+)\s*(cm|pt|mm)?$/i.exec(String(v).trim()); if (!m) return null;
+    var n = parseFloat(m[1]), u = (m[2] || 'pt').toLowerCase();
+    return Math.round(u === 'cm' ? n * TW_CM : u === 'mm' ? n * TW_CM / 10 : n * TW_PT);
+  }
+  function margin4(v) { // "a b c d" | "a b" | "a" → {t,r,b,l} (twips)
+    var p = String(v || '').trim().split(/\s+/).map(doDai); if (!p.length || p[0] == null) return null;
+    if (p.length === 1) p = [p[0], p[0], p[0], p[0]]; else if (p.length === 2) p = [p[0], p[1], p[0], p[1]]; else if (p.length === 3) p = [p[0], p[1], p[2], p[1]];
+    return { t: p[0], r: p[1], b: p[2], l: p[3] };
+  }
+
+  // ---------- trạng thái chữ ----------
+  function chuTuStyle(st, sty) {
+    var n = Object.assign({}, st);
+    if (sty['font-size']) { var m = /([\d.]+)pt/.exec(sty['font-size']); if (m) n.sz = Math.round(parseFloat(m[1]) * 2); }
+    if (sty['font']) { var f = /([\d.]+)pt/.exec(sty['font']); if (f) n.sz = Math.round(parseFloat(f[1]) * 2); }
+    if (sty['font-weight'] && /bold|[6-9]00/.test(sty['font-weight'])) n.b = true;
+    if (sty['font-style'] === 'italic') n.i = true;
+    if (sty['text-decoration'] && /underline/.test(sty['text-decoration'])) n.u = true;
+    if (sty.color) { var c = /^#([0-9a-f]{6})$/i.exec(sty.color) || /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(sty.color); if (c) n.color = c.length === 2 ? c[1].toUpperCase() : (c[1] + c[1] + c[2] + c[2] + c[3] + c[3]).toUpperCase(); }
+    return n;
+  }
+  function rPr(st) {
+    var x = '';
+    if (st.b) x += '<w:b/><w:bCs/>'; if (st.i) x += '<w:i/><w:iCs/>'; if (st.u) x += '<w:u w:val="single"/>';
+    if (st.color) x += '<w:color w:val="' + st.color + '"/>';
+    if (st.sz) x += '<w:sz w:val="' + st.sz + '"/><w:szCs w:val="' + st.sz + '"/>';
+    return x ? '<w:rPr>' + x + '</w:rPr>' : '';
+  }
+  function run(text, st) { return text === '' ? '' : '<w:r>' + rPr(st) + '<w:t xml:space="preserve">' + esc(text) + '</w:t></w:r>'; }
+
+  // ---------- chữ trong dòng ----------
+  // Trả về chuỗi XML các <w:r>. Khoảng trắng HTML được gộp; NBSP được giữ.
+  function noiDung(node, st, ctx) {
+    var out = '';
+    node.childNodes.forEach(function (c) {
+      if (c.nodeType === 3) {
+        var t = c.nodeValue.replace(/[ \t\r\n]+/g, ' ');
+        out += run(t, st);
+      } else if (c.nodeType === 1) {
+        var tag = c.tagName.toLowerCase();
+        if (tag === 'br') out += '<w:r><w:br/></w:r>';
+        else if (tag === 'script' || tag === 'style') { }
+        else {
+          var n = Object.assign({}, st);
+          if (tag === 'b' || tag === 'strong' || tag === 'th') n.b = true;
+          if (tag === 'i' || tag === 'em') n.i = true;
+          if (tag === 'u') n.u = true;
+          n = chuTuStyle(n, docKhai(c.getAttribute('style')));
+          out += noiDung(c, n, ctx);
+        }
+      }
+    });
+    return out;
+  }
+  // gọt khoảng trắng đầu/cuối của đoạn (chỉ ở dạng XML text đầu tiên / cuối cùng)
+  function gotRuns(xml) {
+    xml = xml.replace(/^(<w:r>(?:<w:rPr>.*?<\/w:rPr>)?<w:t xml:space="preserve">) +/, '$1');
+    xml = xml.replace(/ +(<\/w:t><\/w:r>)$/, '$1');
+    return xml;
+  }
+
+  // ---------- đoạn văn ----------
+  function paraProps(el, ctx, op) {
+    var cls = (el.getAttribute('class') || '').split(/\s+/), sty = docKhai(el.getAttribute('style'));
+    var tag = el.tagName.toLowerCase();
+    var cs = Object.assign({}, ctx.css[tag === 'p' ? 'p' : tag] || {});
+    cls.forEach(function (k) { if (k) Object.assign(cs, ctx.css['p.' + k] || {}); });
+    Object.assign(cs, sty);
+    var jc = null, al = (el.getAttribute('align') || cs['text-align'] || '').toLowerCase();
+    if (al === 'center') jc = 'center'; else if (al === 'right') jc = 'right'; else if (al === 'justify') jc = 'both'; else if (al === 'left') jc = 'left';
+    var before = 0, after = 6 * TW_PT;
+    var base = margin4(cs.margin); if (base) { before = base.t; after = base.b; }
+    var mg = margin4(cs.margin), left = 0, right = 0;
+    if (mg) { before = mg.t; after = mg.b; left = mg.l; right = mg.r; }
+    if (cs['margin-top'] != null && doDai(cs['margin-top']) != null) before = doDai(cs['margin-top']);
+    if (cs['margin-bottom'] != null && doDai(cs['margin-bottom']) != null) after = doDai(cs['margin-bottom']);
+    if (cs['margin-left'] != null && doDai(cs['margin-left']) != null) left = doDai(cs['margin-left']);
+    if (cs['margin-right'] != null && doDai(cs['margin-right']) != null) right = doDai(cs['margin-right']);
+    var first = doDai(cs['text-indent']) || 0;
+    var line = 0, rule = 'auto';
+    var lh = cs['line-height'];
+    if (lh) { var pm = /^([\d.]+)%$/.exec(lh); if (pm) line = Math.round(240 * parseFloat(pm[1]) / 100); else { var d = doDai(lh); if (d) { line = d; rule = 'exact'; } } }
+    var x = '';
+    if (op && op.keep || /avoid/.test(cs['page-break-after'] || '') || cls.indexOf('kn') >= 0) x += '<w:keepNext/>';
+    if (/always|page/.test(cs['page-break-before'] || '') && !/avoid/.test(cs['page-break-before'])) x += '<w:pageBreakBefore/>';
+    if (cs['border-bottom'] && /solid/.test(cs['border-bottom'])) x += '<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="000000"/></w:pBdr>';
+    if (op && op.tabs) x += op.tabs;
+    x += '<w:spacing w:before="' + before + '" w:after="' + after + '"' + (line ? ' w:line="' + line + '" w:lineRule="' + rule + '"' : '') + '/>';
+    if (left || right || first) x += '<w:ind w:left="' + left + '" w:right="' + right + '"' + (first > 0 ? ' w:firstLine="' + first + '"' : first < 0 ? ' w:hanging="' + (-first) + '"' : '') + '/>';
+    if (jc) x += '<w:jc w:val="' + jc + '"/>';
+    return { x: '<w:pPr>' + x + '</w:pPr>', cs: cs };
+  }
+  function chuGoc(el, ctx) {
+    var st = Object.assign({}, ctx.base);
+    var cls = (el.getAttribute('class') || '').split(/\s+/), cs = {};
+    cls.forEach(function (k) { if (k) Object.assign(cs, ctx.css['p.' + k] || {}); });
+    st = chuTuStyle(st, cs);
+    return chuTuStyle(st, docKhai(el.getAttribute('style')));
+  }
+  function para(el, ctx) {
+    var tag = el.tagName.toLowerCase();
+    var st = chuGoc(el, ctx);
+    if (tag === 'h3' || tag === 'h2' || tag === 'h1') { st.b = true; var hs = ctx.css[tag]; if (hs) st = chuTuStyle(st, hs); }
+    var cls = (el.getAttribute('class') || '').split(/\s+/);
+    if (cls.indexOf('tab') >= 0) return paraTab(el, ctx, st);
+    var pp = paraProps(el, ctx);
+    var body = gotRuns(noiDung(el, st, ctx));
+    if (/font-size:\s*2pt/.test(el.getAttribute('style') || '')) body = '<w:r><w:rPr><w:sz w:val="4"/></w:rPr><w:t></w:t></w:r>';
+    return '<w:p>' + pp.x + body + '</w:p>';
+  }
+  // p.tab: data-cols="7:c|9:c"  (độ rộng cm : c/l/r) — mỗi cột là <span class="t">
+  function paraTab(el, ctx, st) {
+    var cols = String(el.getAttribute('data-cols') || '').split('|').map(function (s) { var p = s.split(':'); return { w: parseFloat(p[0]) || 0, a: (p[1] || 'l').charAt(0) }; });
+    var spans = Array.prototype.filter.call(el.childNodes, function (n) { return n.nodeType === 1 && n.tagName.toLowerCase() === 'span'; });
+    var tabs = '', pos = 0, body = '';
+    cols.forEach(function (c, i) {
+      var p = pos + (c.a === 'c' ? c.w / 2 : c.a === 'r' ? c.w : 0);
+      var can = !(i === 0 && c.a === 'l');
+      if (can) { tabs += '<w:tab w:val="' + (c.a === 'c' ? 'center' : c.a === 'r' ? 'right' : 'left') + '" w:pos="' + Math.round(p * TW_CM) + '"/>'; body += '<w:r><w:tab/></w:r>'; }
+      var sp = spans[i];
+      if (sp) { var n = chuTuStyle(st, docKhai(sp.getAttribute('style'))); body += gotRuns(noiDung(sp, n, ctx)); }
+      pos += c.w;
+    });
+    var pp = paraProps(el, ctx, { tabs: tabs ? '<w:tabs>' + tabs + '</w:tabs>' : '' });
+    return '<w:p>' + pp.x + body + '</w:p>';
+  }
+
+  // ---------- bảng dữ liệu ----------
+  function bang(el, ctx) {
+    var hang = Array.prototype.slice.call(el.querySelectorAll('tr')).filter(function (r) { return r.closest('table') === el; });
+    var coVien = /luoi/.test(el.getAttribute('class') || '') || (el.getAttribute('border') && el.getAttribute('border') !== '0') || /border:\s*1px/.test(el.getAttribute('style') || '');
+    var soCot = 0; hang.forEach(function (r) { var n = 0; Array.prototype.forEach.call(r.children, function (c) { n += parseInt(c.getAttribute('colspan') || '1', 10); }); if (n > soCot) soCot = n; });
+    if (!soCot) return '';
+    var R = 9070 + 0; // 16 cm = 9072 twips
+    var wTong = 9072, widths = [], r0 = hang[0], i;
+    if (r0) { var tot = 0, co = 0; Array.prototype.forEach.call(r0.children, function (c) { var w = c.getAttribute('width'); var cs = parseInt(c.getAttribute('colspan') || '1', 10); var pc = w && /%$/.test(w) ? parseFloat(w) : null; if (pc != null && cs === 1) { widths.push(pc); tot += pc; co++; } else for (var k = 0; k < cs; k++) widths.push(null); }); }
+    var conLai = 100 - (widths.filter(function (w) { return w != null; }).reduce(function (a, b) { return a + b; }, 0)), thieu = widths.filter(function (w) { return w == null; }).length;
+    widths = widths.map(function (w) { return Math.round((w != null ? w : (thieu ? Math.max(conLai, 5) / thieu : 100 / soCot)) / 100 * wTong); });
+    while (widths.length < soCot) widths.push(Math.round(wTong / soCot));
+    var vien = coVien ? '<w:tblBorders><w:top w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:left w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:right w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="000000"/></w:tblBorders>' : '';
+    var x = '<w:tbl><w:tblPr><w:tblW w:w="' + wTong + '" w:type="dxa"/>' + vien + '<w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="40" w:type="dxa"/><w:left w:w="80" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>' + widths.map(function (w) { return '<w:gridCol w:w="' + w + '"/>'; }).join('') + '</w:tblGrid>';
+    hang.forEach(function (tr, ri) {
+      var trSty = docKhai(tr.getAttribute('style'));
+      x += '<w:tr><w:trPr><w:cantSplit/>' + (ri === 0 && tr.querySelector('th') ? '<w:tblHeader/>' : '') + '</w:trPr>';
+      var ci = 0;
+      Array.prototype.forEach.call(tr.children, function (td) {
+        var cs = parseInt(td.getAttribute('colspan') || '1', 10), w = 0; for (var k = 0; k < cs; k++) w += widths[ci + k] || 0; ci += cs;
+        var tsty = docKhai(td.getAttribute('style'));
+        var st = Object.assign({}, ctx.base); st = chuTuStyle(st, ctx.css['td'] || {}); st = chuTuStyle(st, trSty); st = chuTuStyle(st, tsty);
+        if (td.tagName.toLowerCase() === 'th') st.b = true;
+        var al = (td.getAttribute('align') || tsty['text-align'] || trSty['text-align'] || '').toLowerCase();
+        var tcp = '<w:tcW w:w="' + w + '" w:type="dxa"/>' + (cs > 1 ? '<w:gridSpan w:val="' + cs + '"/>' : '');
+        var bg = /background(?:-color)?:\s*#([0-9a-f]{6})/i.exec(td.getAttribute('style') || ''); if (bg) tcp += '<w:shd w:val="clear" w:color="auto" w:fill="' + bg[1].toUpperCase() + '"/>';
+        tcp += '<w:vAlign w:val="' + ((td.getAttribute('valign') || '').toLowerCase() === 'middle' ? 'center' : 'top') + '"/>';
+        var inner = '';
+        var blocks = td.querySelector('p') ? Array.prototype.filter.call(td.children, function (c) { return /^(p|div)$/i.test(c.tagName); }) : null;
+        if (blocks && blocks.length) blocks.forEach(function (b) { inner += para(b, ctx); });
+        else inner = '<w:p><w:pPr><w:spacing w:before="0" w:after="0"/>' + (al === 'center' ? '<w:jc w:val="center"/>' : al === 'right' ? '<w:jc w:val="right"/>' : '') + '</w:pPr>' + gotRuns(noiDung(td, st, ctx)) + '</w:p>';
+        x += '<w:tc><w:tcPr>' + tcp + '</w:tcPr>' + inner + '</w:tc>';
+      });
+      x += '</w:tr>';
+    });
+    return x + '</w:tbl><w:p><w:pPr><w:spacing w:before="0" w:after="60"/></w:pPr></w:p>';
+  }
+
+  // ---------- thân văn bản ----------
+  function khoi(node, ctx) {
+    var x = '';
+    node.childNodes.forEach(function (c) {
+      if (c.nodeType !== 1) return;
+      var tag = c.tagName.toLowerCase();
+      if (tag === 'p' || /^h[1-6]$/.test(tag)) x += para(c, ctx);
+      else if (tag === 'table') x += bang(c, ctx);
+      else if (tag === 'div') { if (!/khong-in/.test(c.getAttribute('class') || '')) x += khoi(c, ctx); }
+      else if (tag === 'ul' || tag === 'ol') Array.prototype.forEach.call(c.children, function (li) { x += '<w:p><w:pPr><w:spacing w:before="0" w:after="60"/></w:pPr>' + run('- ', ctx.base) + noiDung(li, ctx.base, ctx) + '</w:p>'; });
+    });
+    return x;
+  }
+
+  var NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+  var XMLH = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+  function stylesXml(szHalf) {
+    return XMLH + '<w:styles ' + NS + '><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="Times New Roman" w:cs="Times New Roman"/><w:sz w:val="' + szHalf + '"/><w:szCs w:val="' + szHalf + '"/><w:lang w:val="vi-VN" w:eastAsia="vi-VN" w:bidi="ar-SA"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style><w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/><w:uiPriority w:val="99"/><w:semiHidden/><w:tblPr><w:tblInd w:w="0" w:type="dxa"/><w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="108" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="108" w:type="dxa"/></w:tblCellMar></w:tblPr></w:style></w:styles>';
+  }
+  function headerXml(coSo) {
+    return XMLH + '<w:hdr ' + NS + '><w:p><w:pPr><w:jc w:val="center"/></w:pPr>' + (coSo ? '<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>2</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r>' : '') + '</w:p></w:hdr>';
+  }
+
+  // ---------- ZIP (store) ----------
+  var CRC_T = null;
+  function crc32(b) { if (!CRC_T) { CRC_T = new Uint32Array(256); for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; CRC_T[n] = c >>> 0; } } var c2 = 0xFFFFFFFF; for (var i = 0; i < b.length; i++) c2 = CRC_T[(c2 ^ b[i]) & 255] ^ (c2 >>> 8); return (c2 ^ 0xFFFFFFFF) >>> 0; }
+  function zip(files) {
+    var enc = new TextEncoder(), parts = [], central = [], off = 0;
+    function u16(v) { return [v & 255, (v >>> 8) & 255]; } function u32(v) { return [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255]; }
+    files.forEach(function (f) {
+      var nm = enc.encode(f.name), data = enc.encode(f.data), crc = crc32(data);
+      var lh = [0x50, 0x4b, 3, 4].concat(u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(data.length), u32(data.length), u16(nm.length), u16(0));
+      parts.push(new Uint8Array(lh), nm, data);
+      central.push([0x50, 0x4b, 1, 2].concat(u16(20), u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(data.length), u32(data.length), u16(nm.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(off)), nm);
+      off += lh.length + nm.length + data.length;
+    });
+    var cs = 0, cparts = [];
+    central.forEach(function (c) { var a = c instanceof Uint8Array ? c : new Uint8Array(c); cparts.push(a); cs += a.length; });
+    var end = new Uint8Array([0x50, 0x4b, 5, 6].concat(u16(0), u16(0), u16(files.length), u16(files.length), u32(cs), u32(off), u16(0)));
+    return parts.concat(cparts, [end]);
+  }
+
+  // ---------- chính ----------
+  function htmlSangDocxParts(html, DOMParserCtor) {
+    var doc = new (DOMParserCtor || G.DOMParser)().parseFromString(html, 'text/html');
+    var css = laySheet(doc), bs = css['body'] || {};
+    var szPt = /([\d.]+)pt/.exec(bs['font-size'] || ''), sz = szPt ? Math.round(parseFloat(szPt[1]) * 2) : 26;
+    var ctx = { css: css, base: {}, sz: sz };
+    var goc = doc.querySelector('div.WordSection1') || doc.body;
+    var thanh = khoi(goc, ctx);
+    var sect = '<w:sectPr><w:headerReference w:type="default" r:id="rIdH1"/><w:headerReference w:type="first" r:id="rIdH2"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1701" w:header="567" w:footer="567" w:gutter="0"/><w:titlePg/></w:sectPr>';
+    var documentXml = XMLH + '<w:document ' + NS + '><w:body>' + thanh + sect + '</w:body></w:document>';
+    var title = (doc.querySelector('title') || {}).textContent || 'Văn bản';
+    return [
+      { name: '[Content_Types].xml', data: XMLH + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/><Override PartName="/word/header2.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>' },
+      { name: '_rels/.rels', data: XMLH + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>' },
+      { name: 'docProps/core.xml', data: XMLH + '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>' + esc(title) + '</dc:title><dc:creator>Quản lý địa bàn CSKV</dc:creator></cp:coreProperties>' },
+      { name: 'word/_rels/document.xml.rels', data: XMLH + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdS" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rIdH1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/><Relationship Id="rIdH2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header2.xml"/></Relationships>' },
+      { name: 'word/document.xml', data: documentXml },
+      { name: 'word/styles.xml', data: stylesXml(sz) },
+      { name: 'word/header1.xml', data: headerXml(true) },
+      { name: 'word/header2.xml', data: headerXml(false) }
+    ];
+  }
+  function htmlSangDocx(html) {
+    return new Blob(zip(htmlSangDocxParts(html)), { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  }
+  G.htmlSangDocx = htmlSangDocx; G.__nd30Docx = { parts: htmlSangDocxParts, zip: zip };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
 <script id="cskvBoSung">
 /* ==========================================================================
    cskv-bo-sung.js — BẢN BỔ SUNG 2026.11.01 cho "Hệ thống Quản lý địa bàn CSKV"
@@ -14247,6 +14576,15 @@ ${kySo ? '' : `<p style="font-size:10pt;color:#555;margin-top:12pt"><i>Dự th�
     BlobBoc.__cskvDau = true;
     window.Blob = BlobBoc;
   })();
+
+  // --- Word (.docx thật): dùng chung bước che số + dấu người xuất + nhật ký như file Word cũ ---
+  window.cskvChuanBiWord = function (html) {
+    var ma = maXuat(), ghi = quyetDinhGhiDau('Word');
+    html = cheHtmlXuat(html);
+    if (ghi) html = chenDauVaoHtml(html, ma);
+    ghiNhatKyXuat('Word', tieuDeHtml(html), ma, ghi);
+    return html;
+  };
 
   // --- In / PDF: các cửa sổ window.open('') rồi document.write(html) ---
   (function caiWindowOpen() {
